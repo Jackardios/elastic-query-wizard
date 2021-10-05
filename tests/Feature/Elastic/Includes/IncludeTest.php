@@ -109,6 +109,8 @@ class IncludeTest extends TestCase
             ->createQueryFromIncludeRequest('relatedModelsCount')
             ->setAllowedIncludes('relatedModelsCount')
             ->build()
+            ->execute()
+            ->models()
             ->first();
 
         $this->assertNotNull($model->related_models_count);
@@ -121,6 +123,8 @@ class IncludeTest extends TestCase
             ->createQueryFromIncludeRequest('relatedModelsCount')
             ->setAllowedIncludes('relatedModels')
             ->build()
+            ->execute()
+            ->models()
             ->first();
 
         $this->assertNotNull($model->related_models_count);
@@ -178,6 +182,8 @@ class IncludeTest extends TestCase
             ->createQueryFromIncludeRequest('relatedModelsCount')
             ->setAllowedIncludes('relatedModels.nestedRelatedModels')
             ->build()
+            ->execute()
+            ->models()
             ->first();
 
         $this->assertNotNull($model->related_models_count);
@@ -188,6 +194,8 @@ class IncludeTest extends TestCase
             ->createQueryFromIncludeRequest('nestedRelatedModelsCount')
             ->setAllowedIncludes('relatedModels.nestedRelatedModels')
             ->build()
+            ->execute()
+            ->models()
             ->first();
 
         $this->expectException(InvalidIncludeQuery::class);
@@ -196,6 +204,8 @@ class IncludeTest extends TestCase
             ->createQueryFromIncludeRequest('related-models.nestedRelatedModelsCount')
             ->setAllowedIncludes('relatedModels.nestedRelatedModels')
             ->build()
+            ->execute()
+            ->models()
             ->first();
     }
 
@@ -405,6 +415,8 @@ class IncludeTest extends TestCase
             ->createQueryFromIncludeRequest('relatedModels')
             ->setAllowedIncludes($includeClass)
             ->build()
+            ->execute()
+            ->models()
             ->first();
 
         $this->assertNotNull($modelResult->related_models_count);
@@ -424,6 +436,8 @@ class IncludeTest extends TestCase
             ->createQueryFromIncludeRequest('relatedModelsCount')
             ->setAllowedIncludes($includeClass)
             ->build()
+            ->execute()
+            ->models()
             ->first();
 
         $this->assertNotNull($modelResult->related_models_count);
@@ -442,6 +456,8 @@ class IncludeTest extends TestCase
             })
             ->setAllowedIncludes(new IncludedCount('relatedModels', 'relatedModelsCount'))
             ->build()
+            ->execute()
+            ->models()
             ->first();
 
         $this->assertNotNull($modelResult->related_models_count);
