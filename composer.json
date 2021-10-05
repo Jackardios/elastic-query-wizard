@@ -1,0 +1,68 @@
+{
+    "name": "jackardios/elastic-query-wizard",
+    "description": "Laravel Elastic Query Wizard",
+    "keywords": [
+        "jackardios",
+        "scout-query-wizard",
+        "laravel-elastic-query-wizard",
+        "elastic-query-builder",
+        "laravel-query-builder",
+        "laravel",
+        "scout",
+        "elastic",
+        "query",
+        "wizard",
+        "builder",
+        "json",
+        "api",
+        "json api",
+        "query builder"
+    ],
+    "homepage": "https://github.com/jackardios/elastic-query-wizard",
+    "license": "MIT",
+    "support": {
+        "issues": "https://github.com/jackardios/elastic-query-wizard/issues",
+        "source": "https://github.com/jackardios/elastic-query-wizard"
+    },
+    "authors": [
+        {
+            "name": "Salavat Salakhutdinov",
+            "email": "salavat.salahutdinov@gmail.com",
+            "homepage": "https://github.com/jackardios"
+        }
+    ],
+    "require": {
+        "php": "^7.4|^8.0",
+        "laravel/framework": "^6.20.13|^7.30.4|^8.22.2",
+        "jackardios/laravel-query-wizard": "dev-master",
+        "jackardios/elastic-scout-driver-plus": "v3.0.x-dev"
+    },
+    "require-dev": {
+        "ext-json": "*",
+        "jackardios/elastic-migrations": "v2.0.x-dev",
+        "laravel/legacy-factories": "^1.0.4",
+        "laravel/scout": "^9.2.6",
+        "orchestra/testbench": "^v6.20.1",
+        "phpunit/phpunit": "^9.5",
+        "roave/security-advisories": "dev-latest"
+    },
+    "autoload": {
+        "psr-4": {
+            "Jackardios\\ElasticQueryWizard\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Jackardios\\ElasticQueryWizard\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-coverage": "phpunit --coverage-html coverage"
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
