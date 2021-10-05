@@ -1,7 +1,8 @@
 <?php
 
-namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic;
+namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Sorts;
 
+use ElasticScoutDriverPlus\Builders\SearchRequestBuilder;
 use Illuminate\Http\Request;
 use Jackardios\QueryWizard\Enums\SortDirection;
 use Jackardios\QueryWizard\Exceptions\InvalidSortQuery;
@@ -12,6 +13,7 @@ use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
 use Jackardios\ElasticQueryWizard\Tests\Concerns\AssertsCollectionSorting;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
 use Jackardios\ElasticQueryWizard\Tests\App\Models\TestModel;
+use ReflectionClass;
 
 /**
  * @group elastic
@@ -22,94 +24,59 @@ class SortTest extends TestCase
 {
     use AssertsCollectionSorting;
 
-    /** @var \Illuminate\Support\Collection */
-    protected $models;
-
-    public function setUp(): void
-    {
-        parent::setUp();
-
-        $this->models = factory(TestModel::class, 5)->create();
-    }
-
     /** @test */
     public function it_can_sort_a_query_ascending(): void
     {
-        $query = $this
+        $wizard =$this
             ->createQueryFromSortRequest('name')
             ->setAllowedSorts('name')
             ->build();
 
-        $this->assertEquals([
-            [
-                "column" => "name",
-                "direction" => "asc"
-            ]
-        ], $query->orders);
+        $this->assertEquals([["name" => "asc"]], $this->getSorts($wizard->getHandler()->getSubject()));
     }
 
     /** @test */
     public function it_can_sort_a_query_descending(): void
     {
-        $query = $this
+        $wizard =$this
             ->createQueryFromSortRequest('-name')
             ->setAllowedSorts('name')
             ->build();
 
-        $this->assertEquals([
-            [
-                "column" => "name",
-                "direction" => "desc"
-            ]
-        ], $query->orders);
+        $this->assertEquals([["name" => "desc"]], $this->getSorts($wizard->getHandler()->getSubject()));
     }
 
     /** @test */
     public function it_can_sort_a_query_by_alias(): void
     {
-        $query = $this
+        $wizard =$this
             ->createQueryFromSortRequest('name-alias')
             ->setAllowedSorts([new SortsByField('name', 'name-alias')])
             ->build();
 
-        $this->assertEquals([
-            [
-                "column" => "name",
-                "direction" => "asc"
-            ]
-        ], $query->orders);
+        $this->assertEquals([["name" => "asc"]], $this->getSorts($wizard->getHandler()->getSubject()));
     }
 
     /** @test */
     public function it_can_allow_a_descending_sort_by_still_sort_ascending(): void
     {
-        $query = $this
+        $wizard =$this
             ->createQueryFromSortRequest('name')
             ->setAllowedSorts('-name')
             ->build();
 
-        $this->assertEquals([
-            [
-                "column" => "name",
-                "direction" => "asc"
-            ]
-        ], $query->orders);
+        $this->assertEquals([["name" => "asc"]], $this->getSorts($wizard->getHandler()->getSubject()));
     }
 
     /** @test */
     public function it_can_sort_by_sketchy_alias_if_its_an_allowed_sort(): void
     {
-        $query = $this
+        $wizard =$this
             ->createQueryFromSortRequest('-sketchy<>sort')
             ->setAllowedSorts(new SortsByField('name', 'sketchy<>sort'))
             ->build();
 
-        $this->assertEquals([
-            [
-                "column" => "name",
-                "direction" => "desc"
-            ]
-        ], $query->orders);
+        $this->assertEquals([["name" => "desc"]], $this->getSorts($wizard->getHandler()->getSubject()));
     }
 
     /** @test */
@@ -126,39 +93,33 @@ class SortTest extends TestCase
     /** @test */
     public function it_wont_sort_if_no_sort_query_parameter_is_given(): void
     {
-        $query = ElasticQueryWizard::for(TestModel::class, new Request())
+        $wizard =ElasticQueryWizard::for(TestModel::class, new Request())
             ->setAllowedSorts('name')
             ->build();
 
-        $this->assertEquals([], $query->orders);
+        $this->assertEquals([], $this->getSorts($wizard->getHandler()->getSubject()));
     }
 
     /** @test */
     public function it_uses_default_sort_parameter_when_no_sort_was_requested(): void
     {
-        $query = ElasticQueryWizard::for(TestModel::class, new Request())
+        $wizard =ElasticQueryWizard::for(TestModel::class, new Request())
             ->setAllowedSorts('name')
             ->setDefaultSorts('name')
             ->build();
 
-        $this->assertEquals([[
-            "column" => "name",
-            "direction" => "asc"
-        ]], $query->orders);
+        $this->assertEquals([["name" => "asc"]], $this->getSorts($wizard->getHandler()->getSubject()));
     }
 
     /** @test */
     public function it_doesnt_use_the_default_sort_parameter_when_a_sort_was_requested(): void
     {
-        $query = $this->createQueryFromSortRequest('id')
+        $wizard =$this->createQueryFromSortRequest('id')
             ->setAllowedSorts('id')
             ->setDefaultSorts('name')
             ->build();
 
-        $this->assertEquals([[
-            "column" => "id",
-            "direction" => "asc"
-        ]], $query->orders);
+        $this->assertEquals([["id" => "asc"]], $this->getSorts($wizard->getHandler()->getSubject()));
     }
 
     /** @test */
@@ -167,33 +128,27 @@ class SortTest extends TestCase
         $sortClass = new class('custom_name') extends AbstractElasticSort {
             public function handle($queryHandler, $queryBuilder, string $direction): void
             {
-                $queryBuilder->orderBy('name', $direction);
+                $queryBuilder->sort('name', $direction);
             }
         };
 
-        $query = ElasticQueryWizard::for(TestModel::class, new Request())
+        $wizard =ElasticQueryWizard::for(TestModel::class, new Request())
             ->setAllowedSorts($sortClass)
             ->setDefaultSorts(new Sort('custom_name'))
             ->build();
 
-        $this->assertEquals([[
-            "column" => "name",
-            "direction" => "asc"
-        ]], $query->orders);
+        $this->assertEquals([["name" => "asc"]], $this->getSorts($wizard->getHandler()->getSubject()));
     }
 
     /** @test */
     public function it_uses_default_descending_sort_parameter(): void
     {
-        $query = ElasticQueryWizard::for(TestModel::class, new Request())
+        $wizard =ElasticQueryWizard::for(TestModel::class, new Request())
             ->setAllowedSorts('-name')
             ->setDefaultSorts('-name')
             ->build();
 
-        $this->assertEquals([[
-            "column" => "name",
-            "direction" => "desc"
-        ]], $query->orders);
+        $this->assertEquals([["name" => "desc"]], $this->getSorts($wizard->getHandler()->getSubject()));
     }
 
     /** @test */
@@ -202,73 +157,55 @@ class SortTest extends TestCase
         $sortClass = new class('custom_name') extends AbstractElasticSort {
             public function handle($queryHandler, $queryBuilder, string $direction): void
             {
-                $queryBuilder->orderBy('name', $direction);
+                $queryBuilder->sort('name', $direction);
             }
         };
 
-        $query = ElasticQueryWizard::for(TestModel::class, new Request())
+        $wizard =ElasticQueryWizard::for(TestModel::class, new Request())
             ->setAllowedSorts($sortClass, 'id')
             ->setDefaultSorts('custom_name', new Sort('id', SortDirection::DESCENDING))
             ->build();
 
         $this->assertEquals([
-            [
-                "column" => "name",
-                "direction" => "asc"
-            ],
-            [
-                "column" => "id",
-                "direction" => "desc"
-            ],
-        ], $query->orders);
+            ["name" => "asc"],
+            ["id" => "desc"]
+        ], $this->getSorts($wizard->getHandler()->getSubject()));
     }
 
     /** @test */
     public function it_can_allow_multiple_sort_parameters(): void
     {
-        $query = $this
+        $wizard =$this
             ->createQueryFromSortRequest('name')
             ->setAllowedSorts('id', 'name')
             ->build();
 
-        $this->assertEquals([[
-            "column" => "name",
-            "direction" => "asc"
-        ]], $query->orders);
+        $this->assertEquals([["name" => "asc"]], $this->getSorts($wizard->getHandler()->getSubject()));
     }
 
     /** @test */
     public function it_can_allow_multiple_sort_parameters_as_an_array(): void
     {
-        $query = $this
+        $wizard =$this
             ->createQueryFromSortRequest('name')
             ->setAllowedSorts(['id', 'name'])
             ->build();
 
-        $this->assertEquals([[
-            "column" => "name",
-            "direction" => "asc"
-        ]], $query->orders);
+        $this->assertEquals([["name" => "asc"]], $this->getSorts($wizard->getHandler()->getSubject()));
     }
 
     /** @test */
     public function it_can_sort_by_multiple_columns(): void
     {
-        $query = $this
+        $wizard =$this
             ->createQueryFromSortRequest('name,-id')
             ->setAllowedSorts('name', 'id')
             ->build();
 
         $this->assertEquals([
-            [
-                "column" => "name",
-                "direction" => "asc"
-            ],
-            [
-                "column" => "id",
-                "direction" => "desc"
-            ],
-        ], $query->orders);
+            ["name" => "asc"],
+            ["id" => "desc"]
+        ], $this->getSorts($wizard->getHandler()->getSubject()));
     }
 
     /** @test */
@@ -277,21 +214,16 @@ class SortTest extends TestCase
         $sortClass = new class('custom_name') extends AbstractElasticSort {
             public function handle($queryHandler, $queryBuilder, string $direction): void
             {
-                $queryBuilder->orderBy('name', $direction);
+                $queryBuilder->sort('name', $direction);
             }
         };
 
-        $query = $this
+        $wizard =$this
             ->createQueryFromSortRequest('custom_name')
             ->setAllowedSorts($sortClass)
             ->build();
 
-        $this->assertEquals([
-            [
-                "column" => "name",
-                "direction" => "asc"
-            ],
-        ], $query->orders);
+        $this->assertEquals([["name" => "asc"]], $this->getSorts($wizard->getHandler()->getSubject()));
     }
 
     /** @test */
@@ -299,64 +231,44 @@ class SortTest extends TestCase
     {
         $sort = new SortsByField('name', 'nickname');
 
-        $query = $this
+        $wizard =$this
             ->createQueryFromSortRequest('nickname')
             ->setAllowedSorts($sort)
             ->build();
 
-        $this->assertEquals([
-            [
-                "column" => "name",
-                "direction" => "asc"
-            ],
-        ], $query->orders);
+        $this->assertEquals([["name" => "asc"]], $this->getSorts($wizard->getHandler()->getSubject()));
     }
 
     /** @test */
     public function it_can_sort_descending_with_an_alias(): void
     {
-        $query = $this->createQueryFromSortRequest('-exposed_property_name')
+        $wizard =$this->createQueryFromSortRequest('-exposed_property_name')
             ->setAllowedSorts(new SortsByField('name', 'exposed_property_name'))
             ->build();
 
-        $this->assertEquals([
-            [
-                "column" => "name",
-                "direction" => "desc"
-            ],
-        ], $query->orders);
+        $this->assertEquals([["name" => "desc"]], $this->getSorts($wizard->getHandler()->getSubject()));
     }
 
     /** @test */
     public function it_does_not_add_sort_clauses_multiple_times(): void
     {
-        $query = ElasticQueryWizard::for(TestModel::class)
+        $wizard = ElasticQueryWizard::for(TestModel::class)
             ->setAllowedSorts('name')
             ->setDefaultSorts('name', '-name')
             ->build();
 
-        $this->assertEquals([
-            [
-                "column" => "name",
-                "direction" => "asc"
-            ],
-        ], $query->orders);
+        $this->assertEquals([["name" => "asc"]], $this->getSorts($wizard->getHandler()->getSubject()));
     }
 
     /** @test */
     public function given_a_default_sort_a_sort_alias_will_still_be_resolved(): void
     {
-        $query = $this->createQueryFromSortRequest('-joined')
+        $wizard = $this->createQueryFromSortRequest('-joined')
             ->setDefaultSorts('name')
             ->setAllowedSorts(new SortsByField('created_at', 'joined'))
             ->build();
 
-        $this->assertEquals([
-            [
-                "column" => "created_at",
-                "direction" => "desc"
-            ],
-        ], $query->orders);
+        $this->assertEquals([["created_at" => "desc"]], $this->getSorts($wizard->getHandler()->getSubject()));
     }
 
     /** @test */
@@ -365,21 +277,16 @@ class SortTest extends TestCase
         $sortClass = new class('custom_name') extends AbstractElasticSort {
             public function handle($queryHandler, $queryBuilder, string $direction): void
             {
-                $queryBuilder->orderBy('name', $direction);
+                $queryBuilder->sort('name', $direction);
             }
         };
 
-        $query = ElasticQueryWizard::for(TestModel::class, new Request())
+        $wizard = ElasticQueryWizard::for(TestModel::class, new Request())
             ->setAllowedSorts($sortClass)
             ->setDefaultSorts('-custom_name')
             ->build();
 
-        $this->assertEquals([
-            [
-                "column" => "name",
-                "direction" => "desc"
-            ],
-        ], $query->orders);
+        $this->assertEquals([["name" => "desc"]], $this->getSorts($wizard->getHandler()->getSubject()));
     }
 
     protected function createQueryFromSortRequest(string $sort): ElasticQueryWizard
@@ -389,5 +296,12 @@ class SortTest extends TestCase
         ]);
 
         return ElasticQueryWizard::for(TestModel::class, $request);
+    }
+
+    protected function getSorts(SearchRequestBuilder $wizard) {
+        $reflection = new ReflectionClass($wizard);
+        $property = $reflection->getProperty('sort');
+        $property->setAccessible(true);
+        return $property->getValue($wizard);
     }
 }
