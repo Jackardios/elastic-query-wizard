@@ -8,7 +8,7 @@ use Jackardios\QueryWizard\Enums\SortDirection;
 use Jackardios\QueryWizard\Exceptions\InvalidSortQuery;
 use Jackardios\QueryWizard\Values\Sort;
 use Jackardios\ElasticQueryWizard\Handlers\Sorts\AbstractElasticSort;
-use Jackardios\ElasticQueryWizard\Handlers\Sorts\SortsByField;
+use Jackardios\ElasticQueryWizard\Handlers\Sorts\FieldSort;
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
 use Jackardios\ElasticQueryWizard\Tests\Concerns\AssertsCollectionSorting;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
@@ -51,7 +51,7 @@ class SortTest extends TestCase
     {
         $wizard =$this
             ->createQueryFromSortRequest('name-alias')
-            ->setAllowedSorts([new SortsByField('name', 'name-alias')])
+            ->setAllowedSorts([new FieldSort('name', 'name-alias')])
             ->build();
 
         $this->assertEquals([["name" => "asc"]], $this->getSorts($wizard->getHandler()->getSubject()));
@@ -73,7 +73,7 @@ class SortTest extends TestCase
     {
         $wizard =$this
             ->createQueryFromSortRequest('-sketchy<>sort')
-            ->setAllowedSorts(new SortsByField('name', 'sketchy<>sort'))
+            ->setAllowedSorts(new FieldSort('name', 'sketchy<>sort'))
             ->build();
 
         $this->assertEquals([["name" => "desc"]], $this->getSorts($wizard->getHandler()->getSubject()));
@@ -229,7 +229,7 @@ class SortTest extends TestCase
     /** @test */
     public function it_resolves_queries_using_property_column_name(): void
     {
-        $sort = new SortsByField('name', 'nickname');
+        $sort = new FieldSort('name', 'nickname');
 
         $wizard =$this
             ->createQueryFromSortRequest('nickname')
@@ -243,7 +243,7 @@ class SortTest extends TestCase
     public function it_can_sort_descending_with_an_alias(): void
     {
         $wizard =$this->createQueryFromSortRequest('-exposed_property_name')
-            ->setAllowedSorts(new SortsByField('name', 'exposed_property_name'))
+            ->setAllowedSorts(new FieldSort('name', 'exposed_property_name'))
             ->build();
 
         $this->assertEquals([["name" => "desc"]], $this->getSorts($wizard->getHandler()->getSubject()));
@@ -265,7 +265,7 @@ class SortTest extends TestCase
     {
         $wizard = $this->createQueryFromSortRequest('-joined')
             ->setDefaultSorts('name')
-            ->setAllowedSorts(new SortsByField('created_at', 'joined'))
+            ->setAllowedSorts(new FieldSort('created_at', 'joined'))
             ->build();
 
         $this->assertEquals([["created_at" => "desc"]], $this->getSorts($wizard->getHandler()->getSubject()));

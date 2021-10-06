@@ -35,11 +35,11 @@
         "php": "^7.4|^8.0",
         "laravel/framework": "^6.20.13|^7.30.4|^8.22.2",
         "jackardios/laravel-query-wizard": "dev-master",
-        "jackardios/elastic-scout-driver-plus": "v3.0.x-dev"
+        "jackardios/elastic-scout-driver-plus": "^3.0"
     },
     "require-dev": {
         "ext-json": "*",
-        "jackardios/elastic-migrations": "v2.0.x-dev",
+        "jackardios/elastic-migrations": "^2.0",
         "laravel/legacy-factories": "^1.0.4",
         "laravel/scout": "^9.2.6",
         "orchestra/testbench": "^v6.20.1",
