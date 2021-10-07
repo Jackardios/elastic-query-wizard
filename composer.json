@@ -42,6 +42,7 @@
         "jackardios/elastic-migrations": "^2.0",
         "laravel/legacy-factories": "^1.0.4",
         "laravel/scout": "^9.2.6",
+        "matanyadaev/laravel-eloquent-spatial": "^1.0",
         "orchestra/testbench": "^v6.20.1",
         "phpunit/phpunit": "^9.5",
         "roave/security-advisories": "dev-latest"
