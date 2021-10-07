@@ -29,7 +29,7 @@ class TermFilterTest extends TestCase
     /** @test */
     public function it_can_filter_and_match_results(): void
     {
-        $expectedModel = $this->models->random();
+        $expectedModel = factory(TestModel::class)->create(['category' => 'some-testing-category']);
 
         $modelsResult = $this
             ->createQueryFromFilterRequest([
@@ -64,7 +64,11 @@ class TermFilterTest extends TestCase
     /** @test */
     public function it_can_filter_results_by_array_of_values(): void
     {
-        $expectedModels = $this->models->random(2);
+        $expectedModels = collect([
+            factory(TestModel::class)->create(['category' => 'some-testing-category']),
+            factory(TestModel::class)->create(['category' => 'another-testing-category'])
+        ]);
+
         $results = $this
             ->createQueryFromFilterRequest([
                 'category' => "{$expectedModels[0]->category},{$expectedModels[1]->category}",

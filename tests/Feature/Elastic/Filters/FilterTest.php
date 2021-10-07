@@ -36,7 +36,7 @@ class FilterTest extends TestCase
     /** @test */
     public function it_can_filter_models_by_term_property_by_default(): void
     {
-        $expectedModel = $this->models->random();
+        $expectedModel = factory(TestModel::class)->create(['category' => 'some-testing-category']);
         $modelsResult = $this
             ->createQueryFromFilterRequest([
                 'category' => $expectedModel->category,
@@ -53,7 +53,7 @@ class FilterTest extends TestCase
     /** @test */
     public function it_can_filter_models_by_an_array_as_filter_value(): void
     {
-        $expectedModel = $this->models->random();
+        $expectedModel = factory(TestModel::class)->create(['category' => 'some-testing-category']);
         $modelsResult = $this
             ->createQueryFromFilterRequest([
                 'category' => ['first' => $expectedModel->category],
