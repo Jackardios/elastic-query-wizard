@@ -27,7 +27,7 @@ class TermFilterTest extends TestCase
     }
 
     /** @test */
-    public function it_can_filter_and_match_results_by_term_property(): void
+    public function it_can_filter_and_match_results(): void
     {
         $expectedModel = $this->models->random();
 
@@ -45,7 +45,7 @@ class TermFilterTest extends TestCase
     }
 
     /** @test */
-    public function it_can_filter_and_reject_results_by_term_property(): void
+    public function it_can_filter_and_reject_results(): void
     {
         factory(TestModel::class)->create(['category' => 'Some Testing Category']);
 
@@ -62,7 +62,7 @@ class TermFilterTest extends TestCase
     }
 
     /** @test */
-    public function it_can_filter_results_by_term_property_by_array_of_values(): void
+    public function it_can_filter_results_by_array_of_values(): void
     {
         $expectedModels = $this->models->random(2);
         $results = $this

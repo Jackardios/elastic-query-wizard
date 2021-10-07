@@ -29,7 +29,7 @@ class GeoBoundingBoxFilterTest extends TestCase
     }
 
     /** @test */
-    public function it_throws_an_exception_when_invalid_bbox_provided(): void
+    public function it_throws_an_exception_when_invalid_value_provided(): void
     {
         $this->expectException(InvalidGeoBoundingBoxValue::class);
         $this
@@ -41,7 +41,7 @@ class GeoBoundingBoxFilterTest extends TestCase
     }
 
     /** @test */
-    public function it_can_filter_results_by_geo_bounding_box_property(): void
+    public function it_can_filter_results(): void
     {
         $expectedModels[] = factory(GeoModel::class)->create(['location' => new Point(59.933237, 30.3694531)]);
         $expectedModels[] = factory(GeoModel::class)->create(['location' => new Point(59.973454, 30.5493402)]);

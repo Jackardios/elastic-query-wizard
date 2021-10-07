@@ -27,7 +27,7 @@ class MatchFilterTest extends TestCase
     }
 
     /** @test */
-    public function it_can_filter_and_match_results_by_match_property(): void
+    public function it_can_filter_results(): void
     {
         $expectedModel = factory(TestModel::class)->create(['name' => 'Some new TESTING Name']);
 
@@ -45,7 +45,7 @@ class MatchFilterTest extends TestCase
     }
 
     /** @test */
-    public function it_can_filter_results_by_term_property_by_array_of_values(): void
+    public function it_can_filter_results_by_array_of_values(): void
     {
         factory(TestModel::class)->create(['name' => 'UniqueJohn Doe']);
         $model1 = factory(TestModel::class)->create(['name' => 'Some new TESTING Name']);
