@@ -41,6 +41,21 @@ class GeoBoundingBoxFilterTest extends TestCase
     }
 
     /** @test */
+    public function it_allows_empty_filter_value(): void
+    {
+        $this
+            ->createQueryFromFilterRequest([
+                'bbox' => ''
+            ])
+            ->setAllowedFilters(new GeoBoundingBoxFilter('location', 'bbox'))
+            ->build()
+            ->execute()
+            ->models();
+
+        $this->assertCount(5, $this->models);
+    }
+
+    /** @test */
     public function it_can_filter_results(): void
     {
         $expectedModels[] = factory(GeoModel::class)->create(['location' => new Point(30.3694531, 59.933237)]);

@@ -8,6 +8,10 @@ class GeoBoundingBoxFilter extends AbstractElasticFilter
 {
     public function handle($queryHandler, $queryBuilder, $value): void
     {
+        if (empty($value)) {
+            return;
+        }
+        
         if (! (is_array($value) && count($value) === 4)) {
             throw InvalidGeoBoundingBoxValue::make($this->getName());
         }

@@ -62,6 +62,21 @@ class TermFilterTest extends TestCase
     }
 
     /** @test */
+    public function it_allows_empty_filter_value(): void
+    {
+        $this
+            ->createQueryFromFilterRequest([
+                'category' => ''
+            ])
+            ->setAllowedFilters(new TermFilter('category'))
+            ->build()
+            ->execute()
+            ->models();
+
+        $this->assertCount(5, $this->models);
+    }
+
+    /** @test */
     public function it_can_filter_results_by_array_of_values(): void
     {
         $expectedModels = collect([

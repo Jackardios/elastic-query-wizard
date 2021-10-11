@@ -54,6 +54,21 @@ class GeoDistanceFilterTest extends TestCase
     }
 
     /** @test */
+    public function it_allows_empty_filter_value(): void
+    {
+        $this
+            ->createQueryFromFilterRequest([
+                'location_distance' => ''
+            ])
+            ->setAllowedFilters(new GeoDistanceFilter('location', 'location_distance'))
+            ->build()
+            ->execute()
+            ->models();
+
+        $this->assertCount(5, $this->models);
+    }
+
+    /** @test */
     public function it_can_filter_results(): void
     {
         $expectedModels[] = factory(GeoModel::class)->create(['location' => new Point(30.328443362817065, 59.939403630916246)]);

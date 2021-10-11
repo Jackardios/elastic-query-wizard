@@ -8,11 +8,15 @@ class MatchFilter extends AbstractParameterizedElasticFilter
 {
     public function handle($queryHandler, $queryBuilder, $value): void
     {
-        $propertyName = $this->getPropertyName();
+        if (empty($value)) {
+            return;
+        }
 
         if (is_array($value)) {
             $value = implode(',', $value);
         }
+
+        $propertyName = $this->getPropertyName();
 
         $query = Query::match()->field($propertyName)->query($value);
         $this->applyParametersOnQuery($query);

@@ -8,6 +8,10 @@ class GeoDistanceFilter extends AbstractElasticFilter
 {
     public function handle($queryHandler, $queryBuilder, $value): void
     {
+        if (empty($value)) {
+            return;
+        }
+        
         if (! (is_array($value) && isset($value['lat'], $value['lon'], $value['distance']))) {
             throw InvalidGeoDistanceValue::make($this->getName());
         }
