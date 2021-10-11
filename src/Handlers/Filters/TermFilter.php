@@ -8,10 +8,10 @@ class TermFilter extends AbstractParameterizedElasticFilter
 {
     public function handle($queryHandler, $queryBuilder, $value): void
     {
-        if (empty($value)) {
+        if (!isset($value) || $value === '') {
             return;
         }
-        
+
         $propertyName = $this->getPropertyName();
 
         $query = is_array($value)

@@ -8,7 +8,7 @@ class MatchFilter extends AbstractParameterizedElasticFilter
 {
     public function handle($queryHandler, $queryBuilder, $value): void
     {
-        if (empty($value)) {
+        if (!isset($value) || $value === '') {
             return;
         }
 
