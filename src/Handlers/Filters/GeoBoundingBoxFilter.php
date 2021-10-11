@@ -16,7 +16,7 @@ class GeoBoundingBoxFilter extends AbstractElasticFilter
 
         $value = array_map('floatval', $value);
 
-        [$bottom, $left, $top, $right] = $value;
+        [$left, $bottom, $right, $top] = $value;
 
         if ($left === $right) {
             $left += 0.00001;
@@ -29,12 +29,12 @@ class GeoBoundingBoxFilter extends AbstractElasticFilter
             'geo_bounding_box' => [
                 $propertyName => [
                     'top_left' => [
-                        'lat' => $top,
-                        'lon' => $left
+                        'lon' => $left,
+                        'lat' => $top
                     ],
                     'bottom_right' => [
-                        'lat' => $bottom,
-                        'lon' => $right
+                        'lon' => $right,
+                        'lat' => $bottom
                     ],
                 ]
             ]
