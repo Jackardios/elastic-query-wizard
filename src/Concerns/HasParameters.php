@@ -13,7 +13,7 @@ trait HasParameters
     {
         foreach ($this->parameters as $name => $value) {
             $methodName = Str::camel($name);
-            $queryBuilder->{$methodName}($methodName);
+            $queryBuilder->{$methodName}($value);
         }
 
         return $queryBuilder;
