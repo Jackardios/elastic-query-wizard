@@ -8,7 +8,7 @@ use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
 use Jackardios\ElasticQueryWizard\Handlers\ElasticQueryHandler;
 use Jackardios\ElasticQueryWizard\Handlers\Sorts\CallbackSort;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
-use Jackardios\ElasticQueryWizard\Tests\App\Models\TestModel;
+use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\Concerns\AssertsCollectionSorting;
 
 /**

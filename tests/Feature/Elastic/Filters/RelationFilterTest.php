@@ -4,8 +4,8 @@ namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Filters;
 
 use Illuminate\Http\Request;
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
-use Jackardios\ElasticQueryWizard\Tests\App\Models\RelatedModel;
-use Jackardios\ElasticQueryWizard\Tests\App\Models\TestModel;
+use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\RelatedModel;
+use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
 use Jackardios\QueryWizard\Handlers\Eloquent\Filters\ExactFilter;
 

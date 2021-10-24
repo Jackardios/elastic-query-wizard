@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
 use Jackardios\ElasticQueryWizard\Handlers\Filters\TrashedFilter;
-use Jackardios\ElasticQueryWizard\Tests\App\Models\SoftDeleteModel;
+use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\SoftDeleteModel;
 
 /**
  * @group elastic

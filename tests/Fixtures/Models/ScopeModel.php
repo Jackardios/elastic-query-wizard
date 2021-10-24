@@ -1,6 +1,6 @@
 <?php
 
-namespace Jackardios\ElasticQueryWizard\Tests\App\Models;
+namespace Jackardios\ElasticQueryWizard\Tests\Fixtures\Models;
 
 use ElasticScoutDriverPlus\Searchable;
 use Illuminate\Database\Eloquent\Builder;

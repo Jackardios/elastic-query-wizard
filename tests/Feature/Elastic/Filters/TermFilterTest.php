@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
 use Jackardios\ElasticQueryWizard\Handlers\Filters\TermFilter;
-use Jackardios\ElasticQueryWizard\Tests\App\Models\TestModel;
+use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 
 /**
  * @group elastic

@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
 use Jackardios\ElasticQueryWizard\Handlers\ElasticQueryHandler;
 use Jackardios\ElasticQueryWizard\Handlers\Filters\CallbackFilter;
-use Jackardios\ElasticQueryWizard\Tests\App\Models\TestModel;
+use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 
 /**
  * @group elastic

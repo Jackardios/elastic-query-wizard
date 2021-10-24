@@ -15,8 +15,8 @@ use Jackardios\QueryWizard\Handlers\Eloquent\Includes\RelationshipInclude;
 use ReflectionClass;
 use Jackardios\QueryWizard\Exceptions\InvalidIncludeQuery;
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
-use Jackardios\ElasticQueryWizard\Tests\App\Models\MorphModel;
-use Jackardios\ElasticQueryWizard\Tests\App\Models\TestModel;
+use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\MorphModel;
+use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 
 /**
  * @group elastic

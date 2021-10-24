@@ -1,6 +1,6 @@
 <?php
 
-namespace Jackardios\ElasticQueryWizard\Tests\App\Models;
+namespace Jackardios\ElasticQueryWizard\Tests\Fixtures\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;

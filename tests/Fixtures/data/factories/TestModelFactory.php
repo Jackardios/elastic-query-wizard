@@ -1,7 +1,7 @@
 <?php
 
 use Faker\Generator as Faker;
-use Jackardios\ElasticQueryWizard\Tests\App\Models\TestModel;
+use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Illuminate\Database\Eloquent\Factory;
 
 /** @var Factory $factory */

@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Config;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
 use Jackardios\QueryWizard\Exceptions\InvalidSubject;
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
-use Jackardios\ElasticQueryWizard\Tests\App\Models\SoftDeleteModel;
+use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\SoftDeleteModel;
 
 /**
  * @group elastic

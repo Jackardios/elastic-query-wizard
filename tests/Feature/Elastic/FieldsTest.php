@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Jackardios\QueryWizard\Exceptions\InvalidFieldQuery;
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
-use Jackardios\ElasticQueryWizard\Tests\App\Models\RelatedModel;
-use Jackardios\ElasticQueryWizard\Tests\App\Models\TestModel;
+use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\RelatedModel;
+use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 
 /**
  * @group elastic

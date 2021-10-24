@@ -41,7 +41,7 @@ abstract class TestCase extends Orchestra
         parent::getEnvironmentSetUp($app);
 
         $app['config']->set('scout.driver', 'elastic');
-        $app['config']->set('elastic.migrations.storage_directory', __DIR__ . '/App/data/elastic/migrations');
+        $app['config']->set('elastic.migrations.storage_directory', __DIR__ . '/Fixtures/data/elastic/migrations');
         $app['config']->set('elastic.scout_driver.refresh_documents', true);
     }
 
@@ -49,8 +49,8 @@ abstract class TestCase extends Orchestra
     {
         parent::setUp();
 
-        $this->loadMigrationsFrom(__DIR__ . '/App/data/migrations');
-        $this->withFactories(__DIR__ . '/App/data/factories');
+        $this->loadMigrationsFrom(__DIR__ . '/Fixtures/data/migrations');
+        $this->withFactories(__DIR__ . '/Fixtures/data/factories');
 
         $this->artisan('migrate')->run();
         $this->artisan('elastic:migrate')->run();

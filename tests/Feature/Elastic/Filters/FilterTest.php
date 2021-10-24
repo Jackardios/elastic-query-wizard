@@ -12,7 +12,7 @@ use Jackardios\QueryWizard\Exceptions\InvalidFilterQuery;
 use Jackardios\ElasticQueryWizard\Handlers\Filters\AbstractElasticFilter;
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
 use Jackardios\ElasticQueryWizard\Handlers\Filters\TermFilter;
-use Jackardios\ElasticQueryWizard\Tests\App\Models\TestModel;
+use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\QueryWizard\Handlers\Eloquent\Filters\ExactFilter;
 use Jackardios\QueryWizard\Handlers\Eloquent\Filters\ScopeFilter;
 
@@ -337,6 +337,12 @@ class FilterTest extends TestCase
 
         $this->assertCount(0, $models);
         $this->assertGreaterThan(0, TestModel::all()->count());
+    }
+
+    /** @test */
+    public function it_can_add_parameters_to_filters(): void
+    {
+        // TODO: add test
     }
 
     protected function createQueryFromFilterRequest(array $filters): ElasticQueryWizard

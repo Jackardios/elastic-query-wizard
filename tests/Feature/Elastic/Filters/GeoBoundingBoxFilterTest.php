@@ -5,7 +5,7 @@ namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Filters;
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
 use Jackardios\ElasticQueryWizard\Exceptions\InvalidGeoBoundingBoxValue;
 use Jackardios\ElasticQueryWizard\Handlers\Filters\GeoBoundingBoxFilter;
-use Jackardios\ElasticQueryWizard\Tests\App\Models\GeoModel;
+use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\GeoModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;

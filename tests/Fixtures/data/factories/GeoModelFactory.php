@@ -2,7 +2,7 @@
 
 use Faker\Generator as Faker;
 use Illuminate\Database\Eloquent\Factory;
-use Jackardios\ElasticQueryWizard\Tests\App\Models\GeoModel;
+use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\GeoModel;
 use MatanYadaev\EloquentSpatial\Objects\Point;
 
 /** @var Factory $factory */

@@ -11,7 +11,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Jackardios\QueryWizard\Exceptions\InvalidAppendQuery;
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
-use Jackardios\ElasticQueryWizard\Tests\App\Models\AppendModel;
+use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\AppendModel;
 
 /**
  * @group elastic

@@ -4,7 +4,7 @@ namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Filters;
 
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
 use Jackardios\ElasticQueryWizard\Handlers\Filters\MatchFilter;
-use Jackardios\ElasticQueryWizard\Tests\App\Models\TestModel;
+use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
