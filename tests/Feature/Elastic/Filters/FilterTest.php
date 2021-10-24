@@ -342,7 +342,24 @@ class FilterTest extends TestCase
     /** @test */
     public function it_can_add_parameters_to_filters(): void
     {
-        // TODO: add test
+        factory(TestModel::class)->create(['name' => 'St.Petersburg']);
+        factory(TestModel::class)->create(['name' => 'Noscow']);
+        $expectedModel = factory(TestModel::class)->create(['name' => 'Moscow']);
+
+        $filter = (new MatchFilter('name'))->withParameters([
+            'fuzziness' => 1,
+        ]);
+        $results = $this
+            ->createQueryFromFilterRequest([
+                'name' => 'Mascow'
+            ])
+            ->setAllowedFilters($filter)
+            ->build()
+            ->execute()
+            ->models();
+
+        $this->assertCount(1, $results);
+        $this->assertEquals([$expectedModel->id], $results->pluck('id')->all());
     }
 
     protected function createQueryFromFilterRequest(array $filters): ElasticQueryWizard
