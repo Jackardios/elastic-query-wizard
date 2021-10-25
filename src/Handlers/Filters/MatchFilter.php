@@ -3,9 +3,12 @@
 namespace Jackardios\ElasticQueryWizard\Handlers\Filters;
 
 use ElasticScoutDriverPlus\Support\Query;
+use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
 
-class MatchFilter extends AbstractParameterizedElasticFilter
+class MatchFilter extends AbstractElasticFilter
 {
+    use HasParameters;
+
     public function handle($queryHandler, $queryBuilder, $value): void
     {
         if (!isset($value) || $value === '') {

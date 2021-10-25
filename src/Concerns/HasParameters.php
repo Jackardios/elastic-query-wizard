@@ -7,7 +7,7 @@ use Illuminate\Support\Str;
 
 trait HasParameters
 {
-    protected array $parameters;
+    protected array $parameters = [];
 
     public function applyParametersOnQuery(AbstractParameterizedQueryBuilder $queryBuilder): AbstractParameterizedQueryBuilder
     {
@@ -17,5 +17,16 @@ trait HasParameters
         }
 
         return $queryBuilder;
+    }
+
+    /**
+     * @param array $parameters
+     * @return $this
+     */
+    public function withParameters(array $parameters)
+    {
+        $this->parameters = $parameters;
+
+        return $this;
     }
 }

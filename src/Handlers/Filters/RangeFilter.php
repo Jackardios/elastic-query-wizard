@@ -3,10 +3,13 @@
 namespace Jackardios\ElasticQueryWizard\Handlers\Filters;
 
 use ElasticScoutDriverPlus\Support\Query;
+use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
 use Jackardios\ElasticQueryWizard\Exceptions\InvalidRangeValue;
 
-class RangeFilter extends AbstractParameterizedElasticFilter
+class RangeFilter extends AbstractElasticFilter
 {
+    use HasParameters;
+
     public function handle($queryHandler, $queryBuilder, $value): void
     {
         if (empty($value)) {
