@@ -69,17 +69,16 @@ class ElasticQueryHandler extends AbstractQueryHandler
     protected function buildMainBoolQuery(): array
     {
         try {
-            $buildMainQuery = $this->mainBoolQuery->buildQuery();
-        } catch (QueryBuilderException $e) {
-            $buildMainQuery = $this->mainBoolQuery->must(Query::matchAll())->buildQuery();
-        }
-
-        try {
-            $builtFiltersQuery = $this->filtersBoolQuery->buildQuery();
-            $buildMainQuery['bool']['filter'][] = $builtFiltersQuery;
+            $this->mainBoolQuery->filter($this->filtersBoolQuery->buildQuery());
         } catch (QueryBuilderException $e) {}
 
-        return $buildMainQuery;
+        try {
+            $builtMainQuery = $this->mainBoolQuery->buildQuery();
+        } catch (QueryBuilderException $e) {
+            $builtMainQuery = $this->mainBoolQuery->must(Query::matchAll())->buildQuery();
+        }
+
+        return $builtMainQuery;
     }
 
     /**
