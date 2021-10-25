@@ -3,6 +3,7 @@
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Filters;
 
 use Illuminate\Support\Collection;
+use Jackardios\ElasticQueryWizard\Exceptions\InvalidRangeValue;
 use Jackardios\ElasticQueryWizard\Handlers\Filters\RangeFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\GeoModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
@@ -96,6 +97,39 @@ class RangeFilterTest extends TestCase
 
         $this->assertCount(2, $modelsResult);
         $this->assertEqualsCanonicalizing([4,5], $modelsResult->pluck('id')->all());
+    }
+
+    /** @test */
+    public function it_throws_exception_when_value_as_string_passed(): void
+    {
+        $this->expectException(InvalidRangeValue::class);
+
+        $this
+            ->createQueryFromFilterRequest([
+                'id' => 'some value',
+            ])
+            ->setAllowedFilters([
+                new RangeFilter('id')
+            ])
+            ->build();
+    }
+
+    /** @test */
+    public function it_throws_exception_when_value_with_wrong_key_passed(): void
+    {
+        $this->expectException(InvalidRangeValue::class);
+
+        $this
+            ->createQueryFromFilterRequest([
+                'id' => [
+                    'gtee' => 3,
+                    'lte' => '5'
+                ],
+            ])
+            ->setAllowedFilters([
+                new RangeFilter('id')
+            ])
+            ->build();
     }
 
     protected function createQueryFromFilterRequest(array $filters): ElasticQueryWizard
