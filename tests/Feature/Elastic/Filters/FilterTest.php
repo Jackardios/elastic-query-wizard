@@ -93,7 +93,7 @@ class FilterTest extends TestCase
             'filter' => ['category' => $expectedModel->category],
         ]);
 
-        $resultModel = ElasticQueryWizard::for(TestModel::class, $request)
+        $modelResult = ElasticQueryWizard::for(TestModel::class, $request)
             ->query(function(Builder $query) {
                 return $query->select('id', 'category');
             })
@@ -103,14 +103,14 @@ class FilterTest extends TestCase
             ->models()
             ->first();
 
-        $this->assertModelsAttributesEqual($expectedModel, $resultModel);
+        $this->assertModelsAttributesEqual($expectedModel, $modelResult);
     }
 
     /** @test */
     public function it_can_filter_results_based_on_the_existence_of_a_property_in_an_array(): void
     {
         $expectedModels = $this->models->random(2);
-        $results = $this
+        $modelsResult = $this
             ->createQueryFromFilterRequest([
                 'id' => "{$expectedModels[0]->id},{$expectedModels[1]->id}",
             ])
@@ -119,8 +119,8 @@ class FilterTest extends TestCase
             ->execute()
             ->models();
 
-        $this->assertCount(2, $results);
-        $this->assertEqualsCanonicalizing($expectedModels->pluck('id')->all(), $results->pluck('id')->all());
+        $this->assertCount(2, $modelsResult);
+        $this->assertEqualsCanonicalizing($expectedModels->pluck('id')->all(), $modelsResult->pluck('id')->all());
     }
 
     /** @test */
@@ -202,7 +202,7 @@ class FilterTest extends TestCase
     {
         $expectedModels = factory(TestModel::class, 2)->create(['name' => 'abcdef']);
 
-        $results = $this
+        $modelsResult = $this
             ->createQueryFromFilterRequest([
                 'name' => 'abcdef',
             ])
@@ -211,8 +211,8 @@ class FilterTest extends TestCase
             ->execute()
             ->models();
 
-        $this->assertCount(2, $results);
-        $this->assertEqualsCanonicalizing($expectedModels->pluck('id')->all(), $results->pluck('id')->all());
+        $this->assertCount(2, $modelsResult);
+        $this->assertEqualsCanonicalizing($expectedModels->pluck('id')->all(), $modelsResult->pluck('id')->all());
     }
 
     /** @test */
@@ -220,7 +220,7 @@ class FilterTest extends TestCase
     {
         $expectedModels = factory(TestModel::class, 2)->create(['name' => 'abcdef']);
 
-        $results = $this
+        $modelsResult = $this
             ->createQueryFromFilterRequest([
                 'name' => 'abcdef',
             ])
@@ -229,8 +229,8 @@ class FilterTest extends TestCase
             ->execute()
             ->models();
 
-        $this->assertCount(2, $results);
-        $this->assertEqualsCanonicalizing($expectedModels->pluck('id')->all(), $results->pluck('id')->all());
+        $this->assertCount(2, $modelsResult);
+        $this->assertEqualsCanonicalizing($expectedModels->pluck('id')->all(), $modelsResult->pluck('id')->all());
     }
 
     /** @test */
@@ -238,7 +238,7 @@ class FilterTest extends TestCase
     {
         $expectedModels = factory(TestModel::class, 2)->create(['name' => 'abcdef']);
 
-        $results = $this
+        $modelsResult = $this
             ->createQueryFromFilterRequest([
                 'name' => 'abcdef',
                 'id' => "1,{$expectedModels[0]->id}",
@@ -248,8 +248,8 @@ class FilterTest extends TestCase
             ->execute()
             ->models();
 
-        $this->assertCount(1, $results);
-        $this->assertEquals([$expectedModels[0]->id], $results->pluck('id')->all());
+        $this->assertCount(1, $modelsResult);
+        $this->assertEquals([$expectedModels[0]->id], $modelsResult->pluck('id')->all());
     }
 
     /** @test */
@@ -273,7 +273,7 @@ class FilterTest extends TestCase
             }
         };
 
-        $results = $this
+        $modelsResult = $this
             ->createQueryFromFilterRequest([
                 '*' => '*',
             ])
@@ -282,7 +282,7 @@ class FilterTest extends TestCase
             ->execute()
             ->models();
 
-        $this->assertNotEmpty($results);
+        $this->assertNotEmpty($modelsResult);
     }
 
     /** @test */
@@ -309,7 +309,7 @@ class FilterTest extends TestCase
 
         $expectedModel = factory(TestModel::class)->create(['category' => 'abcdef']);
 
-        $models = $this
+        $modelsResult = $this
             ->createQueryFromFilterRequest([
                 'tag' => 'abcdef',
             ])
@@ -318,8 +318,8 @@ class FilterTest extends TestCase
             ->execute()
             ->models();
 
-        $this->assertCount(1, $models);
-        $this->assertEquals($expectedModel->category, $models->first()->category);
+        $this->assertCount(1, $modelsResult);
+        $this->assertEquals($expectedModel->category, $modelsResult->first()->category);
     }
 
     /** @test */
@@ -328,14 +328,14 @@ class FilterTest extends TestCase
         TestModel::query()->update(['is_visible' => true]);
         $filter = new TermFilter('is_visible');
 
-        $models = $this
+        $modelsResult = $this
             ->createQueryFromFilterRequest(['is_visible' => 'false'])
             ->setAllowedFilters($filter)
             ->build()
             ->execute()
             ->models();
 
-        $this->assertCount(0, $models);
+        $this->assertCount(0, $modelsResult);
         $this->assertGreaterThan(0, TestModel::all()->count());
     }
 
@@ -349,7 +349,7 @@ class FilterTest extends TestCase
         $filter = (new MatchFilter('name'))->withParameters([
             'fuzziness' => 1,
         ]);
-        $results = $this
+        $modelsResult = $this
             ->createQueryFromFilterRequest([
                 'name' => 'Mascow'
             ])
@@ -358,8 +358,8 @@ class FilterTest extends TestCase
             ->execute()
             ->models();
 
-        $this->assertCount(1, $results);
-        $this->assertEquals([$expectedModel->id], $results->pluck('id')->all());
+        $this->assertCount(1, $modelsResult);
+        $this->assertEquals([$expectedModel->id], $modelsResult->pluck('id')->all());
     }
 
     protected function createQueryFromFilterRequest(array $filters): ElasticQueryWizard

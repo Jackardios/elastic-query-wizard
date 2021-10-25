@@ -31,7 +31,7 @@ class CallbackFilterTest extends TestCase
     public function it_should_filter_by_closure(): void
     {
         $expectedModel = factory(TestModel::class)->create(['name' => 'Some New Testing Name']);
-        $models = $this
+        $modelsResult = $this
             ->createQueryFromFilterRequest([
                 'callback' => $expectedModel->name
             ])
@@ -46,15 +46,15 @@ class CallbackFilterTest extends TestCase
             ->execute()
             ->models();
 
-        $this->assertCount(1, $models);
-        $this->assertEquals($expectedModel->name, $models->first()->name);
+        $this->assertCount(1, $modelsResult);
+        $this->assertEquals($expectedModel->name, $modelsResult->first()->name);
     }
 
     /** @test */
     public function it_should_filter_by_array_callback(): void
     {
         $expectedModel = factory(TestModel::class)->create(['name' => 'Some New Testing Name']);
-        $models = $this
+        $modelsResult = $this
             ->createQueryFromFilterRequest([
                 'callback' => $expectedModel->name,
             ])
@@ -63,8 +63,8 @@ class CallbackFilterTest extends TestCase
             ->execute()
             ->models();
 
-        $this->assertCount(1, $models);
-        $this->assertEquals($expectedModel->name, $models->first()->name);
+        $this->assertCount(1, $modelsResult);
+        $this->assertEquals($expectedModel->name, $modelsResult->first()->name);
     }
 
     public function filterCallback(ElasticQueryHandler $queryHandler, $queryBuilder, $value): void

@@ -1,6 +1,6 @@
 <?php
 
-namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic;
+namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Includes;
 
 use Illuminate\Database\Eloquent\Builder;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;

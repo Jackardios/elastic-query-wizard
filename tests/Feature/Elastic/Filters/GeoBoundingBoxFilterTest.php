@@ -43,7 +43,7 @@ class GeoBoundingBoxFilterTest extends TestCase
     /** @test */
     public function it_allows_empty_filter_value(): void
     {
-        $this
+        $modelsResult = $this
             ->createQueryFromFilterRequest([
                 'bbox' => ''
             ])
@@ -52,7 +52,7 @@ class GeoBoundingBoxFilterTest extends TestCase
             ->execute()
             ->models();
 
-        $this->assertCount(5, $this->models);
+        $this->assertCount(5, $modelsResult);
     }
 
     /** @test */

@@ -56,7 +56,7 @@ class GeoDistanceFilterTest extends TestCase
     /** @test */
     public function it_allows_empty_filter_value(): void
     {
-        $this
+        $modelsResult = $this
             ->createQueryFromFilterRequest([
                 'location_distance' => ''
             ])
@@ -65,7 +65,7 @@ class GeoDistanceFilterTest extends TestCase
             ->execute()
             ->models();
 
-        $this->assertCount(5, $this->models);
+        $this->assertCount(5, $modelsResult);
     }
 
     /** @test */

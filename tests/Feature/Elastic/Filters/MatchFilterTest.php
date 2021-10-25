@@ -47,7 +47,7 @@ class MatchFilterTest extends TestCase
     /** @test */
     public function it_allows_empty_filter_value(): void
     {
-        $this
+        $modelsResult = $this
             ->createQueryFromFilterRequest([
                 'name' => ''
             ])
@@ -56,7 +56,7 @@ class MatchFilterTest extends TestCase
             ->execute()
             ->models();
 
-        $this->assertCount(5, $this->models);
+        $this->assertCount(5, $modelsResult);
     }
 
     /** @test */
@@ -90,15 +90,15 @@ class MatchFilterTest extends TestCase
 
         $filter = (new MatchFilter('name'))->default('UniqueJohn');
 
-        $models = $this
+        $modelsResult = $this
             ->createQueryFromFilterRequest([])
             ->setAllowedFilters($filter)
             ->build()
             ->execute()
             ->models();
 
-        $this->assertEquals(1, $models->count());
-        $this->assertEquals($model1->id, $models->first()->id);
+        $this->assertCount(1, $modelsResult);
+        $this->assertEquals($model1->id, $modelsResult->first()->id);
     }
 
     /** @test */
@@ -109,7 +109,7 @@ class MatchFilterTest extends TestCase
 
         $filter = (new MatchFilter('name'))->default('Deer');
 
-        $models = $this
+        $modelsResult = $this
             ->createQueryFromFilterRequest([
                 'name' => 'UniqueDoe',
             ])
@@ -118,8 +118,8 @@ class MatchFilterTest extends TestCase
             ->execute()
             ->models();
 
-        $this->assertEquals(1, $models->count());
-        $this->assertEquals($model1->id, $models->first()->id);
+        $this->assertCount(1, $modelsResult);
+        $this->assertEquals($model1->id, $modelsResult->first()->id);
     }
 
     protected function createQueryFromFilterRequest(array $filters): ElasticQueryWizard

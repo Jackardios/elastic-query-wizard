@@ -64,7 +64,7 @@ class TermFilterTest extends TestCase
     /** @test */
     public function it_allows_empty_filter_value(): void
     {
-        $this
+        $modelsResult = $this
             ->createQueryFromFilterRequest([
                 'category' => ''
             ])
@@ -73,7 +73,7 @@ class TermFilterTest extends TestCase
             ->execute()
             ->models();
 
-        $this->assertCount(5, $this->models);
+        $this->assertCount(5, $modelsResult);
     }
 
     /** @test */
@@ -112,7 +112,7 @@ class TermFilterTest extends TestCase
             ->execute()
             ->models();
 
-        $this->assertEquals(1, $models->count());
+        $this->assertCount(1, $models);
         $this->assertEquals($models[0]->id, $model1->id);
     }
 
@@ -133,7 +133,7 @@ class TermFilterTest extends TestCase
             ->execute()
             ->models();
 
-        $this->assertEquals(1, $models->count());
+        $this->assertCount(1, $models);
         $this->assertEquals($models[0]->id, $model1->id);
     }
 

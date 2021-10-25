@@ -36,7 +36,7 @@ class RelationFilterTest extends TestCase
     public function it_can_filter_related_model_property(): void
     {
         $expectedModel = $this->models->random();
-        $models = $this
+        $modelsResult = $this
             ->createQueryFromFilterRequest([
                 'relatedModels.name' => $expectedModel->name,
             ])
@@ -45,14 +45,14 @@ class RelationFilterTest extends TestCase
             ->execute()
             ->models();
 
-        $this->assertCount(1, $models);
-        $this->assertEquals($expectedModel->id, $models->first()->id);
+        $this->assertCount(1, $modelsResult);
+        $this->assertEquals($expectedModel->id, $modelsResult->first()->id);
     }
 
     /** @test */
     public function it_can_filter_results_based_on_the_exact_existence_of_a_property_in_an_array(): void
     {
-        $models = $this
+        $modelsResult = $this
             ->createQueryFromFilterRequest([
                 'relatedModels.nestedRelatedModels.name' => 'test0,test1',
             ])
@@ -61,17 +61,17 @@ class RelationFilterTest extends TestCase
             ->execute()
             ->models();
 
-        $this->assertCount(2, $models);
+        $this->assertCount(2, $modelsResult);
         $this->assertEqualsCanonicalizing(
-            [$this->models->get(0)->id, $this->models->get(1)->id],
-            $models->pluck('id')->all()
+            [$this->models[0]->id, $this->models[1]->id],
+            $modelsResult->pluck('id')->all()
         );
     }
 
     /** @test */
     public function it_can_filter_models_and_return_an_empty_collection(): void
     {
-        $models = $this
+        $modelsResult = $this
             ->createQueryFromFilterRequest([
                 'relatedModels.name' => 'None existing first name',
             ])
@@ -80,13 +80,13 @@ class RelationFilterTest extends TestCase
             ->execute()
             ->models();
 
-        $this->assertCount(0, $models);
+        $this->assertCount(0, $modelsResult);
     }
 
     /** @test */
     public function it_can_filter_related_nested_model_property(): void
     {
-        $models = $this
+        $modelsResult = $this
             ->createQueryFromFilterRequest([
                 'relatedModels.nestedRelatedModels.name' => 'test1',
             ])
@@ -95,9 +95,9 @@ class RelationFilterTest extends TestCase
             ->execute()
             ->models();
 
-        $this->assertCount(1, $models);
+        $this->assertCount(1, $modelsResult);
         $this->assertTrue(
-            $models
+            $modelsResult
                 ->first()
                 ->relatedModels
                 ->contains(function(RelatedModel $relatedModel) {
@@ -112,7 +112,7 @@ class RelationFilterTest extends TestCase
     public function it_can_filter_related_model_and_related_nested_model_property(): void
     {
         $expectedModel = $this->models->first();
-        $models = $this
+        $modelsResult = $this
             ->createQueryFromFilterRequest([
                 'relatedModels.name' => $expectedModel->name,
                 'relatedModels.nestedRelatedModels.name' => 'test0',
@@ -125,8 +125,8 @@ class RelationFilterTest extends TestCase
             ->execute()
             ->models();
 
-        $this->assertCount(1, $models);
-        $this->assertEquals($expectedModel->name, $models->first()->name);
+        $this->assertCount(1, $modelsResult);
+        $this->assertEquals($expectedModel->name, $modelsResult->first()->name);
     }
 
     /** @test */
@@ -134,7 +134,7 @@ class RelationFilterTest extends TestCase
     {
         $testModels = TestModel::whereIn('id', [1, 2])->get();
 
-        $models = $this
+        $modelsResult = $this
             ->createQueryFromFilterRequest([
                 'relatedModels.id' => $testModels->map(function ($model) {
                     return $model->relatedModels->pluck('id');
@@ -145,8 +145,8 @@ class RelationFilterTest extends TestCase
             ->execute()
             ->models();
 
-        $this->assertCount(2, $models);
-        $this->assertEqualsCanonicalizing([1, 2], $models->pluck('id')->all());
+        $this->assertCount(2, $modelsResult);
+        $this->assertEqualsCanonicalizing([1, 2], $modelsResult->pluck('id')->all());
     }
 
     /** @test */
