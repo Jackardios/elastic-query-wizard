@@ -5,15 +5,13 @@ namespace Jackardios\ElasticQueryWizard\Handlers\Filters;
 class CallbackFilter extends AbstractElasticFilter
 {
     /**
-     * @var callable a PHP callback of the following signature:
-     * `function (\Jackardios\ElasticQueryWizard\Handlers\ElasticQueryHandler $queryHandler, \ElasticScoutDriverPlus\Builders\SearchRequestBuilder $builder, mixed $value)`
+     * @var callable(\Jackardios\ElasticQueryWizard\Handlers\ElasticQueryHandler, \ElasticScoutDriverPlus\Builders\SearchRequestBuilder, mixed): mixed
      */
     private $callback;
 
     /**
      * @param string $propertyName
-     * @param callable $callback a PHP callback of the following signature:
-     * `function (\Jackardios\ElasticQueryWizard\Handlers\ElasticQueryHandler $queryHandler, \ElasticScoutDriverPlus\Builders\SearchRequestBuilder $builder, mixed $value)`
+     * @param callable(\Jackardios\ElasticQueryWizard\Handlers\ElasticQueryHandler, \ElasticScoutDriverPlus\Builders\SearchRequestBuilder, mixed): mixed $callback
      * @param string|null $alias
      * @param mixed $default
      */
