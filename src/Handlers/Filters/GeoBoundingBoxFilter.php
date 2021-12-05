@@ -11,7 +11,7 @@ class GeoBoundingBoxFilter extends AbstractElasticFilter
         if (empty($value)) {
             return;
         }
-        
+
         if (! (is_array($value) && count($value) === 4)) {
             throw InvalidGeoBoundingBoxValue::make($this->getName());
         }
@@ -29,7 +29,7 @@ class GeoBoundingBoxFilter extends AbstractElasticFilter
             $top -= 0.00001;
         }
 
-        $queryHandler->getFiltersBoolQuery()->must([
+        $queryHandler->filter([
             'geo_bounding_box' => [
                 $propertyName => [
                     'top_left' => [

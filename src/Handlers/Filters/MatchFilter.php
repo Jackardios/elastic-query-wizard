@@ -24,6 +24,6 @@ class MatchFilter extends AbstractElasticFilter
         $query = Query::match()->field($propertyName)->query($value);
         $this->applyParametersOnQuery($query);
 
-        $queryHandler->getMainBoolQuery()->must($query);
+        $queryHandler->must($query);
     }
 }

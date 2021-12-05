@@ -3,11 +3,12 @@
 namespace Jackardios\ElasticQueryWizard\Handlers;
 
 use ElasticScoutDriverPlus\Builders\BoolQueryBuilder;
+use ElasticScoutDriverPlus\Builders\QueryBuilderInterface;
 use ElasticScoutDriverPlus\Builders\SearchRequestBuilder;
-use ElasticScoutDriverPlus\Exceptions\QueryBuilderException;
 use ElasticScoutDriverPlus\Support\Query;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Jackardios\QueryWizard\Abstracts\Handlers\AbstractQueryHandler;
 use Jackardios\QueryWizard\Exceptions\InvalidSubject;
 use Jackardios\QueryWizard\Handlers\Eloquent\Filters\AbstractEloquentFilter;
@@ -36,7 +37,10 @@ class ElasticQueryHandler extends AbstractQueryHandler
     protected array $modelQueryCallbacks = [];
 
     protected BoolQueryBuilder $mainBoolQuery;
-    protected BoolQueryBuilder $filtersBoolQuery;
+    protected Collection $mustQueries;
+    protected Collection $mustNotQueries;
+    protected Collection $shouldQueries;
+    protected Collection $filterQueries;
 
     /**
      * @param ElasticQueryWizard $wizard
@@ -50,27 +54,112 @@ class ElasticQueryHandler extends AbstractQueryHandler
         }
 
         $subject = $subject::searchQuery([]);
+
         $this->mainBoolQuery = Query::bool();
-        $this->filtersBoolQuery = Query::bool();
+        $this->mustQueries = collect([]);
+        $this->mustNotQueries = collect([]);
+        $this->shouldQueries = collect([]);
+        $this->filterQueries = collect([]);
 
         parent::__construct($wizard, $subject);
     }
 
-    public function getMainBoolQuery(): BoolQueryBuilder
+    /**
+     * @param Closure|QueryBuilderInterface|array $query
+     * @param string|int|null $key
+     *
+     * @return Closure|QueryBuilderInterface|array|null
+     */
+    public function must($query = null, $key = null)
     {
-        return $this->mainBoolQuery;
+        if ($key === null || ! $this->mustQueries->has($key)) {
+            $this->mustQueries->put($key, value($query));
+        }
+
+        return $this->mustQueries->get($key);
     }
 
-    public function getFiltersBoolQuery(): BoolQueryBuilder
+    /**
+     * @param Closure|QueryBuilderInterface|array $query
+     * @param string|int|null $key
+     *
+     * @return Closure|QueryBuilderInterface|array|null
+     */
+    public function mustNot($query = null, $key = null)
     {
-        return $this->filtersBoolQuery;
+        if ($key === null || ! $this->mustNotQueries->has($key)) {
+            $this->mustNotQueries->put($key, value($query));
+        }
+
+        return $this->mustNotQueries->get($key);
+    }
+
+    /**
+     * @param Closure|QueryBuilderInterface|array $query
+     * @param string|int|null $key
+     *
+     * @return Closure|QueryBuilderInterface|array|null
+     */
+    public function should($query = null, $key = null)
+    {
+        if ($key === null || ! $this->shouldQueries->has($key)) {
+            $this->shouldQueries->put($key, value($query));
+        }
+
+        return $this->shouldQueries->get($key);
+    }
+
+    /**
+     * @param Closure|QueryBuilderInterface|array $query
+     * @param string|int|null $key
+     *
+     * @return Closure|QueryBuilderInterface|array|null
+     */
+    public function filter($query = null, $key = null)
+    {
+        if ($key === null || ! $this->filterQueries->has($key)) {
+            $this->filterQueries->put($key, value($query));
+        }
+
+        return $this->filterQueries->get($key);
+    }
+
+    /**
+     * @return $this
+     */
+    public function withTrashed(): self
+    {
+        $this->mainBoolQuery->withTrashed();
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function onlyTrashed(): self
+    {
+        $this->mainBoolQuery->onlyTrashed();
+        return $this;
     }
 
     protected function buildMainBoolQuery(): array
     {
-        try {
-            $this->mainBoolQuery->filter($this->filtersBoolQuery->buildQuery());
-        } catch (QueryBuilderException $e) {}
+        $parameters = [
+            'must' => $this->mustQueries,
+            'mustNot' => $this->mustNotQueries,
+            'should' => $this->shouldQueries,
+            'filter' => $this->filterQueries
+        ];
+
+        foreach($parameters as $key => $queries) {
+            if (empty($queries)) {
+                continue;
+            }
+
+            foreach($queries as $query) {
+                $this->mainBoolQuery->{$key}($query);
+            }
+        }
 
         if (! $this->mainBoolQuery->hasParameter('must')) {
             $this->mainBoolQuery->must(Query::matchAll());

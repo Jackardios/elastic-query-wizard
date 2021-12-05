@@ -12,13 +12,13 @@ class TrashedFilter extends AbstractElasticFilter
     public function handle($queryHandler, $queryBuilder, $value): void
     {
         if ($value === 'with') {
-            $queryHandler->getMainBoolQuery()->withTrashed();
+            $queryHandler->withTrashed();
 
             return;
         }
 
         if ($value === 'only') {
-            $queryHandler->getMainBoolQuery()->onlyTrashed();
+            $queryHandler->onlyTrashed();
 
             return;
         }

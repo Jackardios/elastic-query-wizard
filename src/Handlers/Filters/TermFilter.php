@@ -23,6 +23,6 @@ class TermFilter extends AbstractElasticFilter
 
         $query = $this->applyParametersOnQuery($query);
 
-        $queryHandler->getFiltersBoolQuery()->must($query);
+        $queryHandler->filter($query);
     }
 }

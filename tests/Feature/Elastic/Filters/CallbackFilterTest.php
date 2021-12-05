@@ -37,7 +37,7 @@ class CallbackFilterTest extends TestCase
             ])
             ->setAllowedFilters(
                 new CallbackFilter('callback', function (ElasticQueryHandler $queryHandler, $queryBuilder, $value) {
-                    $queryHandler->getMainBoolQuery()->must(
+                    $queryHandler->must(
                         Query::match()->field('name')->query($value)
                     );
                 })
@@ -69,7 +69,7 @@ class CallbackFilterTest extends TestCase
 
     public function filterCallback(ElasticQueryHandler $queryHandler, $queryBuilder, $value): void
     {
-        $queryHandler->getMainBoolQuery()->must(
+        $queryHandler->must(
             Query::match()->field('name')->query($value)
         );
     }

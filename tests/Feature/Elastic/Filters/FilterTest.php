@@ -180,7 +180,7 @@ class FilterTest extends TestCase
         $filterClass = new class('custom_name') extends AbstractElasticFilter {
             public function handle($queryHandler, $queryBuilder, $value): void
             {
-                $queryHandler->getMainBoolQuery()->must(Query::match()->field('name')->query($value));
+                $queryHandler->must(Query::match()->field('name')->query($value));
             }
         };
 

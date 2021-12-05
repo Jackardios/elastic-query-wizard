@@ -33,6 +33,6 @@ class RangeFilter extends AbstractElasticFilter
 
         $this->applyParametersOnQuery($query);
 
-        $queryHandler->getMainBoolQuery()->must($query);
+        $queryHandler->must($query);
     }
 }
