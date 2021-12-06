@@ -11,9 +11,9 @@ use Jackardios\QueryWizard\Concerns\HandlesFields;
 use Jackardios\QueryWizard\Concerns\HandlesFilters;
 use Jackardios\QueryWizard\Concerns\HandlesIncludes;
 use Jackardios\QueryWizard\Concerns\HandlesSorts;
-use Jackardios\QueryWizard\Handlers\Eloquent\Includes\AbstractEloquentInclude;
-use Jackardios\QueryWizard\Handlers\Eloquent\Includes\CountInclude;
-use Jackardios\QueryWizard\Handlers\Eloquent\Includes\RelationshipInclude;
+use Jackardios\ElasticQueryWizard\Handlers\Includes\AbstractElasticInclude;
+use Jackardios\ElasticQueryWizard\Handlers\Includes\CountInclude;
+use Jackardios\ElasticQueryWizard\Handlers\Includes\RelationshipInclude;
 use Jackardios\ElasticQueryWizard\Handlers\Filters\TermFilter;
 use Jackardios\ElasticQueryWizard\Handlers\Sorts\FieldSort;
 use Jackardios\ElasticQueryWizard\Handlers\ElasticQueryHandler;
@@ -62,7 +62,7 @@ class ElasticQueryWizard extends AbstractQueryWizard
      * @param string $includeName
      * @return RelationshipInclude|CountInclude
      */
-    public function makeDefaultIncludeHandler(string $includeName): AbstractEloquentInclude
+    public function makeDefaultIncludeHandler(string $includeName): AbstractElasticInclude
     {
         $countSuffix = config('query-wizard.count_suffix');
         if (Str::endsWith($includeName, $countSuffix)) {

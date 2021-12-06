@@ -2,6 +2,7 @@
 
 namespace Jackardios\ElasticQueryWizard\Handlers;
 
+use ElasticAdapter\Search\SearchResponse;
 use ElasticScoutDriverPlus\Builders\BoolQueryBuilder;
 use ElasticScoutDriverPlus\Builders\QueryBuilderInterface;
 use ElasticScoutDriverPlus\Builders\SearchRequestBuilder;
@@ -9,10 +10,10 @@ use ElasticScoutDriverPlus\Support\Query;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Jackardios\ElasticQueryWizard\Handlers\Includes\AbstractElasticInclude;
 use Jackardios\QueryWizard\Abstracts\Handlers\AbstractQueryHandler;
 use Jackardios\QueryWizard\Exceptions\InvalidSubject;
 use Jackardios\QueryWizard\Handlers\Eloquent\Filters\AbstractEloquentFilter;
-use Jackardios\QueryWizard\Handlers\Eloquent\Includes\AbstractEloquentInclude;
 use Jackardios\QueryWizard\Values\Sort;
 use Jackardios\ElasticQueryWizard\Handlers\Filters\AbstractElasticFilter;
 use Jackardios\ElasticQueryWizard\Handlers\Sorts\AbstractElasticSort;
@@ -27,7 +28,7 @@ use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
 class ElasticQueryHandler extends AbstractQueryHandler
 {
     protected static array $baseFilterHandlerClasses = [AbstractEloquentFilter::class, AbstractElasticFilter::class];
-    protected static array $baseIncludeHandlerClasses = [AbstractEloquentInclude::class];
+    protected static array $baseIncludeHandlerClasses = [AbstractElasticInclude::class];
     protected static array $baseSortHandlerClasses = [AbstractElasticSort::class];
 
     /** @var callable[] */
@@ -237,10 +238,12 @@ class ElasticQueryHandler extends AbstractQueryHandler
         $requestedIncludes = $this->wizard->getIncludes();
         $handlers = $this->wizard->getAllowedIncludes();
 
-        $this->addEloquentQueryCallback(function(EloquentBuilder $eloquentBuilder) use ($requestedIncludes, $handlers) {
-            $requestedIncludes->each(function($include) use (&$eloquentBuilder, $handlers) {
+        $this->addEloquentQueryCallback(function(EloquentBuilder $eloquentBuilder, SearchResponse $response) use ($requestedIncludes, $handlers) {
+            $requestedIncludes->each(function($include) use (&$eloquentBuilder, &$response, $handlers) {
+                /** @var AbstractElasticInclude $handler */
                 $handler = $handlers->get($include);
                 if ($handler) {
+                    $handler->setSearchResponse($response);
                     $handler->handle($this, $eloquentBuilder);
                 }
             });
@@ -255,6 +258,7 @@ class ElasticQueryHandler extends AbstractQueryHandler
         $handlers = $this->wizard->getAllowedFilters();
 
         $requestedFilters->each(function($value, $name) use ($handlers) {
+            /** @var AbstractElasticFilter|AbstractEloquentFilter $handler */
             $handler = $handlers->get($name);
             if ($handler instanceof AbstractElasticFilter) {
                 $handler->handle($this, $this->subject, $value);
@@ -274,6 +278,7 @@ class ElasticQueryHandler extends AbstractQueryHandler
         $handlers = $this->wizard->getAllowedSorts();
 
         $requestedSorts->each(function(Sort $sort) use ($handlers) {
+            /** @var AbstractElasticSort $handler */
             $handler = $handlers->get($sort->getField());
             if ($handler) {
                 $handler->handle($this, $this->subject, $sort->getDirection());

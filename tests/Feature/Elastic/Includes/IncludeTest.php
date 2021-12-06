@@ -3,20 +3,19 @@
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Includes;
 
 use Illuminate\Database\Eloquent\Builder;
-use Jackardios\ElasticQueryWizard\Tests\TestCase;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Jackardios\QueryWizard\Abstracts\Handlers\AbstractQueryHandler;
-use Jackardios\QueryWizard\Handlers\Eloquent\Includes\AbstractEloquentInclude;
-use Jackardios\QueryWizard\Handlers\Eloquent\Includes\CountInclude;
-use Jackardios\QueryWizard\Handlers\Eloquent\Includes\RelationshipInclude;
 use ReflectionClass;
 use Jackardios\QueryWizard\Exceptions\InvalidIncludeQuery;
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
+use Jackardios\ElasticQueryWizard\Handlers\Includes\AbstractElasticInclude;
+use Jackardios\ElasticQueryWizard\Handlers\Includes\CountInclude;
+use Jackardios\ElasticQueryWizard\Handlers\Includes\RelationshipInclude;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\MorphModel;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
+use Jackardios\ElasticQueryWizard\Tests\TestCase;
 
 /**
  * @group elastic
@@ -314,7 +313,7 @@ class IncludeTest extends TestCase
         $property = (new ReflectionClass($query))->getProperty('allowedIncludes');
         $property->setAccessible(true);
 
-        $includes = $property->getValue($query)->map(function (AbstractEloquentInclude $allowedInclude) {
+        $includes = $property->getValue($query)->map(function (AbstractElasticInclude $allowedInclude) {
             return $allowedInclude->getName();
         });
 
@@ -404,8 +403,8 @@ class IncludeTest extends TestCase
     /** @test */
     public function it_can_include_custom_include_class(): void
     {
-        $includeClass = new class('relatedModels') extends AbstractEloquentInclude {
-            public function handle(AbstractQueryHandler $queryHandler, $queryBuilder): void
+        $includeClass = new class('relatedModels') extends AbstractElasticInclude {
+            public function handle($queryHandler, $queryBuilder): void
             {
                 $queryBuilder->withCount($this->getInclude());
             }
@@ -425,8 +424,8 @@ class IncludeTest extends TestCase
     /** @test */
     public function it_can_include_custom_include_class_by_alias(): void
     {
-        $includeClass = new class('relatedModels', 'relatedModelsCount') extends AbstractEloquentInclude {
-            public function handle(AbstractQueryHandler $queryHandler, $queryBuilder): void
+        $includeClass = new class('relatedModels', 'relatedModelsCount') extends AbstractElasticInclude {
+            public function handle($queryHandler, $queryBuilder): void
             {
                 $queryBuilder->withCount($this->getInclude());
             }
