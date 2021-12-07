@@ -74,7 +74,7 @@ class ElasticQueryHandler extends AbstractQueryHandler
      * @param Closure|QueryBuilderInterface|array $query
      * @param string|int|null $key
      *
-     * @return Closure|QueryBuilderInterface|array|null
+     * @return QueryBuilderInterface|array|null
      */
     public function must($query = null, $key = null)
     {
@@ -89,7 +89,7 @@ class ElasticQueryHandler extends AbstractQueryHandler
      * @param Closure|QueryBuilderInterface|array $query
      * @param string|int|null $key
      *
-     * @return Closure|QueryBuilderInterface|array|null
+     * @return QueryBuilderInterface|array|null
      */
     public function mustNot($query = null, $key = null)
     {
@@ -104,7 +104,7 @@ class ElasticQueryHandler extends AbstractQueryHandler
      * @param Closure|QueryBuilderInterface|array $query
      * @param string|int|null $key
      *
-     * @return Closure|QueryBuilderInterface|array|null
+     * @return QueryBuilderInterface|array|null
      */
     public function should($query = null, $key = null)
     {
@@ -119,7 +119,7 @@ class ElasticQueryHandler extends AbstractQueryHandler
      * @param Closure|QueryBuilderInterface|array $query
      * @param string|int|null $key
      *
-     * @return Closure|QueryBuilderInterface|array|null
+     * @return QueryBuilderInterface|array|null
      */
     public function filter($query = null, $key = null)
     {
