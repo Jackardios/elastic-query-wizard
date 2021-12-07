@@ -19,6 +19,7 @@ use Jackardios\QueryWizard\Values\Sort;
 use Jackardios\ElasticQueryWizard\Handlers\Filters\AbstractElasticFilter;
 use Jackardios\ElasticQueryWizard\Handlers\Sorts\AbstractElasticSort;
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
+use Closure;
 
 /**
  * @property ElasticQueryWizard $wizard
