@@ -10,6 +10,7 @@ use ElasticScoutDriverPlus\Support\Query;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Traits\ForwardsCalls;
 use Jackardios\ElasticQueryWizard\Handlers\Includes\AbstractElasticInclude;
 use Jackardios\QueryWizard\Abstracts\Handlers\AbstractQueryHandler;
 use Jackardios\QueryWizard\Exceptions\InvalidSubject;
@@ -24,9 +25,12 @@ use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
  * @property SearchRequestBuilder $subject
  * @method ElasticQueryWizard getWizard()
  * @method SearchRequestBuilder getSubject()
+ * @mixin BoolQueryBuilder
  */
 class ElasticQueryHandler extends AbstractQueryHandler
 {
+    use ForwardsCalls;
+
     protected static array $baseFilterHandlerClasses = [AbstractEloquentFilter::class, AbstractElasticFilter::class];
     protected static array $baseIncludeHandlerClasses = [AbstractElasticInclude::class];
     protected static array $baseSortHandlerClasses = [AbstractElasticSort::class];
@@ -299,5 +303,10 @@ class ElasticQueryHandler extends AbstractQueryHandler
         }
 
         return $this;
+    }
+
+    public function __call($name, $arguments)
+    {
+        return $this->forwardCallTo($this->mainBoolQuery, $name, $arguments);
     }
 }
