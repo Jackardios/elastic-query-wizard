@@ -12,9 +12,14 @@ class RelationshipInclude extends AbstractElasticInclude
     {
         $relatedTables = collect(explode('.', $this->getInclude()));
 
+        $eagerLoads = $queryBuilder->getEagerLoads();
         $withs = $relatedTables
-            ->mapWithKeys(function ($table, $key) use ($queryHandler, $relatedTables) {
+            ->mapWithKeys(function ($table, $key) use ($queryHandler, $relatedTables, $eagerLoads) {
                 $fullRelationName = $relatedTables->slice(0, $key + 1)->implode('.');
+
+                if (array_key_exists($fullRelationName, $eagerLoads)) {
+                    return null;
+                }
 
                 $key = Str::plural(Str::snake($fullRelationName));
                 $fields = $queryHandler->getWizard()->getFieldsByKey($key);
@@ -27,6 +32,7 @@ class RelationshipInclude extends AbstractElasticInclude
                     $query->select($fields);
                 }];
             })
+            ->filter()
             ->toArray();
 
         $queryBuilder->with($withs);
