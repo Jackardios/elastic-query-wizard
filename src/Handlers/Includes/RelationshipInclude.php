@@ -18,7 +18,7 @@ class RelationshipInclude extends AbstractElasticInclude
                 $fullRelationName = $relatedTables->slice(0, $key + 1)->implode('.');
 
                 if (array_key_exists($fullRelationName, $eagerLoads)) {
-                    return null;
+                    return [];
                 }
 
                 $key = Str::plural(Str::snake($fullRelationName));
