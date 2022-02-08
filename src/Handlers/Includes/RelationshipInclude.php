@@ -25,7 +25,7 @@ class RelationshipInclude extends AbstractElasticInclude
                 $fields = $queryHandler->getWizard()->getFieldsByKey($key);
 
                 if (empty($fields)) {
-                    return [$fullRelationName];
+                    return [$fullRelationName => static function() {}];
                 }
 
                 return [$fullRelationName => function ($query) use ($fields) {
@@ -35,7 +35,7 @@ class RelationshipInclude extends AbstractElasticInclude
             ->filter()
             ->toArray();
 
-        $queryBuilder->with($withs);
+        $queryBuilder->setEagerLoads(array_merge($eagerLoads, $withs));
     }
 
     protected function getIndividualRelationshipPathsFromInclude(string $include): Collection
