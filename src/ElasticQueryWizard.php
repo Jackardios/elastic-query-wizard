@@ -122,6 +122,11 @@ class ElasticQueryWizard extends AbstractQueryWizard
         return $this->subject;
     }
 
+    public function getMailBoolQuery(): BoolQueryBuilder
+    {
+        return $this->mainBoolQuery;
+    }
+
     /**
      * @param Closure|QueryBuilderInterface|array $query
      * @param string|int|null $key
