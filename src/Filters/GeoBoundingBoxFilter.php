@@ -1,12 +1,13 @@
 <?php
 
-namespace Jackardios\ElasticQueryWizard\Handlers\Filters;
+namespace Jackardios\ElasticQueryWizard\Filters;
 
+use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\Exceptions\InvalidGeoBoundingBoxValue;
 
-class GeoBoundingBoxFilter extends AbstractElasticFilter
+class GeoBoundingBoxFilter extends ElasticFilter
 {
-    public function handle($queryHandler, $queryBuilder, $value): void
+    public function handle($queryWizard, $queryBuilder, $value): void
     {
         if (empty($value)) {
             return;
@@ -29,7 +30,7 @@ class GeoBoundingBoxFilter extends AbstractElasticFilter
             $top -= 0.00001;
         }
 
-        $queryHandler->filter([
+        $queryWizard->filter([
             'geo_bounding_box' => [
                 $propertyName => [
                     'top_left' => [

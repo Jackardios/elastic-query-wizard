@@ -1,8 +1,10 @@
 <?php
 
-namespace Jackardios\ElasticQueryWizard\Handlers\Includes;
+namespace Jackardios\ElasticQueryWizard\Includes;
 
-class CountInclude extends AbstractElasticInclude
+use Jackardios\ElasticQueryWizard\ElasticInclude;
+
+class CountInclude extends ElasticInclude
 {
     public function __construct(string $include, ?string $alias = null)
     {
@@ -13,7 +15,7 @@ class CountInclude extends AbstractElasticInclude
     }
 
     /** {@inheritdoc} */
-    public function handle($queryHandler, $queryBuilder): void
+    public function handle($queryWizard, $queryBuilder): void
     {
         $queryBuilder->withCount($this->getInclude());
     }

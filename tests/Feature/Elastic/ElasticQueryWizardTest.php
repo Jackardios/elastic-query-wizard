@@ -27,16 +27,6 @@ class ElasticQueryWizardTest extends TestCase
     }
 
     /** @test */
-    public function it_can_not_be_given_an_object_that_is_neither_relation_nor_eloquent_builder(): void
-    {
-        $this->expectException(InvalidSubject::class);
-
-        $this->expectExceptionMessage('$subject must be a model that uses `ElasticScoutDriverPlus\Searchable` trait');
-
-        ElasticQueryWizard::for($this);
-    }
-
-    /** @test */
     public function it_can_query_soft_deletes(): void
     {
         Config::set('scout.soft_delete', true);

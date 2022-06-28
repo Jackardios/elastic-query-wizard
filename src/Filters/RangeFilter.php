@@ -1,16 +1,17 @@
 <?php
 
-namespace Jackardios\ElasticQueryWizard\Handlers\Filters;
+namespace Jackardios\ElasticQueryWizard\Filters;
 
 use ElasticScoutDriverPlus\Support\Query;
+use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
 use Jackardios\ElasticQueryWizard\Exceptions\InvalidRangeValue;
 
-class RangeFilter extends AbstractElasticFilter
+class RangeFilter extends ElasticFilter
 {
     use HasParameters;
 
-    public function handle($queryHandler, $queryBuilder, $value): void
+    public function handle($queryWizard, $queryBuilder, $value): void
     {
         if (empty($value)) {
             return;
@@ -33,6 +34,6 @@ class RangeFilter extends AbstractElasticFilter
 
         $this->applyParametersOnQuery($query);
 
-        $queryHandler->must($query);
+        $queryWizard->must($query);
     }
 }

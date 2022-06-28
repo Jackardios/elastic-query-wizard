@@ -5,9 +5,7 @@ namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Http\Request;
 use Jackardios\QueryWizard\Exceptions\InvalidFieldQuery;
-use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\RelatedModel;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 
@@ -18,10 +16,8 @@ use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
  */
 class FieldsTest extends TestCase
 {
-    /** @var TestModel */
-    protected $model;
+    protected TestModel $model;
 
-    /** @var string */
     protected string $modelTableName;
 
     public function setUp(): void
@@ -36,7 +32,7 @@ class FieldsTest extends TestCase
     public function it_fetches_all_columns_if_no_field_was_requested(): void
     {
         $model = $this
-            ->createQueryFromFieldRequest()
+            ->createElasticWizardWithFields([])
             ->build()
             ->size(1)
             ->execute()
@@ -52,7 +48,7 @@ class FieldsTest extends TestCase
     public function it_fetches_all_columns_if_no_field_was_requested_but_allowed_fields_were_specified(): void
     {
         $model = $this
-            ->createQueryFromFieldRequest()
+            ->createElasticWizardWithFields([])
             ->setAllowedFields('id', 'name')
             ->build()
             ->size(1)
@@ -69,7 +65,7 @@ class FieldsTest extends TestCase
     public function it_replaces_selected_columns_on_the_query(): void
     {
         $model = $this
-            ->createQueryFromFieldRequest(['test_models' => 'name,id'])
+            ->createElasticWizardWithFields(['test_models' => 'name,id'])
             ->query(function(Builder $query) {
                 $query->select(['id', 'is_visible']);
             })
@@ -91,7 +87,7 @@ class FieldsTest extends TestCase
     public function it_can_fetch_specific_columns(): void
     {
         $model = $this
-            ->createQueryFromFieldRequest(['test_models' => 'name,id'])
+            ->createElasticWizardWithFields(['test_models' => 'name,id'])
             ->setAllowedFields(['name', 'id'])
             ->build()
             ->size(1)
@@ -110,7 +106,7 @@ class FieldsTest extends TestCase
     public function it_wont_fetch_a_specific_column_if_its_not_allowed(): void
     {
         $model = $this
-            ->createQueryFromFieldRequest(['test_models' => 'random-column'])
+            ->createElasticWizardWithFields(['test_models' => 'random-column'])
             ->build()
             ->size(1)
             ->execute()
@@ -128,7 +124,7 @@ class FieldsTest extends TestCase
         $this->expectException(InvalidFieldQuery::class);
 
         $this
-            ->createQueryFromFieldRequest(['test_models' => 'random-column'])
+            ->createElasticWizardWithFields(['test_models' => 'random-column'])
             ->setAllowedFields('name')
             ->build();
     }
@@ -139,7 +135,7 @@ class FieldsTest extends TestCase
         $this->expectException(InvalidFieldQuery::class);
 
         $this
-            ->createQueryFromFieldRequest(['related_models' => 'random_column'])
+            ->createElasticWizardWithFields(['related_models' => 'random_column'])
             ->setAllowedFields('related_models.name')
             ->build();
     }
@@ -152,16 +148,14 @@ class FieldsTest extends TestCase
             'name' => 'related',
         ]);
 
-        $request = new Request([
-            'fields' => [
-                'test_models' => 'id',
-                'related_models' => 'name',
-            ],
-            'include' => ['relatedModels'],
-        ]);
-
         $elasticWizard = $this
-            ->createQueryFromRequest($request)
+            ->createElasticWizardFromQuery([
+                'fields' => [
+                    'test_models' => 'id',
+                    'related_models' => 'name',
+                ],
+                'include' => ['relatedModels'],
+            ])
             ->setAllowedFields('related_models.name', 'id')
             ->setAllowedIncludes('relatedModels')
             ->build();
@@ -187,16 +181,14 @@ class FieldsTest extends TestCase
             'name' => 'related',
         ]);
 
-        $request = new Request([
-            'fields' => [
-                'test_models' => 'id,name',
-                'related_models.test_models' => 'id',
-            ],
-            'include' => ['relatedModels.testModel'],
-        ]);
-
         $model = $this
-            ->createQueryFromRequest($request)
+            ->createElasticWizardFromQuery([
+                'fields' => [
+                    'test_models' => 'id,name',
+                    'related_models.test_models' => 'id',
+                ],
+                'include' => ['relatedModels.testModel'],
+            ])
             ->setAllowedFields('related_models.test_models.id', 'id', 'name')
             ->setAllowedIncludes('relatedModels.testModel')
             ->build()
@@ -213,13 +205,11 @@ class FieldsTest extends TestCase
     /** @test */
     public function it_can_allow_specific_fields_on_an_included_model(): void
     {
-        $request = new Request([
-            'fields' => ['related_models' => 'id,name'],
-            'include' => ['relatedModels'],
-        ]);
-
         $elasticWizard = $this
-            ->createQueryFromRequest($request)
+            ->createElasticWizardFromQuery([
+                'fields' => ['related_models' => 'id,name'],
+                'include' => ['relatedModels'],
+            ])
             ->setAllowedFields(['related_models.id', 'related_models.name'])
             ->setAllowedIncludes('relatedModels')
             ->build();
@@ -240,32 +230,14 @@ class FieldsTest extends TestCase
     /** @test */
     public function it_wont_use_sketchy_field_requests(): void
     {
-        $request = new Request([
-            'fields' => ['test_models' => 'id->"\')from test_models--injection'],
-        ]);
-
         DB::enableQueryLog();
 
-        $this->createQueryFromRequest($request)
+        $this->createElasticWizardWithFields(['test_models' => 'id->"\')from test_models--injection'])
             ->build()
             ->size(1)
             ->execute()
             ->models();
 
         $this->assertQueryLogDoesntContain('--injection');
-    }
-
-    protected function createQueryFromFieldRequest(array $fields = []): ElasticQueryWizard
-    {
-        $request = new Request([
-            'fields' => $fields,
-        ]);
-
-        return ElasticQueryWizard::for(TestModel::class, $request);
-    }
-
-    protected function createQueryFromRequest(Request $request): ElasticQueryWizard
-    {
-        return ElasticQueryWizard::for(TestModel::class, $request);
     }
 }

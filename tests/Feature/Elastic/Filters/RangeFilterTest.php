@@ -4,12 +4,9 @@ namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Filters;
 
 use Illuminate\Support\Collection;
 use Jackardios\ElasticQueryWizard\Exceptions\InvalidRangeValue;
-use Jackardios\ElasticQueryWizard\Handlers\Filters\RangeFilter;
-use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\GeoModel;
-use Jackardios\ElasticQueryWizard\Tests\TestCase;
-use Illuminate\Http\Request;
-use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
+use Jackardios\ElasticQueryWizard\Filters\RangeFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
+use Jackardios\ElasticQueryWizard\Tests\TestCase;
 
 /**
  * @group elastic
@@ -18,8 +15,7 @@ use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
  */
 class RangeFilterTest extends TestCase
 {
-    /** @var Collection */
-    protected $models;
+    protected Collection $models;
 
     public function setUp(): void
     {
@@ -32,7 +28,7 @@ class RangeFilterTest extends TestCase
     public function it_can_filter_by_lt_and_rt(): void
     {
         $modelsResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'id' => [
                     'gt' => '2',
                     'lte' => '4'
@@ -51,7 +47,7 @@ class RangeFilterTest extends TestCase
     public function it_allows_empty_filter_value(): void
     {
         $modelsResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'id' => ''
             ])
             ->setAllowedFilters(new RangeFilter('id'))
@@ -68,7 +64,7 @@ class RangeFilterTest extends TestCase
         $filter = (new RangeFilter('id'))->default(['gte' => '2', 'lt' => 4]);
 
         $modelsResult = $this
-            ->createQueryFromFilterRequest([])
+            ->createElasticWizardWithFilters([])
             ->setAllowedFilters($filter)
             ->build()
             ->execute()
@@ -84,7 +80,7 @@ class RangeFilterTest extends TestCase
         $filter = (new RangeFilter('id'))->default(['gte' => '2', 'lt' => 4]);
 
         $modelsResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'id' => [
                     'gt' => 3,
                     'lte' => '5'
@@ -105,7 +101,7 @@ class RangeFilterTest extends TestCase
         $this->expectException(InvalidRangeValue::class);
 
         $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'id' => 'some value',
             ])
             ->setAllowedFilters([
@@ -120,7 +116,7 @@ class RangeFilterTest extends TestCase
         $this->expectException(InvalidRangeValue::class);
 
         $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'id' => [
                     'gtee' => 3,
                     'lte' => '5'
@@ -130,14 +126,5 @@ class RangeFilterTest extends TestCase
                 new RangeFilter('id')
             ])
             ->build();
-    }
-
-    protected function createQueryFromFilterRequest(array $filters): ElasticQueryWizard
-    {
-        $request = new Request([
-            'filter' => $filters,
-        ]);
-
-        return ElasticQueryWizard::for(TestModel::class, $request);
     }
 }

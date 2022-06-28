@@ -6,11 +6,9 @@ use Jackardios\ElasticQueryWizard\Tests\TestCase;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Jackardios\QueryWizard\Exceptions\InvalidAppendQuery;
-use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\AppendModel;
 
 /**
@@ -30,7 +28,7 @@ class AppendTest extends TestCase
     /** @test */
     public function it_does_not_require_appends(): void
     {
-        $result = ElasticQueryWizard::for(AppendModel::class, new Request())
+        $result = $this->createElasticWizardFromQuery([], AppendModel::class)
             ->setAllowedAppends('fullname')
             ->build()
             ->execute();
@@ -42,7 +40,7 @@ class AppendTest extends TestCase
     public function it_can_append_attributes(): void
     {
         $model = $this
-            ->createQueryFromAppendRequest('fullname')
+            ->createElasticWizardWithAppends('fullname')
             ->setAllowedAppends('fullname')
             ->build()
             ->size(1)
@@ -59,7 +57,7 @@ class AppendTest extends TestCase
         $this->expectException(InvalidAppendQuery::class);
 
         $this
-            ->createQueryFromAppendRequest('FullName')
+            ->createElasticWizardWithAppends('FullName')
             ->setAllowedAppends('fullname')
             ->build()
             ->size(1)
@@ -72,7 +70,7 @@ class AppendTest extends TestCase
     public function it_can_append_collections(): void
     {
         $models = $this
-            ->createQueryFromAppendRequest('FullName')
+            ->createElasticWizardWithAppends('FullName')
             ->setAllowedAppends('FullName')
             ->build()
             ->execute()
@@ -85,7 +83,7 @@ class AppendTest extends TestCase
     public function it_can_append_paginates(): void
     {
         $models = $this
-            ->createQueryFromAppendRequest('FullName')
+            ->createElasticWizardWithAppends('FullName')
             ->setAllowedAppends('FullName')
             ->build()
             ->paginate()
@@ -100,7 +98,7 @@ class AppendTest extends TestCase
         $this->expectException(InvalidAppendQuery::class);
 
         $this
-            ->createQueryFromAppendRequest('random-attribute-to-append')
+            ->createElasticWizardWithAppends('random-attribute-to-append')
             ->setAllowedAppends('attribute-to-append')
             ->build();
     }
@@ -109,7 +107,7 @@ class AppendTest extends TestCase
     public function it_can_allow_multiple_appends(): void
     {
         $model = $this
-            ->createQueryFromAppendRequest('fullname')
+            ->createElasticWizardWithAppends('fullname')
             ->setAllowedAppends('fullname', 'randomAttribute')
             ->build()
             ->size(1)
@@ -124,7 +122,7 @@ class AppendTest extends TestCase
     public function it_can_allow_multiple_appends_as_an_array(): void
     {
         $model = $this
-            ->createQueryFromAppendRequest('fullname')
+            ->createElasticWizardWithAppends('fullname')
             ->setAllowedAppends(['fullname', 'randomAttribute'])
             ->build()
             ->size(1)
@@ -139,7 +137,7 @@ class AppendTest extends TestCase
     public function it_can_append_multiple_attributes(): void
     {
         $model = $this
-            ->createQueryFromAppendRequest('fullname,reversename')
+            ->createElasticWizardWithAppends('fullname,reversename')
             ->setAllowedAppends(['fullname', 'reversename'])
             ->build()
             ->size(1)
@@ -158,15 +156,6 @@ class AppendTest extends TestCase
 
         $this->assertEquals(['not allowed append'], $exception->unknownAppends->all());
         $this->assertEquals(['allowed append'], $exception->allowedAppends->all());
-    }
-
-    protected function createQueryFromAppendRequest(string $appends): ElasticQueryWizard
-    {
-        $request = new Request([
-            'append' => $appends,
-        ]);
-
-        return ElasticQueryWizard::for(AppendModel::class, $request);
     }
 
     protected function assertAttributeLoaded(Model $model, string $attribute): void

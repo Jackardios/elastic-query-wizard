@@ -2,13 +2,12 @@
 
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Filters;
 
+use Illuminate\Support\Collection;
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
 use Jackardios\ElasticQueryWizard\Exceptions\InvalidGeoBoundingBoxValue;
-use Jackardios\ElasticQueryWizard\Handlers\Filters\GeoBoundingBoxFilter;
+use Jackardios\ElasticQueryWizard\Filters\GeoBoundingBoxFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\GeoModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
-use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use MatanYadaev\EloquentSpatial\Objects\Point;
 
 /**
@@ -18,8 +17,7 @@ use MatanYadaev\EloquentSpatial\Objects\Point;
  */
 class GeoBoundingBoxFilterTest extends TestCase
 {
-    /** @var Collection */
-    protected $models;
+    protected Collection $models;
 
     public function setUp(): void
     {
@@ -136,10 +134,6 @@ class GeoBoundingBoxFilterTest extends TestCase
 
     protected function createQueryFromFilterRequest(array $filters): ElasticQueryWizard
     {
-        $request = new Request([
-            'filter' => $filters,
-        ]);
-
-        return ElasticQueryWizard::for(GeoModel::class, $request);
+        return $this->createElasticWizardWithFilters($filters, GeoModel::class);
     }
 }

@@ -2,13 +2,12 @@
 
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Filters;
 
+use Illuminate\Support\Collection;
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
 use Jackardios\ElasticQueryWizard\Exceptions\InvalidGeoDistanceValue;
-use Jackardios\ElasticQueryWizard\Handlers\Filters\GeoDistanceFilter;
+use Jackardios\ElasticQueryWizard\Filters\GeoDistanceFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\GeoModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
-use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use MatanYadaev\EloquentSpatial\Objects\Point;
 
 /**
@@ -18,8 +17,7 @@ use MatanYadaev\EloquentSpatial\Objects\Point;
  */
 class GeoDistanceFilterTest extends TestCase
 {
-    /** @var Collection */
-    protected $models;
+    protected Collection $models;
 
     public function setUp(): void
     {
@@ -162,10 +160,6 @@ class GeoDistanceFilterTest extends TestCase
 
     protected function createQueryFromFilterRequest(array $filters): ElasticQueryWizard
     {
-        $request = new Request([
-            'filter' => $filters,
-        ]);
-
-        return ElasticQueryWizard::for(GeoModel::class, $request);
+        return $this->createElasticWizardWithFilters($filters, GeoModel::class);
     }
 }

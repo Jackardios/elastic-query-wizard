@@ -1,20 +1,21 @@
 <?php
 
-namespace Jackardios\ElasticQueryWizard\Handlers\Includes;
+namespace Jackardios\ElasticQueryWizard\Includes;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Jackardios\ElasticQueryWizard\ElasticInclude;
 
-class RelationshipInclude extends AbstractElasticInclude
+class RelationshipInclude extends ElasticInclude
 {
     /** {@inheritdoc} */
-    public function handle($queryHandler, $queryBuilder): void
+    public function handle($queryWizard, $queryBuilder): void
     {
         $relatedTables = collect(explode('.', $this->getInclude()));
 
         $eagerLoads = $queryBuilder->getEagerLoads();
         $withs = $relatedTables
-            ->mapWithKeys(function ($table, $key) use ($queryHandler, $relatedTables, $eagerLoads) {
+            ->mapWithKeys(function ($table, $key) use ($queryWizard, $relatedTables, $eagerLoads) {
                 $fullRelationName = $relatedTables->slice(0, $key + 1)->implode('.');
 
                 if (array_key_exists($fullRelationName, $eagerLoads)) {
@@ -22,7 +23,7 @@ class RelationshipInclude extends AbstractElasticInclude
                 }
 
                 $key = Str::plural(Str::snake($fullRelationName));
-                $fields = $queryHandler->getWizard()->getFieldsByKey($key);
+                $fields = $queryWizard->getFieldsByKey($key);
 
                 if (empty($fields)) {
                     return [$fullRelationName => static function() {}];
@@ -50,7 +51,7 @@ class RelationshipInclude extends AbstractElasticInclude
             }, collect());
     }
 
-    public function createOther(): array
+    public function createExtra(): array
     {
         return $this->getIndividualRelationshipPathsFromInclude($this->getInclude())
             ->map(function ($include) {

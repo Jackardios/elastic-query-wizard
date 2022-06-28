@@ -9,12 +9,14 @@ use ElasticScoutDriverPlus\ServiceProvider as ElasticScoutDriverPlusServiceProvi
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Jackardios\ElasticQueryWizard\Tests\Concerns\AssertsModels;
 use Jackardios\ElasticQueryWizard\Tests\Concerns\AssertsQueryLog;
+use Jackardios\ElasticQueryWizard\Tests\Concerns\QueryWizardTestingHelpers;
 use Jackardios\QueryWizard\QueryWizardServiceProvider;
 use Laravel\Scout\ScoutServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 
 abstract class TestCase extends Orchestra
 {
+    use QueryWizardTestingHelpers;
     use DatabaseMigrations;
     use AssertsQueryLog;
     use AssertsModels;

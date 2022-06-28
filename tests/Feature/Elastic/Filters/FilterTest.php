@@ -3,18 +3,16 @@
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Filters;
 
 use ElasticScoutDriverPlus\Support\Query;
-use Jackardios\ElasticQueryWizard\Handlers\Filters\MatchFilter;
-use Jackardios\ElasticQueryWizard\Tests\TestCase;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Jackardios\QueryWizard\Exceptions\InvalidFilterQuery;
-use Jackardios\ElasticQueryWizard\Handlers\Filters\AbstractElasticFilter;
-use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
-use Jackardios\ElasticQueryWizard\Handlers\Filters\TermFilter;
+use Jackardios\ElasticQueryWizard\ElasticFilter;
+use Jackardios\ElasticQueryWizard\Filters\MatchFilter;
+use Jackardios\ElasticQueryWizard\Filters\TermFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
-use Jackardios\QueryWizard\Handlers\Eloquent\Filters\ExactFilter;
-use Jackardios\QueryWizard\Handlers\Eloquent\Filters\ScopeFilter;
+use Jackardios\ElasticQueryWizard\Tests\TestCase;
+use Jackardios\QueryWizard\Exceptions\InvalidFilterQuery;
+use Jackardios\QueryWizard\Eloquent\Filters\ExactFilter;
+use Jackardios\QueryWizard\Eloquent\Filters\ScopeFilter;
 
 /**
  * @group elastic
@@ -23,8 +21,7 @@ use Jackardios\QueryWizard\Handlers\Eloquent\Filters\ScopeFilter;
  */
 class FilterTest extends TestCase
 {
-    /** @var Collection */
-    protected $models;
+    protected Collection $models;
 
     public function setUp(): void
     {
@@ -38,7 +35,7 @@ class FilterTest extends TestCase
     {
         $expectedModel = factory(TestModel::class)->create(['category' => 'some-testing-category']);
         $modelsResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'category' => $expectedModel->category,
             ])
             ->setAllowedFilters('category')
@@ -55,7 +52,7 @@ class FilterTest extends TestCase
     {
         $expectedModel = factory(TestModel::class)->create(['category' => 'some-testing-category']);
         $modelsResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'category' => ['first' => $expectedModel->category],
             ])
             ->setAllowedFilters('category')
@@ -71,7 +68,7 @@ class FilterTest extends TestCase
     public function it_can_filter_models_and_return_an_empty_collection(): void
     {
         $modelsResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'category' => 'non existing category',
             ])
             ->setAllowedFilters('category')
@@ -89,11 +86,7 @@ class FilterTest extends TestCase
             ->select(['id', 'category'])
             ->find($this->models->random()->id);
 
-        $request = new Request([
-            'filter' => ['category' => $expectedModel->category],
-        ]);
-
-        $modelResult = ElasticQueryWizard::for(TestModel::class, $request)
+        $modelResult = $this->createElasticWizardWithFilters(['category' => $expectedModel->category])
             ->query(function(Builder $query) {
                 return $query->select('id', 'category');
             })
@@ -111,7 +104,7 @@ class FilterTest extends TestCase
     {
         $expectedModels = $this->models->random(2);
         $modelsResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'id' => "{$expectedModels[0]->id},{$expectedModels[1]->id}",
             ])
             ->setAllowedFilters('id')
@@ -129,7 +122,7 @@ class FilterTest extends TestCase
         $expectedModel = factory(TestModel::class)->create(['category' => 'Some Testing Category']);
 
         $modelsResult = $this
-            ->createQueryFromFilterRequest(['category' => 'Some Testing Category'])
+            ->createElasticWizardWithFilters(['category' => 'Some Testing Category'])
             ->setAllowedFilters(new ExactFilter('category'))
             ->build()
             ->execute()
@@ -145,7 +138,7 @@ class FilterTest extends TestCase
         $expectedModel = factory(TestModel::class)->create(['category' => 'Some Testing Category']);
 
         $modelsResult = $this
-            ->createQueryFromFilterRequest(['categorized' => 'Some Testing Category'])
+            ->createElasticWizardWithFilters(['categorized' => 'Some Testing Category'])
             ->setAllowedFilters(new ScopeFilter('categorized'))
             ->build()
             ->execute()
@@ -162,7 +155,7 @@ class FilterTest extends TestCase
         $expectedModel->relatedModels()->create(['name' => 'John\'s Post']);
 
         $modelsResult = $this
-            ->createQueryFromFilterRequest(['relatedModels.named' => 'John\'s Post'])
+            ->createElasticWizardWithFilters(['relatedModels.named' => 'John\'s Post'])
             ->setAllowedFilters(new ScopeFilter('relatedModels.named'))
             ->build()
             ->execute()
@@ -177,15 +170,15 @@ class FilterTest extends TestCase
     {
         $testModel = $this->models->first();
 
-        $filterClass = new class('custom_name') extends AbstractElasticFilter {
-            public function handle($queryHandler, $queryBuilder, $value): void
+        $filterClass = new class('custom_name') extends ElasticFilter {
+            public function handle($queryWizard, $queryBuilder, $value): void
             {
-                $queryHandler->must(Query::match()->field('name')->query($value));
+                $queryWizard->must(Query::match()->field('name')->query($value));
             }
         };
 
         $modelResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'custom_name' => $testModel->name,
             ])
             ->setAllowedFilters($filterClass)
@@ -203,7 +196,7 @@ class FilterTest extends TestCase
         $expectedModels = factory(TestModel::class, 2)->create(['name' => 'abcdef']);
 
         $modelsResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'name' => 'abcdef',
             ])
             ->setAllowedFilters(new MatchFilter('name'), 'id')
@@ -221,7 +214,7 @@ class FilterTest extends TestCase
         $expectedModels = factory(TestModel::class, 2)->create(['name' => 'abcdef']);
 
         $modelsResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'name' => 'abcdef',
             ])
             ->setAllowedFilters([new MatchFilter('name'), 'id'])
@@ -239,7 +232,7 @@ class FilterTest extends TestCase
         $expectedModels = factory(TestModel::class, 2)->create(['name' => 'abcdef']);
 
         $modelsResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'name' => 'abcdef',
                 'id' => "1,{$expectedModels[0]->id}",
             ])
@@ -258,7 +251,7 @@ class FilterTest extends TestCase
         $this->expectException(InvalidFilterQuery::class);
 
         $this
-            ->createQueryFromFilterRequest(['name' => 'John'])
+            ->createElasticWizardWithFilters(['name' => 'John'])
             ->setAllowedFilters('id')
             ->build();
     }
@@ -266,15 +259,15 @@ class FilterTest extends TestCase
     /** @test */
     public function it_can_create_a_custom_filter_with_an_instantiated_filter(): void
     {
-        $customFilter = new class('*') extends AbstractElasticFilter {
-            public function handle($queryHandler, $query, $value): void
+        $customFilter = new class('*') extends ElasticFilter {
+            public function handle($queryWizard, $queryBuilder, $value): void
             {
                 //
             }
         };
 
         $modelsResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 '*' => '*',
             ])
             ->setAllowedFilters('name', $customFilter)
@@ -310,7 +303,7 @@ class FilterTest extends TestCase
         $expectedModel = factory(TestModel::class)->create(['category' => 'abcdef']);
 
         $modelsResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'tag' => 'abcdef',
             ])
             ->setAllowedFilters($filter)
@@ -329,7 +322,7 @@ class FilterTest extends TestCase
         $filter = new TermFilter('is_visible');
 
         $modelsResult = $this
-            ->createQueryFromFilterRequest(['is_visible' => 'false'])
+            ->createElasticWizardWithFilters(['is_visible' => 'false'])
             ->setAllowedFilters($filter)
             ->build()
             ->execute()
@@ -350,7 +343,7 @@ class FilterTest extends TestCase
             'fuzziness' => 1,
         ]);
         $modelsResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'name' => 'Mascow'
             ])
             ->setAllowedFilters($filter)
@@ -360,14 +353,5 @@ class FilterTest extends TestCase
 
         $this->assertCount(1, $modelsResult);
         $this->assertEquals([$expectedModel->id], $modelsResult->pluck('id')->all());
-    }
-
-    protected function createQueryFromFilterRequest(array $filters): ElasticQueryWizard
-    {
-        $request = new Request([
-            'filter' => $filters,
-        ]);
-
-        return ElasticQueryWizard::for(TestModel::class, $request);
     }
 }
