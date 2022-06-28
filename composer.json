@@ -33,9 +33,9 @@
     ],
     "require": {
         "php": "^8.0",
-        "laravel/framework": "^8.22.2",
-        "jackardios/laravel-query-wizard": "dev-master",
-        "jackardios/elastic-scout-driver-plus": "^3.3"
+        "jackardios/elastic-scout-driver-plus": "^3.3",
+        "jackardios/laravel-query-wizard": "0.1.0",
+        "laravel/framework": "^8.22.2"
     },
     "require-dev": {
         "ext-json": "*",
