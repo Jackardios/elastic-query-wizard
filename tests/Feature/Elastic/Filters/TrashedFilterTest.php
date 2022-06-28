@@ -2,12 +2,12 @@
 
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Filters;
 
-use Jackardios\ElasticQueryWizard\Tests\TestCase;
-use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
-use Jackardios\ElasticQueryWizard\Handlers\Filters\TrashedFilter;
+use Jackardios\ElasticQueryWizard\Filters\TrashedFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\SoftDeleteModel;
+use Jackardios\ElasticQueryWizard\Tests\TestCase;
 
 /**
  * @group elastic
@@ -16,8 +16,7 @@ use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\SoftDeleteModel;
  */
 class TrashedFilterTest extends TestCase
 {
-    /** @var \Illuminate\Support\Collection */
-    protected $models;
+    protected Collection $models;
 
     public function setUp(): void
     {
@@ -76,10 +75,6 @@ class TrashedFilterTest extends TestCase
 
     protected function createQueryFromFilterRequest(array $filters): ElasticQueryWizard
     {
-        $request = new Request([
-            'filter' => $filters,
-        ]);
-
-        return ElasticQueryWizard::for(SoftDeleteModel::class, $request);
+        return $this->createElasticWizardWithFilters($filters, SoftDeleteModel::class);
     }
 }

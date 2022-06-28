@@ -1,24 +1,26 @@
 <?php
 
-namespace Jackardios\ElasticQueryWizard\Handlers\Filters;
+namespace Jackardios\ElasticQueryWizard\Filters;
 
-class TrashedFilter extends AbstractElasticFilter
+use Jackardios\ElasticQueryWizard\ElasticFilter;
+
+class TrashedFilter extends ElasticFilter
 {
     public function __construct(string $propertyName = "trashed", ?string $alias = null, $default = null)
     {
         parent::__construct($propertyName, $alias, $default);
     }
 
-    public function handle($queryHandler, $queryBuilder, $value): void
+    public function handle($queryWizard, $queryBuilder, $value): void
     {
         if ($value === 'with') {
-            $queryHandler->withTrashed();
+            $queryWizard->withTrashed();
 
             return;
         }
 
         if ($value === 'only') {
-            $queryHandler->onlyTrashed();
+            $queryWizard->onlyTrashed();
 
             return;
         }

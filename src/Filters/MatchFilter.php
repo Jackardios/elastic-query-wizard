@@ -1,15 +1,16 @@
 <?php
 
-namespace Jackardios\ElasticQueryWizard\Handlers\Filters;
+namespace Jackardios\ElasticQueryWizard\Filters;
 
 use ElasticScoutDriverPlus\Support\Query;
+use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
 
-class MatchFilter extends AbstractElasticFilter
+class MatchFilter extends ElasticFilter
 {
     use HasParameters;
 
-    public function handle($queryHandler, $queryBuilder, $value): void
+    public function handle($queryWizard, $queryBuilder, $value): void
     {
         if (!isset($value) || $value === '') {
             return;
@@ -24,6 +25,6 @@ class MatchFilter extends AbstractElasticFilter
         $query = Query::match()->field($propertyName)->query($value);
         $this->applyParametersOnQuery($query);
 
-        $queryHandler->must($query);
+        $queryWizard->must($query);
     }
 }

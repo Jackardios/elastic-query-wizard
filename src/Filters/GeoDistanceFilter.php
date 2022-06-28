@@ -1,12 +1,13 @@
 <?php
 
-namespace Jackardios\ElasticQueryWizard\Handlers\Filters;
+namespace Jackardios\ElasticQueryWizard\Filters;
 
+use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\Exceptions\InvalidGeoDistanceValue;
 
-class GeoDistanceFilter extends AbstractElasticFilter
+class GeoDistanceFilter extends ElasticFilter
 {
-    public function handle($queryHandler, $queryBuilder, $value): void
+    public function handle($queryWizard, $queryBuilder, $value): void
     {
         if (empty($value)) {
             return;
@@ -20,7 +21,7 @@ class GeoDistanceFilter extends AbstractElasticFilter
 
         ['lon' => $lon, 'lat' => $lat, 'distance' => $distance] = $value;
 
-        $queryHandler->filter([
+        $queryWizard->filter([
             'geo_distance' => [
                 "distance" => $distance,
                 $propertyName => [

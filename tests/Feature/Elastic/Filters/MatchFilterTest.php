@@ -2,12 +2,10 @@
 
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Filters;
 
-use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
-use Jackardios\ElasticQueryWizard\Handlers\Filters\MatchFilter;
+use Illuminate\Support\Collection;
+use Jackardios\ElasticQueryWizard\Filters\MatchFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
-use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 
 /**
  * @group elastic
@@ -16,8 +14,7 @@ use Illuminate\Support\Collection;
  */
 class MatchFilterTest extends TestCase
 {
-    /** @var Collection */
-    protected $models;
+    protected Collection $models;
 
     public function setUp(): void
     {
@@ -32,7 +29,7 @@ class MatchFilterTest extends TestCase
         $expectedModel = factory(TestModel::class)->create(['name' => 'Some new TESTING Name']);
 
         $modelsResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'name' => 'new testing',
             ])
             ->setAllowedFilters(new MatchFilter('name'))
@@ -48,7 +45,7 @@ class MatchFilterTest extends TestCase
     public function it_allows_empty_filter_value(): void
     {
         $modelsResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'name' => ''
             ])
             ->setAllowedFilters(new MatchFilter('name'))
@@ -67,7 +64,7 @@ class MatchFilterTest extends TestCase
         $model2 = factory(TestModel::class)->create(['name' => 'UniqueJohn Deer']);
 
         $results = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'name' => "Testing,Deer",
             ])
             ->setAllowedFilters(new MatchFilter('name'))
@@ -91,7 +88,7 @@ class MatchFilterTest extends TestCase
         $filter = (new MatchFilter('name'))->default('UniqueJohn');
 
         $modelsResult = $this
-            ->createQueryFromFilterRequest([])
+            ->createElasticWizardWithFilters([])
             ->setAllowedFilters($filter)
             ->build()
             ->execute()
@@ -110,7 +107,7 @@ class MatchFilterTest extends TestCase
         $filter = (new MatchFilter('name'))->default('Deer');
 
         $modelsResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'name' => 'UniqueDoe',
             ])
             ->setAllowedFilters($filter)
@@ -120,14 +117,5 @@ class MatchFilterTest extends TestCase
 
         $this->assertCount(1, $modelsResult);
         $this->assertEquals($model1->id, $modelsResult->first()->id);
-    }
-
-    protected function createQueryFromFilterRequest(array $filters): ElasticQueryWizard
-    {
-        $request = new Request([
-            'filter' => $filters,
-        ]);
-
-        return ElasticQueryWizard::for(TestModel::class, $request);
     }
 }

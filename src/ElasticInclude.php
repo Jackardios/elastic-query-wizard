@@ -1,21 +1,20 @@
 <?php
 
-namespace Jackardios\ElasticQueryWizard\Handlers\Includes;
+namespace Jackardios\ElasticQueryWizard;
 
 use ElasticAdapter\Search\SearchResponse;
 use Illuminate\Database\Eloquent\Builder;
-use Jackardios\ElasticQueryWizard\Handlers\ElasticQueryHandler;
-use Jackardios\QueryWizard\Handlers\Eloquent\Includes\AbstractEloquentInclude;
+use Jackardios\QueryWizard\Eloquent\EloquentInclude;
 
-abstract class AbstractElasticInclude extends AbstractEloquentInclude
+abstract class ElasticInclude extends EloquentInclude
 {
     protected SearchResponse $searchResponse;
 
     /**
-     * @param ElasticQueryHandler $queryHandler
+     * @param ElasticQueryWizard $queryWizard
      * @param Builder $queryBuilder
      */
-    abstract public function handle($queryHandler, $queryBuilder): void;
+    abstract public function handle($queryWizard, Builder $queryBuilder): void;
 
     /**
      * @param SearchResponse $searchResponse

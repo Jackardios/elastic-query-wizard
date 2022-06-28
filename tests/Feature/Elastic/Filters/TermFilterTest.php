@@ -2,12 +2,10 @@
 
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Filters;
 
-use Jackardios\ElasticQueryWizard\Tests\TestCase;
-use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
-use Jackardios\ElasticQueryWizard\Handlers\Filters\TermFilter;
+use Jackardios\ElasticQueryWizard\Filters\TermFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
+use Jackardios\ElasticQueryWizard\Tests\TestCase;
 
 /**
  * @group elastic
@@ -16,8 +14,7 @@ use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
  */
 class TermFilterTest extends TestCase
 {
-    /** @var Collection */
-    protected $models;
+    protected Collection $models;
 
     public function setUp(): void
     {
@@ -32,7 +29,7 @@ class TermFilterTest extends TestCase
         $expectedModel = factory(TestModel::class)->create(['category' => 'some-testing-category']);
 
         $modelsResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'category' => $expectedModel->category,
             ])
             ->setAllowedFilters(new TermFilter('category'))
@@ -50,7 +47,7 @@ class TermFilterTest extends TestCase
         factory(TestModel::class)->create(['category' => 'Some Testing Category']);
 
         $modelsResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'category' => ' Testing ',
             ])
             ->setAllowedFilters(new TermFilter('category'))
@@ -65,7 +62,7 @@ class TermFilterTest extends TestCase
     public function it_allows_empty_filter_value(): void
     {
         $modelsResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'category' => ''
             ])
             ->setAllowedFilters(new TermFilter('category'))
@@ -85,7 +82,7 @@ class TermFilterTest extends TestCase
         ]);
 
         $results = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'category' => "{$expectedModels[0]->category},{$expectedModels[1]->category}",
             ])
             ->setAllowedFilters(new TermFilter('category'))
@@ -106,7 +103,7 @@ class TermFilterTest extends TestCase
         $filter = (new TermFilter('category'))->default('UniqueJohn Doe');
 
         $models = $this
-            ->createQueryFromFilterRequest([])
+            ->createElasticWizardWithFilters([])
             ->setAllowedFilters($filter)
             ->build()
             ->execute()
@@ -125,7 +122,7 @@ class TermFilterTest extends TestCase
         $filter = (new TermFilter('category'))->default('UniqueJohn Deer');
 
         $models = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'category' => 'UniqueJohn UniqueDoe',
             ])
             ->setAllowedFilters($filter)
@@ -135,14 +132,5 @@ class TermFilterTest extends TestCase
 
         $this->assertCount(1, $models);
         $this->assertEquals($models[0]->id, $model1->id);
-    }
-
-    protected function createQueryFromFilterRequest(array $filters): ElasticQueryWizard
-    {
-        $request = new Request([
-            'filter' => $filters,
-        ]);
-
-        return ElasticQueryWizard::for(TestModel::class, $request);
     }
 }

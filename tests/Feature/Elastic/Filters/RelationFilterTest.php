@@ -2,12 +2,11 @@
 
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Filters;
 
-use Illuminate\Http\Request;
-use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
+use Illuminate\Support\Collection;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\RelatedModel;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
-use Jackardios\QueryWizard\Handlers\Eloquent\Filters\ExactFilter;
+use Jackardios\QueryWizard\Eloquent\Filters\ExactFilter;
 
 /**
  * @group elastic
@@ -16,8 +15,7 @@ use Jackardios\QueryWizard\Handlers\Eloquent\Filters\ExactFilter;
  */
 class RelationFilterTest extends TestCase
 {
-    /** @var \Illuminate\Support\Collection */
-    protected $models;
+    protected Collection $models;
 
     public function setUp(): void
     {
@@ -37,7 +35,7 @@ class RelationFilterTest extends TestCase
     {
         $expectedModel = $this->models->random();
         $modelsResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'relatedModels.name' => $expectedModel->name,
             ])
             ->setAllowedFilters(new ExactFilter('relatedModels.name'))
@@ -53,7 +51,7 @@ class RelationFilterTest extends TestCase
     public function it_can_filter_results_based_on_the_exact_existence_of_a_property_in_an_array(): void
     {
         $modelsResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'relatedModels.nestedRelatedModels.name' => 'test0,test1',
             ])
             ->setAllowedFilters(new ExactFilter('relatedModels.nestedRelatedModels.name'))
@@ -72,7 +70,7 @@ class RelationFilterTest extends TestCase
     public function it_can_filter_models_and_return_an_empty_collection(): void
     {
         $modelsResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'relatedModels.name' => 'None existing first name',
             ])
             ->setAllowedFilters(new ExactFilter('relatedModels.name'))
@@ -87,7 +85,7 @@ class RelationFilterTest extends TestCase
     public function it_can_filter_related_nested_model_property(): void
     {
         $modelsResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'relatedModels.nestedRelatedModels.name' => 'test1',
             ])
             ->setAllowedFilters(new ExactFilter('relatedModels.nestedRelatedModels.name'))
@@ -113,7 +111,7 @@ class RelationFilterTest extends TestCase
     {
         $expectedModel = $this->models->first();
         $modelsResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'relatedModels.name' => $expectedModel->name,
                 'relatedModels.nestedRelatedModels.name' => 'test0',
             ])
@@ -135,7 +133,7 @@ class RelationFilterTest extends TestCase
         $testModels = TestModel::whereIn('id', [1, 2])->get();
 
         $modelsResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'relatedModels.id' => $testModels->map(function ($model) {
                     return $model->relatedModels->pluck('id');
                 })->flatten()->all(),
@@ -155,7 +153,7 @@ class RelationFilterTest extends TestCase
         factory(TestModel::class)->create(['name' => 'John Testing Doe']);
 
         $modelsResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'relatedModels.nestedRelatedModels.name' => ' test ',
             ])
             ->setAllowedFilters(new ExactFilter('relatedModels.nestedRelatedModels.name'))
@@ -164,14 +162,5 @@ class RelationFilterTest extends TestCase
             ->models();
 
         $this->assertCount(0, $modelsResult);
-    }
-
-    protected function createQueryFromFilterRequest(array $filters): ElasticQueryWizard
-    {
-        $request = new Request([
-            'filter' => $filters,
-        ]);
-
-        return ElasticQueryWizard::for(TestModel::class, $request);
     }
 }

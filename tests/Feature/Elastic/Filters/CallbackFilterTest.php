@@ -3,12 +3,11 @@
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Filters;
 
 use ElasticScoutDriverPlus\Support\Query;
-use Jackardios\ElasticQueryWizard\Tests\TestCase;
-use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
-use Jackardios\ElasticQueryWizard\Handlers\ElasticQueryHandler;
-use Jackardios\ElasticQueryWizard\Handlers\Filters\CallbackFilter;
+use Jackardios\ElasticQueryWizard\Filters\CallbackFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
+use Jackardios\ElasticQueryWizard\Tests\TestCase;
 
 /**
  * @group elastic
@@ -17,8 +16,7 @@ use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
  */
 class CallbackFilterTest extends TestCase
 {
-    /** @var \Illuminate\Support\Collection */
-    protected $models;
+    protected Collection $models;
 
     public function setUp(): void
     {
@@ -32,12 +30,12 @@ class CallbackFilterTest extends TestCase
     {
         $expectedModel = factory(TestModel::class)->create(['name' => 'Some New Testing Name']);
         $modelsResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'callback' => $expectedModel->name
             ])
             ->setAllowedFilters(
-                new CallbackFilter('callback', function (ElasticQueryHandler $queryHandler, $queryBuilder, $value) {
-                    $queryHandler->must(
+                new CallbackFilter('callback', function (ElasticQueryWizard $queryWizard, $queryBuilder, $value) {
+                    $queryWizard->must(
                         Query::match()->field('name')->query($value)
                     );
                 })
@@ -55,7 +53,7 @@ class CallbackFilterTest extends TestCase
     {
         $expectedModel = factory(TestModel::class)->create(['name' => 'Some New Testing Name']);
         $modelsResult = $this
-            ->createQueryFromFilterRequest([
+            ->createElasticWizardWithFilters([
                 'callback' => $expectedModel->name,
             ])
             ->setAllowedFilters(new CallbackFilter('callback', [$this, 'filterCallback']))
@@ -67,19 +65,10 @@ class CallbackFilterTest extends TestCase
         $this->assertEquals($expectedModel->name, $modelsResult->first()->name);
     }
 
-    public function filterCallback(ElasticQueryHandler $queryHandler, $queryBuilder, $value): void
+    public function filterCallback(ElasticQueryWizard $queryWizard, $queryBuilder, $value): void
     {
-        $queryHandler->must(
+        $queryWizard->must(
             Query::match()->field('name')->query($value)
         );
-    }
-
-    protected function createQueryFromFilterRequest(array $filters): ElasticQueryWizard
-    {
-        $request = new Request([
-            'filter' => $filters,
-        ]);
-
-        return ElasticQueryWizard::for(TestModel::class, $request);
     }
 }
