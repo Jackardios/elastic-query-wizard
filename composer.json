@@ -34,7 +34,7 @@
     "require": {
         "php": "^8.0",
         "jackardios/elastic-scout-driver-plus": "^3.3",
-        "jackardios/laravel-query-wizard": "0.1.1",
+        "jackardios/laravel-query-wizard": "0.1.2",
         "laravel/framework": "^8.22.2"
     },
     "require-dev": {
