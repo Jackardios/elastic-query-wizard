@@ -2,7 +2,7 @@
 
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Sorts;
 
-use ElasticScoutDriverPlus\Builders\SearchRequestBuilder;
+use Elastic\ScoutDriverPlus\Builders\SearchParametersBuilder;
 use Illuminate\Http\Request;
 use Jackardios\ElasticQueryWizard\ElasticSort;
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
@@ -289,7 +289,7 @@ class SortTest extends TestCase
         $this->assertEquals([["name" => "desc"]], $this->getSorts($wizard->getSubject()));
     }
 
-    protected function getSorts(SearchRequestBuilder $wizard) {
+    protected function getSorts(SearchParametersBuilder $wizard) {
         $reflection = new ReflectionClass($wizard);
         $property = $reflection->getProperty('sort');
         $property->setAccessible(true);

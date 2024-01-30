@@ -14,13 +14,13 @@ class TrashedFilter extends ElasticFilter
     public function handle($queryWizard, $queryBuilder, $value): void
     {
         if ($value === 'with') {
-            $queryWizard->withTrashed();
+            $queryWizard->getRootBoolQuery()->withTrashed();
 
             return;
         }
 
         if ($value === 'only') {
-            $queryWizard->onlyTrashed();
+            $queryWizard->getRootBoolQuery()->onlyTrashed();
 
             return;
         }

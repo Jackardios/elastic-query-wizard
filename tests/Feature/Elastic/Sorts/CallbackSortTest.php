@@ -2,7 +2,7 @@
 
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Sorts;
 
-use ElasticScoutDriverPlus\Builders\SearchRequestBuilder;
+use Elastic\ScoutDriverPlus\Builders\SearchParametersBuilder;
 use Illuminate\Support\Collection;
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
 use Jackardios\ElasticQueryWizard\Sorts\CallbackSort;
@@ -34,7 +34,7 @@ class CallbackSortTest extends TestCase
         $sortedModels = $this
             ->createElasticWizardWithSorts('-callbackSort')
             ->setAllowedSorts(
-                new CallbackSort('callbackSort', function (ElasticQueryWizard $queryWizard, SearchRequestBuilder $queryBuilder, string $direction) {
+                new CallbackSort('callbackSort', function (ElasticQueryWizard $queryWizard, SearchParametersBuilder $queryBuilder, string $direction) {
                     $queryBuilder->sort('category', $direction);
                 })
             )
@@ -58,7 +58,7 @@ class CallbackSortTest extends TestCase
         $this->assertSortedAscending($sortedModels, 'category');
     }
 
-    public function sortCallback(ElasticQueryWizard $queryWizard, SearchRequestBuilder $queryBuilder, string $direction): void
+    public function sortCallback(ElasticQueryWizard $queryWizard, SearchParametersBuilder $queryBuilder, string $direction): void
     {
         $queryBuilder->sort('category', $direction);
     }

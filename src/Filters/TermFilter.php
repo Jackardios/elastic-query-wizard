@@ -2,7 +2,7 @@
 
 namespace Jackardios\ElasticQueryWizard\Filters;
 
-use ElasticScoutDriverPlus\Support\Query;
+use Elastic\ScoutDriverPlus\Support\Query;
 use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
 
@@ -24,6 +24,6 @@ class TermFilter extends ElasticFilter
 
         $query = $this->applyParametersOnQuery($query);
 
-        $queryWizard->filter($query);
+        $queryWizard->getRootBoolQuery()->filter($query);
     }
 }

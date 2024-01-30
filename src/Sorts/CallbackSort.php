@@ -2,20 +2,20 @@
 
 namespace Jackardios\ElasticQueryWizard\Sorts;
 
-use ElasticScoutDriverPlus\Builders\SearchRequestBuilder;
+use Elastic\ScoutDriverPlus\Builders\SearchParametersBuilder;
 use Jackardios\ElasticQueryWizard\ElasticSort;
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
 
 class CallbackSort extends ElasticSort
 {
     /**
-     * @var callable(ElasticQueryWizard, SearchRequestBuilder, string, string):mixed
+     * @var callable(ElasticQueryWizard, SearchParametersBuilder, string, string):mixed
      */
     private $callback;
 
     /**
      * @param string $propertyName
-     * @param callable(ElasticQueryWizard, SearchRequestBuilder, string, string):mixed $callback
+     * @param callable(ElasticQueryWizard, SearchParametersBuilder, string, string):mixed $callback
      * @param string|null $alias
      */
     public function __construct(string $propertyName, callable $callback, ?string $alias = null)

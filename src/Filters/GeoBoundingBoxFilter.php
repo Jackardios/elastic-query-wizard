@@ -30,7 +30,7 @@ class GeoBoundingBoxFilter extends ElasticFilter
             $top -= 0.00001;
         }
 
-        $queryWizard->filter([
+        $queryWizard->getRootBoolQuery()->filter([
             'geo_bounding_box' => [
                 $propertyName => [
                     'top_left' => [

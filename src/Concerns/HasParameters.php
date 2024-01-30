@@ -2,7 +2,7 @@
 
 namespace Jackardios\ElasticQueryWizard\Concerns;
 
-use ElasticScoutDriverPlus\Builders\AbstractParameterizedQueryBuilder;
+use Elastic\ScoutDriverPlus\Builders\AbstractParameterizedQueryBuilder;
 use Illuminate\Support\Str;
 
 trait HasParameters
@@ -23,7 +23,7 @@ trait HasParameters
      * @param array $parameters
      * @return $this
      */
-    public function withParameters(array $parameters)
+    public function withParameters(array $parameters): static
     {
         $this->parameters = $parameters;
 
