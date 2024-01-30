@@ -2,7 +2,7 @@
 
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Filters;
 
-use ElasticScoutDriverPlus\Support\Query;
+use Elastic\ScoutDriverPlus\Support\Query;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Jackardios\ElasticQueryWizard\ElasticFilter;
@@ -87,7 +87,7 @@ class FilterTest extends TestCase
             ->find($this->models->random()->id);
 
         $modelResult = $this->createElasticWizardWithFilters(['category' => $expectedModel->category])
-            ->query(function(Builder $query) {
+            ->addEloquentQueryCallback(function(Builder $query) {
                 return $query->select('id', 'category');
             })
             ->setAllowedFilters('category', 'id')
@@ -173,7 +173,7 @@ class FilterTest extends TestCase
         $filterClass = new class('custom_name') extends ElasticFilter {
             public function handle($queryWizard, $queryBuilder, $value): void
             {
-                $queryWizard->must(Query::match()->field('name')->query($value));
+                $queryWizard->getRootBoolQuery()->must(Query::match()->field('name')->query($value));
             }
         };
 

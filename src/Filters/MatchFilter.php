@@ -2,7 +2,7 @@
 
 namespace Jackardios\ElasticQueryWizard\Filters;
 
-use ElasticScoutDriverPlus\Support\Query;
+use Elastic\ScoutDriverPlus\Support\Query;
 use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
 
@@ -25,6 +25,6 @@ class MatchFilter extends ElasticFilter
         $query = Query::match()->field($propertyName)->query($value);
         $this->applyParametersOnQuery($query);
 
-        $queryWizard->must($query);
+        $queryWizard->getRootBoolQuery()->must($query);
     }
 }

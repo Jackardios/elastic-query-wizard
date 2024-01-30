@@ -2,7 +2,7 @@
 
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Filters;
 
-use ElasticScoutDriverPlus\Support\Query;
+use Elastic\ScoutDriverPlus\Support\Query;
 use Illuminate\Support\Collection;
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
 use Jackardios\ElasticQueryWizard\Filters\CallbackFilter;
@@ -35,7 +35,7 @@ class CallbackFilterTest extends TestCase
             ])
             ->setAllowedFilters(
                 new CallbackFilter('callback', function (ElasticQueryWizard $queryWizard, $queryBuilder, $value) {
-                    $queryWizard->must(
+                    $queryWizard->getRootBoolQuery()->must(
                         Query::match()->field('name')->query($value)
                     );
                 })
@@ -67,7 +67,7 @@ class CallbackFilterTest extends TestCase
 
     public function filterCallback(ElasticQueryWizard $queryWizard, $queryBuilder, $value): void
     {
-        $queryWizard->must(
+        $queryWizard->getRootBoolQuery()->must(
             Query::match()->field('name')->query($value)
         );
     }

@@ -435,7 +435,7 @@ class IncludeTest extends TestCase
     public function it_can_include_a_custom_base_query_with_select(): void
     {
         $modelResult = $this->createElasticWizardWithIncludes('relatedModelsCount')
-            ->query(function(Builder $query) {
+            ->addEloquentQueryCallback(function(Builder $query) {
                 return $query->select('id', 'name');
             })
             ->setAllowedIncludes(new CountInclude('relatedModels', 'relatedModelsCount'))

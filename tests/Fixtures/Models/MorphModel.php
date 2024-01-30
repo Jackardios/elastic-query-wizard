@@ -2,7 +2,7 @@
 
 namespace Jackardios\ElasticQueryWizard\Tests\Fixtures\Models;
 
-use ElasticScoutDriverPlus\Searchable;
+use Elastic\ScoutDriverPlus\Searchable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 

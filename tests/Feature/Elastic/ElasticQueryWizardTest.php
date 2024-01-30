@@ -2,7 +2,7 @@
 
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic;
 
-use ElasticScoutDriverPlus\Support\Query;
+use Elastic\ScoutDriverPlus\Support\Query;
 use Illuminate\Support\Facades\Config;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
 use Jackardios\QueryWizard\Exceptions\InvalidSubject;
@@ -21,7 +21,7 @@ class ElasticQueryWizardTest extends TestCase
     {
         $this->expectException(InvalidSubject::class);
 
-        $this->expectExceptionMessage('$subject must be a model that uses `ElasticScoutDriverPlus\Searchable` trait');
+        $this->expectExceptionMessage('$subject must be a model that uses `Elastic\ScoutDriverPlus\Searchable` trait');
 
         ElasticQueryWizard::for('not a class name');
     }
@@ -38,11 +38,11 @@ class ElasticQueryWizardTest extends TestCase
 
         $models = factory(SoftDeleteModel::class, 5)->create();
 
-        $this->assertCount(5, $queryWizard->setQuery($defaultQuery)->execute()->models());
+        $this->assertCount(5, $queryWizard->query($defaultQuery)->execute()->models());
 
         $models[0]->delete();
 
-        $this->assertCount(4, $queryWizard->setQuery($defaultQuery)->execute()->models());
-        $this->assertCount(5, $queryWizard->setQuery($withTrashedQuery)->execute()->models());
+        $this->assertCount(4, $queryWizard->query($defaultQuery)->execute()->models());
+        $this->assertCount(5, $queryWizard->query($withTrashedQuery)->execute()->models());
     }
 }

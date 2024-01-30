@@ -2,20 +2,20 @@
 
 namespace Jackardios\ElasticQueryWizard\Filters;
 
-use ElasticScoutDriverPlus\Builders\SearchRequestBuilder;
+use Elastic\ScoutDriverPlus\Builders\SearchParametersBuilder;
 use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
 
 class CallbackFilter extends ElasticFilter
 {
     /**
-     * @param callable(ElasticQueryWizard, SearchRequestBuilder, mixed):mixed
+     * @var callable(ElasticQueryWizard, SearchParametersBuilder, mixed):mixed
      */
     private $callback;
 
     /**
      * @param string $propertyName
-     * @param callable(ElasticQueryWizard, SearchRequestBuilder, mixed):mixed $callback
+     * @param callable(ElasticQueryWizard, SearchParametersBuilder, mixed):mixed $callback
      * @param string|null $alias
      * @param mixed $default
      */

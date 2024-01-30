@@ -32,18 +32,18 @@
         }
     ],
     "require": {
-        "php": "^8.0",
-        "jackardios/elastic-scout-driver-plus": "^3.3",
-        "jackardios/laravel-query-wizard": "0.1.2",
-        "laravel/framework": "^8.22.2"
+        "php": "^8.1",
+        "jackardios/elastic-scout-driver-plus": "v4.0.0",
+        "jackardios/laravel-query-wizard": "^v1.0.0",
+        "laravel/framework": "^v10.0"
     },
     "require-dev": {
         "ext-json": "*",
-        "jackardios/elastic-migrations": "^2.0",
+        "babenkoivan/elastic-migrations": "v3.4.0",
         "laravel/legacy-factories": "^1.0.4",
-        "laravel/scout": "^9.2.6",
-        "jackardios/laravel-eloquent-spatial": "^1.0",
-        "orchestra/testbench": "^v6.20.1",
+        "laravel/scout": "^v10.8.0",
+        "jackardios/laravel-eloquent-spatial": "^2.0",
+        "orchestra/testbench": "^v8.21.1",
         "phpunit/phpunit": "^9.5",
         "roave/security-advisories": "dev-latest"
     },
@@ -62,7 +62,10 @@
         "test-coverage": "phpunit --coverage-html coverage"
     },
     "config": {
-        "sort-packages": true
+        "sort-packages": true,
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
     },
     "minimum-stability": "dev",
     "prefer-stable": true

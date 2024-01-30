@@ -2,10 +2,10 @@
 
 namespace Jackardios\ElasticQueryWizard\Tests;
 
-use ElasticClient\ServiceProvider as ElasticClientServiceProvider;
-use ElasticMigrations\ServiceProvider as ElasticMigrationsServiceProvider;
-use ElasticScoutDriver\ServiceProvider as ElasticScoutDriverServiceProvider;
-use ElasticScoutDriverPlus\ServiceProvider as ElasticScoutDriverPlusServiceProvider;
+use Elastic\Client\ServiceProvider as ElasticClientServiceProvider;
+use Elastic\Migrations\ServiceProvider as ElasticMigrationsServiceProvider;
+use Elastic\ScoutDriver\ServiceProvider as ElasticScoutDriverServiceProvider;
+use Elastic\ScoutDriverPlus\ServiceProvider as ElasticScoutDriverPlusServiceProvider;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Jackardios\ElasticQueryWizard\Tests\Concerns\AssertsModels;
 use Jackardios\ElasticQueryWizard\Tests\Concerns\AssertsQueryLog;
@@ -43,7 +43,7 @@ abstract class TestCase extends Orchestra
         parent::getEnvironmentSetUp($app);
 
         $app['config']->set('scout.driver', 'elastic');
-        $app['config']->set('elastic.migrations.storage_directory', __DIR__ . '/Fixtures/data/elastic/migrations');
+        $app['config']->set('elastic.migrations.storage.default_path', __DIR__ . '/Fixtures/data/elastic/migrations');
         $app['config']->set('elastic.scout_driver.refresh_documents', true);
     }
 

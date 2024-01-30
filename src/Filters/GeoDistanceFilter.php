@@ -21,7 +21,7 @@ class GeoDistanceFilter extends ElasticFilter
 
         ['lon' => $lon, 'lat' => $lat, 'distance' => $distance] = $value;
 
-        $queryWizard->filter([
+        $queryWizard->getRootBoolQuery()->filter([
             'geo_distance' => [
                 "distance" => $distance,
                 $propertyName => [

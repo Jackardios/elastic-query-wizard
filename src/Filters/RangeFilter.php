@@ -2,7 +2,7 @@
 
 namespace Jackardios\ElasticQueryWizard\Filters;
 
-use ElasticScoutDriverPlus\Support\Query;
+use Elastic\ScoutDriverPlus\Support\Query;
 use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
 use Jackardios\ElasticQueryWizard\Exceptions\InvalidRangeValue;
@@ -34,6 +34,6 @@ class RangeFilter extends ElasticFilter
 
         $this->applyParametersOnQuery($query);
 
-        $queryWizard->must($query);
+        $queryWizard->getRootBoolQuery()->must($query);
     }
 }

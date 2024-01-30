@@ -2,13 +2,13 @@
 
 namespace Jackardios\ElasticQueryWizard;
 
-use ElasticAdapter\Search\SearchResponse;
+use Elastic\Adapter\Search\SearchResult;
 use Illuminate\Database\Eloquent\Builder;
 use Jackardios\QueryWizard\Eloquent\EloquentInclude;
 
 abstract class ElasticInclude extends EloquentInclude
 {
-    protected SearchResponse $searchResponse;
+    protected SearchResult $searchResult;
 
     /**
      * @param ElasticQueryWizard $queryWizard
@@ -17,18 +17,18 @@ abstract class ElasticInclude extends EloquentInclude
     abstract public function handle($queryWizard, Builder $queryBuilder): void;
 
     /**
-     * @param SearchResponse $searchResponse
+     * @param SearchResult $searchResult
      * @return $this
      */
-    public function setSearchResponse(SearchResponse $searchResponse): self
+    public function setSearchResult(SearchResult $searchResult): self
     {
-        $this->searchResponse = $searchResponse;
+        $this->searchResult = $searchResult;
 
         return $this;
     }
 
-    public function getSearchResponse(): SearchResponse
+    public function getSearchResult(): SearchResult
     {
-        return $this->searchResponse;
+        return $this->searchResult;
     }
 }
