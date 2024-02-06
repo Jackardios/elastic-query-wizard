@@ -2,6 +2,7 @@
 
 namespace Jackardios\ElasticQueryWizard;
 
+use Closure;
 use Elastic\ScoutDriverPlus\Builders\AbstractParameterizedQueryBuilder;
 use Elastic\ScoutDriverPlus\Builders\QueryBuilderInterface;
 use Elastic\ScoutDriverPlus\QueryParameters\ParameterCollection;
