@@ -138,9 +138,9 @@ class ElasticRootBoolQuery extends AbstractParameterizedQueryBuilder
 
         $buildQuery = static fn ($query) => $query instanceof QueryBuilderInterface ? $query->buildQuery() : $query;
 
-        $this->parameters->put('must', $this->mustQueries->map($buildQuery));
-        $this->parameters->put('mustNot', $this->mustNotQueries->map($buildQuery));
-        $this->parameters->put('should', $this->shouldQueries->map($buildQuery));
-        $this->parameters->put('filter', $this->filterQueries->map($buildQuery));
+        $this->parameters->put('must', $this->mustQueries->map($buildQuery)->values());
+        $this->parameters->put('mustNot', $this->mustNotQueries->map($buildQuery)->values());
+        $this->parameters->put('should', $this->shouldQueries->map($buildQuery)->values());
+        $this->parameters->put('filter', $this->filterQueries->map($buildQuery)->values());
     }
 }
