@@ -51,7 +51,7 @@ class ElasticQueryWizard extends AbstractQueryWizard
 
     protected ElasticRootBoolQuery $rootBoolQuery;
 
-    protected string $modelTable;
+    protected string $modelClass;
 
     public function __construct(Model|string $subject, ?QueryParametersManager $parametersManager = null)
     {
@@ -59,7 +59,7 @@ class ElasticQueryWizard extends AbstractQueryWizard
             throw new InvalidSubject('$subject must be a model that uses `Elastic\ScoutDriverPlus\Searchable` trait');
         }
 
-        $this->modelTable = $subject instanceof Model ? $subject->getTable() : (new $subject)->getTable();
+        $this->modelClass = is_string($subject) ? $subject : $subject::class;
         $subject = $subject::searchQuery([]);
 
         $this->rootBoolQuery = new ElasticRootBoolQuery();
@@ -67,9 +67,9 @@ class ElasticQueryWizard extends AbstractQueryWizard
         parent::__construct($subject, $parametersManager);
     }
 
-    protected function defaultFieldsKey(): string
+    public function rootFieldsKey(): string
     {
-        return $this->modelTable;
+        return Str::camel(class_basename($this->modelClass));
     }
 
     public function makeDefaultFilterHandler(string $filterName): TermFilter
@@ -123,7 +123,7 @@ class ElasticQueryWizard extends AbstractQueryWizard
      * Set the callback that should have an opportunity to modify the database query.
      * This method overrides the Scout Query Builder method
      *
-     * @param  callable(Collection): Collection  $callback
+     * @param  callable(Collection<int, Model>): Collection<int, Model>  $callback
      * @return $this
      */
     public function addEloquentCollectionCallback(callable $callback): self
@@ -165,14 +165,9 @@ class ElasticQueryWizard extends AbstractQueryWizard
 
     protected function handleFields(): self
     {
-        $requestedFields = $this->getFields();
-        $defaultFieldsKey = $this->getDefaultFieldsKey();
-        $modelFields = $requestedFields->get($defaultFieldsKey);
-
-        if (!empty($modelFields)) {
-            $modelFields = $this->prependFieldsWithKey($modelFields);
-            $this->addEloquentQueryCallback(function(EloquentBuilder $eloquentBuilder) use ($modelFields) {
-                return $eloquentBuilder->select($modelFields);
+        if ($rootFields = $this->getRootFields()) {
+            $this->addEloquentQueryCallback(function(EloquentBuilder $eloquentBuilder) use ($rootFields) {
+                return $eloquentBuilder->select($rootFields);
             });
         }
 
@@ -232,11 +227,21 @@ class ElasticQueryWizard extends AbstractQueryWizard
 
     protected function handleAppends(): self
     {
-        $requestedAppends = $this->getAppends()->toArray();
-
-        if (!empty($requestedAppends)) {
+        if ($requestedAppends = $this->getAppends()->toArray()) {
             $this->addEloquentCollectionCallback(function(Collection $collection) use ($requestedAppends) {
                 return $collection->append($requestedAppends);
+            });
+        }
+
+        if ($rootFields = $this->getRootFields()) {
+            $this->addEloquentCollectionCallback(function(Collection $collection) use ($rootFields) {
+                /** @var Model $model */
+                $model = $collection->first();
+                $newHidden = array_values(array_unique([
+                    ...$model->getHidden(),
+                    ...array_diff(array_keys($model->getAttributes()), $rootFields),
+                ]));
+                return $collection->setHidden($newHidden);
             });
         }
 

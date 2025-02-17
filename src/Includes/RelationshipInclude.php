@@ -22,8 +22,7 @@ class RelationshipInclude extends ElasticInclude
                     return [];
                 }
 
-                $key = Str::plural(Str::snake($fullRelationName));
-                $fields = $queryWizard->getFieldsByKey($key);
+                $fields = method_exists($queryWizard, 'getFieldsByKey') ? $queryWizard->getFieldsByKey($fullRelationName) : null;
 
                 if (empty($fields)) {
                     return [$fullRelationName => static function() {}];
