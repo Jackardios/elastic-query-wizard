@@ -33,13 +33,13 @@
     ],
     "require": {
         "php": "^8.1",
-        "jackardios/elastic-scout-driver-plus": "v4.0.0",
-        "jackardios/laravel-query-wizard": "v2.0.0",
+        "jackardios/elastic-scout-driver-plus": "^v4.0.0",
+        "jackardios/laravel-query-wizard": "^v2.0.2",
         "laravel/framework": "^v10.0"
     },
     "require-dev": {
         "ext-json": "*",
-        "babenkoivan/elastic-migrations": "v3.4.0",
+        "babenkoivan/elastic-migrations": "^v3.4.0",
         "laravel/legacy-factories": "^1.0.4",
         "laravel/scout": "^v10.8.0",
         "jackardios/laravel-eloquent-spatial": "^2.0",
