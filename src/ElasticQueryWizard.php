@@ -235,11 +235,15 @@ class ElasticQueryWizard extends AbstractQueryWizard
 
         if ($rootFields = $this->getRootFields()) {
             $this->addEloquentCollectionCallback(function(Collection $collection) use ($rootFields) {
-                /** @var Model $model */
-                $model = $collection->first();
+                /** @var Model|null $firstModel */
+                $firstModel = $collection->first();
+                if (! $firstModel) {
+                    return $collection;
+                }
+
                 $newHidden = array_values(array_unique([
-                    ...$model->getHidden(),
-                    ...array_diff(array_keys($model->getAttributes()), $rootFields),
+                    ...$firstModel->getHidden(),
+                    ...array_diff(array_keys($firstModel->getAttributes()), $rootFields),
                 ]));
                 return $collection->setHidden($newHidden);
             });
