@@ -243,7 +243,7 @@ class ElasticQueryWizard extends AbstractQueryWizard
 
                 $newHidden = array_values(array_unique([
                     ...$firstModel->getHidden(),
-                    ...array_diff(array_keys($firstModel->getAttributes()), $rootFields),
+                    ...(in_array('*', $rootFields) ? [] : array_diff(array_keys($firstModel->getAttributes()), $rootFields)),
                 ]));
                 return $collection->setHidden($newHidden);
             });
