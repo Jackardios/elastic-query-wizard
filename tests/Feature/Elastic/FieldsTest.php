@@ -167,7 +167,7 @@ class FieldsTest extends TestCase
             ->relatedModels;
 
         $this->assertQueryLogContains('select `id` from `test_models`');
-        $this->assertQueryLogContains('select `name` from `related_models`');
+        $this->assertQueryLogContains('select `related_models`.`name` from `related_models`');
     }
 
     /** @test */
@@ -221,7 +221,7 @@ class FieldsTest extends TestCase
             ->relatedModels;
 
         $this->assertQueryLogContains('select * from `test_models`');
-        $this->assertQueryLogContains('select `id`, `name` from `related_models`');
+        $this->assertQueryLogContains('select `related_models`.`id`, `related_models`.`name` from `related_models`');
     }
 
     /** @test */

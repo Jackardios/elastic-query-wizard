@@ -11,12 +11,12 @@ class RelationshipInclude extends ElasticInclude
     /** {@inheritdoc} */
     public function handle($queryWizard, $queryBuilder): void
     {
-        $relatedTables = collect(explode('.', $this->getInclude()));
+        $relationNames = collect(explode('.', $this->getInclude()));
 
         $eagerLoads = $queryBuilder->getEagerLoads();
-        $withs = $relatedTables
-            ->mapWithKeys(function ($table, $key) use ($queryWizard, $relatedTables, $eagerLoads) {
-                $fullRelationName = $relatedTables->slice(0, $key + 1)->implode('.');
+        $withs = $relationNames
+            ->mapWithKeys(function ($table, $key) use ($queryWizard, $relationNames, $eagerLoads) {
+                $fullRelationName = $relationNames->slice(0, $key + 1)->implode('.');
 
                 if (array_key_exists($fullRelationName, $eagerLoads)) {
                     return [];
@@ -29,7 +29,7 @@ class RelationshipInclude extends ElasticInclude
                 }
 
                 return [$fullRelationName => function ($query) use ($fields) {
-                    $query->select($fields);
+                    $query->select($query->qualifyColumns($fields));
                 }];
             })
             ->filter()
