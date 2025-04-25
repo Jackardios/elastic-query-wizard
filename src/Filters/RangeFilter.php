@@ -5,7 +5,7 @@ namespace Jackardios\ElasticQueryWizard\Filters;
 use Elastic\ScoutDriverPlus\Support\Query;
 use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
-use Jackardios\ElasticQueryWizard\Exceptions\InvalidRangeValue;
+use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 
 class RangeFilter extends ElasticFilter
 {
@@ -17,19 +17,12 @@ class RangeFilter extends ElasticFilter
             return;
         }
 
-        if (! is_array($value)) {
-            throw InvalidRangeValue::make($this->getName());
-        }
-
         $propertyName = $this->getPropertyName();
+        $rangeFilters = FilterValueSanitizer::rangeFilterValue($value, $propertyName);
         $query = Query::range()->field($propertyName);
 
-        foreach ($value as $itemKey => $itemValue) {
-            if (! in_array($itemKey, ['gt', 'gte', 'lt', 'lte'])) {
-                throw InvalidRangeValue::make($this->getName());
-            }
-
-            $query->{$itemKey}($itemValue);
+        foreach ($rangeFilters as $filterName => $filterValue) {
+            $query->{$filterName}($filterValue);
         }
 
         $this->applyParametersOnQuery($query);

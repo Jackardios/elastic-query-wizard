@@ -3,7 +3,7 @@
 namespace Jackardios\ElasticQueryWizard\Filters;
 
 use Jackardios\ElasticQueryWizard\ElasticFilter;
-use Jackardios\ElasticQueryWizard\Exceptions\InvalidGeoDistanceValue;
+use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 
 class GeoDistanceFilter extends ElasticFilter
 {
@@ -13,20 +13,16 @@ class GeoDistanceFilter extends ElasticFilter
             return;
         }
 
-        if (! (is_array($value) && isset($value['lat'], $value['lon'], $value['distance']))) {
-            throw InvalidGeoDistanceValue::make($this->getName());
-        }
-
         $propertyName = $this->getPropertyName();
 
-        ['lon' => $lon, 'lat' => $lat, 'distance' => $distance] = $value;
+        ['lon' => $lon, 'lat' => $lat, 'distance' => $distance] = FilterValueSanitizer::geoDistanceValue($value, $propertyName);
 
         $queryWizard->getRootBoolQuery()->filter([
             'geo_distance' => [
                 "distance" => $distance,
                 $propertyName => [
-                    'lon' => (float) $lon,
-                    'lat' => (float) $lat
+                    'lon' => $lon,
+                    'lat' => $lat
                 ]
             ]
         ]);

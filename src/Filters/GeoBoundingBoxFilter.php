@@ -3,7 +3,7 @@
 namespace Jackardios\ElasticQueryWizard\Filters;
 
 use Jackardios\ElasticQueryWizard\ElasticFilter;
-use Jackardios\ElasticQueryWizard\Exceptions\InvalidGeoBoundingBoxValue;
+use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 
 class GeoBoundingBoxFilter extends ElasticFilter
 {
@@ -13,22 +13,9 @@ class GeoBoundingBoxFilter extends ElasticFilter
             return;
         }
 
-        if (! (is_array($value) && count($value) === 4)) {
-            throw InvalidGeoBoundingBoxValue::make($this->getName());
-        }
-
         $propertyName = $this->getPropertyName();
 
-        $value = array_map('floatval', $value);
-
-        [$left, $bottom, $right, $top] = $value;
-
-        if ($left === $right) {
-            $left += 0.00001;
-        }
-        if ($top === $bottom) {
-            $top -= 0.00001;
-        }
+        [$left, $bottom, $right, $top] = FilterValueSanitizer::geoBoundingBoxValue($value, $propertyName);
 
         $queryWizard->getRootBoolQuery()->filter([
             'geo_bounding_box' => [

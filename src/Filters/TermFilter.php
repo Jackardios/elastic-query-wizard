@@ -5,6 +5,7 @@ namespace Jackardios\ElasticQueryWizard\Filters;
 use Elastic\ScoutDriverPlus\Support\Query;
 use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
+use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 
 class TermFilter extends ElasticFilter
 {
@@ -12,15 +13,19 @@ class TermFilter extends ElasticFilter
 
     public function handle($queryWizard, $queryBuilder, $value): void
     {
-        if (!isset($value) || $value === '') {
+        $prepared = is_array($value)
+            ? FilterValueSanitizer::arrayWithOnlyFilledItems($value)
+            : $value;
+
+        if (FilterValueSanitizer::isBlank($prepared)) {
             return;
         }
 
         $propertyName = $this->getPropertyName();
 
-        $query = is_array($value)
-            ? Query::terms()->field($propertyName)->values(array_values($value))
-            : Query::term()->field($propertyName)->value($value);
+        $query = is_array($prepared)
+            ? Query::terms()->field($propertyName)->values($prepared)
+            : Query::term()->field($propertyName)->value($prepared);
 
         $query = $this->applyParametersOnQuery($query);
 

@@ -5,6 +5,7 @@ namespace Jackardios\ElasticQueryWizard\Filters;
 use Elastic\ScoutDriverPlus\Support\Query;
 use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
+use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 
 class MatchFilter extends ElasticFilter
 {
@@ -12,12 +13,12 @@ class MatchFilter extends ElasticFilter
 
     public function handle($queryWizard, $queryBuilder, $value): void
     {
-        if (!isset($value) || $value === '') {
-            return;
+        if (is_array($value)) {
+            $value = FilterValueSanitizer::arrayToCommaSeparatedString($value);
         }
 
-        if (is_array($value)) {
-            $value = implode(',', $value);
+        if (FilterValueSanitizer::isBlank($value)) {
+            return;
         }
 
         $propertyName = $this->getPropertyName();

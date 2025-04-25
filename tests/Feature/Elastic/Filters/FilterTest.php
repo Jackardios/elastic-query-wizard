@@ -53,7 +53,7 @@ class FilterTest extends TestCase
         $expectedModel = factory(TestModel::class)->create(['category' => 'some-testing-category']);
         $modelsResult = $this
             ->createElasticWizardWithFilters([
-                'category' => ['first' => $expectedModel->category],
+                'category' => [$expectedModel->category],
             ])
             ->setAllowedFilters('category')
             ->build()
