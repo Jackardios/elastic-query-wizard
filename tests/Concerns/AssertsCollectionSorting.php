@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Jackardios\ElasticQueryWizard\Tests\Concerns;
 
 use Illuminate\Support\Collection;

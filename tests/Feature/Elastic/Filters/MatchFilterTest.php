@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Filters;
 
 use Illuminate\Support\Collection;
@@ -16,23 +18,23 @@ class MatchFilterTest extends TestCase
 {
     protected Collection $models;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
-        $this->models = factory(TestModel::class, 5)->create();
+        $this->models = TestModel::factory()->count(5)->create();
     }
 
     /** @test */
     public function it_can_filter_results(): void
     {
-        $expectedModel = factory(TestModel::class)->create(['name' => 'Some new TESTING Name']);
+        $expectedModel = TestModel::factory()->create(['name' => 'Some new TESTING Name']);
 
         $modelsResult = $this
             ->createElasticWizardWithFilters([
                 'name' => 'new testing',
             ])
-            ->setAllowedFilters(new MatchFilter('name'))
+            ->allowedFilters(MatchFilter::make('name'))
             ->build()
             ->execute()
             ->models();
@@ -48,7 +50,7 @@ class MatchFilterTest extends TestCase
             ->createElasticWizardWithFilters([
                 'name' => ''
             ])
-            ->setAllowedFilters(new MatchFilter('name'))
+            ->allowedFilters(MatchFilter::make('name'))
             ->build()
             ->execute()
             ->models();
@@ -59,15 +61,15 @@ class MatchFilterTest extends TestCase
     /** @test */
     public function it_can_filter_results_by_array_of_values(): void
     {
-        factory(TestModel::class)->create(['name' => 'UniqueJohn Doe']);
-        $model1 = factory(TestModel::class)->create(['name' => 'Some new TESTING Name']);
-        $model2 = factory(TestModel::class)->create(['name' => 'UniqueJohn Deer']);
+        TestModel::factory()->create(['name' => 'UniqueJohn Doe']);
+        $model1 = TestModel::factory()->create(['name' => 'Some new TESTING Name']);
+        $model2 = TestModel::factory()->create(['name' => 'UniqueJohn Deer']);
 
         $results = $this
             ->createElasticWizardWithFilters([
                 'name' => "Testing,Deer",
             ])
-            ->setAllowedFilters(new MatchFilter('name'))
+            ->allowedFilters(MatchFilter::make('name'))
             ->build()
             ->execute()
             ->models();
@@ -82,14 +84,14 @@ class MatchFilterTest extends TestCase
     /** @test */
     public function it_should_apply_a_default_filter_value_if_nothing_in_request(): void
     {
-        $model1 = factory(TestModel::class)->create(['name' => 'UniqueJohn Doe']);
-        $model2 = factory(TestModel::class)->create(['name' => 'Some Deer']);
+        $model1 = TestModel::factory()->create(['name' => 'UniqueJohn Doe']);
+        $model2 = TestModel::factory()->create(['name' => 'Some Deer']);
 
-        $filter = (new MatchFilter('name'))->default('UniqueJohn');
+        $filter = (MatchFilter::make('name'))->default('UniqueJohn');
 
         $modelsResult = $this
             ->createElasticWizardWithFilters([])
-            ->setAllowedFilters($filter)
+            ->allowedFilters($filter)
             ->build()
             ->execute()
             ->models();
@@ -101,16 +103,16 @@ class MatchFilterTest extends TestCase
     /** @test */
     public function it_does_not_apply_default_filter_when_filter_exists_and_default_is_set(): void
     {
-        $model1 = factory(TestModel::class)->create(['name' => 'UniqueJohn UniqueDoe']);
-        $model2 = factory(TestModel::class)->create(['name' => 'Some Deer']);
+        $model1 = TestModel::factory()->create(['name' => 'UniqueJohn UniqueDoe']);
+        $model2 = TestModel::factory()->create(['name' => 'Some Deer']);
 
-        $filter = (new MatchFilter('name'))->default('Deer');
+        $filter = (MatchFilter::make('name'))->default('Deer');
 
         $modelsResult = $this
             ->createElasticWizardWithFilters([
                 'name' => 'UniqueDoe',
             ])
-            ->setAllowedFilters($filter)
+            ->allowedFilters($filter)
             ->build()
             ->execute()
             ->models();

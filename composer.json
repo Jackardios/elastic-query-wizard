@@ -10,13 +10,17 @@
         "laravel",
         "scout",
         "elastic",
+        "elasticsearch",
         "query",
         "wizard",
         "builder",
         "json",
         "api",
         "json api",
-        "query builder"
+        "query builder",
+        "filtering",
+        "sorting",
+        "search"
     ],
     "homepage": "https://github.com/jackardios/elastic-query-wizard",
     "license": "MIT",
@@ -33,18 +37,17 @@
     ],
     "require": {
         "php": "^8.1",
-        "jackardios/elastic-scout-driver-plus": "^v4.0.0",
-        "jackardios/laravel-query-wizard": "^v2.0.2",
-        "laravel/framework": "^v10.0"
+        "jackardios/es-scout-driver": "dev-main",
+        "jackardios/laravel-query-wizard": "dev-master",
+        "laravel/framework": "^v10.0 || ^v11.0 || ^v12.0"
     },
     "require-dev": {
         "ext-json": "*",
         "babenkoivan/elastic-migrations": "^v3.4.0",
-        "laravel/legacy-factories": "^1.0.4",
         "laravel/scout": "^v10.8.0",
         "jackardios/laravel-eloquent-spatial": "^2.0",
-        "orchestra/testbench": "^v8.21.1",
-        "phpunit/phpunit": "^9.5",
+        "orchestra/testbench": "^8.0 || ^9.0 || ^10.0",
+        "phpunit/phpunit": "^10.5 || ^11.0",
         "roave/security-advisories": "dev-latest"
     },
     "autoload": {
@@ -59,7 +62,7 @@
     },
     "scripts": {
         "test": "vendor/bin/phpunit",
-        "test-coverage": "phpunit --coverage-html coverage"
+        "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
     },
     "config": {
         "sort-packages": true,

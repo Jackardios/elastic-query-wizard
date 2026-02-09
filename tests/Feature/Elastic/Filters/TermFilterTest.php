@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Filters;
 
 use Illuminate\Support\Collection;
@@ -16,23 +18,23 @@ class TermFilterTest extends TestCase
 {
     protected Collection $models;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
-        $this->models = factory(TestModel::class, 5)->create();
+        $this->models = TestModel::factory()->count(5)->create();
     }
 
     /** @test */
     public function it_can_filter_and_match_results(): void
     {
-        $expectedModel = factory(TestModel::class)->create(['category' => 'some-testing-category']);
+        $expectedModel = TestModel::factory()->create(['category' => 'some-testing-category']);
 
         $modelsResult = $this
             ->createElasticWizardWithFilters([
                 'category' => $expectedModel->category,
             ])
-            ->setAllowedFilters(new TermFilter('category'))
+            ->allowedFilters(TermFilter::make('category'))
             ->build()
             ->execute()
             ->models();
@@ -44,13 +46,13 @@ class TermFilterTest extends TestCase
     /** @test */
     public function it_can_filter_and_reject_results(): void
     {
-        factory(TestModel::class)->create(['category' => 'Some Testing Category']);
+        TestModel::factory()->create(['category' => 'Some Testing Category']);
 
         $modelsResult = $this
             ->createElasticWizardWithFilters([
                 'category' => ' Testing ',
             ])
-            ->setAllowedFilters(new TermFilter('category'))
+            ->allowedFilters(TermFilter::make('category'))
             ->build()
             ->execute()
             ->models();
@@ -65,7 +67,7 @@ class TermFilterTest extends TestCase
             ->createElasticWizardWithFilters([
                 'category' => ''
             ])
-            ->setAllowedFilters(new TermFilter('category'))
+            ->allowedFilters(TermFilter::make('category'))
             ->build()
             ->execute()
             ->models();
@@ -77,15 +79,15 @@ class TermFilterTest extends TestCase
     public function it_can_filter_results_by_array_of_values(): void
     {
         $expectedModels = collect([
-            factory(TestModel::class)->create(['category' => 'some-testing-category']),
-            factory(TestModel::class)->create(['category' => 'another-testing-category'])
+            TestModel::factory()->create(['category' => 'some-testing-category']),
+            TestModel::factory()->create(['category' => 'another-testing-category'])
         ]);
 
         $results = $this
             ->createElasticWizardWithFilters([
                 'category' => "{$expectedModels[0]->category},{$expectedModels[1]->category}",
             ])
-            ->setAllowedFilters(new TermFilter('category'))
+            ->allowedFilters(TermFilter::make('category'))
             ->build()
             ->execute()
             ->models();
@@ -97,14 +99,14 @@ class TermFilterTest extends TestCase
     /** @test */
     public function it_should_apply_a_default_filter_value_if_nothing_in_request(): void
     {
-        $model1 = factory(TestModel::class)->create(['category' => 'UniqueJohn Doe']);
-        $model2 = factory(TestModel::class)->create(['category' => 'UniqueJohn Deer']);
+        $model1 = TestModel::factory()->create(['category' => 'UniqueJohn Doe']);
+        $model2 = TestModel::factory()->create(['category' => 'UniqueJohn Deer']);
 
-        $filter = (new TermFilter('category'))->default('UniqueJohn Doe');
+        $filter = (TermFilter::make('category'))->default('UniqueJohn Doe');
 
         $models = $this
             ->createElasticWizardWithFilters([])
-            ->setAllowedFilters($filter)
+            ->allowedFilters($filter)
             ->build()
             ->execute()
             ->models();
@@ -116,16 +118,16 @@ class TermFilterTest extends TestCase
     /** @test */
     public function it_does_not_apply_default_filter_when_filter_exists_and_default_is_set(): void
     {
-        $model1 = factory(TestModel::class)->create(['category' => 'UniqueJohn UniqueDoe']);
-        $model2 = factory(TestModel::class)->create(['category' => 'UniqueJohn Deer']);
+        $model1 = TestModel::factory()->create(['category' => 'UniqueJohn UniqueDoe']);
+        $model2 = TestModel::factory()->create(['category' => 'UniqueJohn Deer']);
 
-        $filter = (new TermFilter('category'))->default('UniqueJohn Deer');
+        $filter = (TermFilter::make('category'))->default('UniqueJohn Deer');
 
         $models = $this
             ->createElasticWizardWithFilters([
                 'category' => 'UniqueJohn UniqueDoe',
             ])
-            ->setAllowedFilters($filter)
+            ->allowedFilters($filter)
             ->build()
             ->execute()
             ->models();

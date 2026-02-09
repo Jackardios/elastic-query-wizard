@@ -1,9 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Jackardios\ElasticQueryWizard\Tests\Fixtures\Models;
 
-use Elastic\ScoutDriverPlus\Searchable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Jackardios\ElasticQueryWizard\Tests\Fixtures\Factories\GeoModelFactory;
+use Jackardios\EsScoutDriver\Searchable;
 use MatanYadaev\EloquentSpatial\Objects\Point;
 
 /**
@@ -11,7 +15,13 @@ use MatanYadaev\EloquentSpatial\Objects\Point;
  */
 class GeoModel extends Model
 {
+    use HasFactory;
     use Searchable;
+
+    protected static function newFactory(): GeoModelFactory
+    {
+        return GeoModelFactory::new();
+    }
 
     protected $guarded = [];
 

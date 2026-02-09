@@ -1,14 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Includes;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Jackardios\ElasticQueryWizard\ElasticInclude;
-use Jackardios\ElasticQueryWizard\Includes\CountInclude;
-use Jackardios\ElasticQueryWizard\Includes\RelationshipInclude;
+use Jackardios\ElasticQueryWizard\Includes\AbstractElasticInclude;
+use Jackardios\QueryWizard\Eloquent\Includes\CountInclude;
+use Jackardios\QueryWizard\Eloquent\Includes\RelationshipInclude;
+use Jackardios\QueryWizard\Contracts\IncludeInterface;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\MorphModel;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
@@ -24,11 +27,11 @@ class IncludeTest extends TestCase
 {
     protected Collection $models;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
-        $this->models = factory(TestModel::class, 5)->create();
+        $this->models = TestModel::factory()->count(5)->create();
 
         $this->models->each(function (TestModel $model) {
             $model
@@ -48,7 +51,7 @@ class IncludeTest extends TestCase
     public function it_does_not_require_includes(): void
     {
         $models = $this->createElasticWizardFromQuery()
-            ->setAllowedIncludes('relatedModels')
+            ->allowedIncludes('relatedModels')
             ->build()
             ->execute()
             ->models();
@@ -60,7 +63,7 @@ class IncludeTest extends TestCase
     public function it_can_handle_empty_includes(): void
     {
         $models = $this->createElasticWizardFromQuery()
-            ->setAllowedIncludes([
+            ->allowedIncludes([
                 null,
                 [],
                 '',
@@ -77,7 +80,7 @@ class IncludeTest extends TestCase
     {
         $models = $this
             ->createElasticWizardWithIncludes('relatedModels')
-            ->setAllowedIncludes('relatedModels')
+            ->allowedIncludes('relatedModels')
             ->build()
             ->execute()
             ->models();
@@ -90,7 +93,7 @@ class IncludeTest extends TestCase
     {
         $models = $this
             ->createElasticWizardWithIncludes('include-alias')
-            ->setAllowedIncludes(new RelationshipInclude('relatedModels', 'include-alias'))
+            ->allowedIncludes(RelationshipInclude::make('relatedModels', 'include-alias'))
             ->build()
             ->execute()
             ->models();
@@ -103,7 +106,7 @@ class IncludeTest extends TestCase
     {
         $model = $this
             ->createElasticWizardWithIncludes('relatedModelsCount')
-            ->setAllowedIncludes('relatedModelsCount')
+            ->allowedIncludes('relatedModelsCount')
             ->build()
             ->execute()
             ->models()
@@ -117,7 +120,7 @@ class IncludeTest extends TestCase
     {
         $model = $this
             ->createElasticWizardWithIncludes('relatedModelsCount')
-            ->setAllowedIncludes('relatedModels')
+            ->allowedIncludes('relatedModels')
             ->build()
             ->execute()
             ->models()
@@ -131,7 +134,7 @@ class IncludeTest extends TestCase
     {
         $models = $this
             ->createElasticWizardWithIncludes('relatedModels.nestedRelatedModels')
-            ->setAllowedIncludes('relatedModels.nestedRelatedModels')
+            ->allowedIncludes('relatedModels.nestedRelatedModels')
             ->build()
             ->execute()
             ->models();
@@ -146,8 +149,8 @@ class IncludeTest extends TestCase
     {
         $models = $this
             ->createElasticWizardWithIncludes('nested-alias')
-            ->setAllowedIncludes(
-                new RelationshipInclude('relatedModels.nestedRelatedModels', 'nested-alias')
+            ->allowedIncludes(
+                RelationshipInclude::make('relatedModels.nestedRelatedModels', 'nested-alias')
             )
             ->build()
             ->execute()
@@ -163,7 +166,7 @@ class IncludeTest extends TestCase
     {
         $models = $this
             ->createElasticWizardWithIncludes('relatedModels')
-            ->setAllowedIncludes('relatedModels.nestedRelatedModels')
+            ->allowedIncludes('relatedModels.nestedRelatedModels')
             ->build()
             ->execute()
             ->models();
@@ -172,33 +175,41 @@ class IncludeTest extends TestCase
     }
 
     /** @test */
-    public function allowing_a_nested_include_only_allows_the_include_count_for_the_first_level(): void
+    public function it_allows_the_include_count_for_the_first_level_of_nested_includes(): void
     {
         $model = $this
             ->createElasticWizardWithIncludes('relatedModelsCount')
-            ->setAllowedIncludes('relatedModels.nestedRelatedModels')
+            ->allowedIncludes('relatedModels.nestedRelatedModels')
             ->build()
             ->execute()
             ->models()
             ->first();
 
         $this->assertNotNull($model->related_models_count);
+    }
 
+    /** @test */
+    public function it_does_not_allow_nested_related_models_count_when_only_nested_include_is_allowed(): void
+    {
         $this->expectException(InvalidIncludeQuery::class);
 
         $this
             ->createElasticWizardWithIncludes('nestedRelatedModelsCount')
-            ->setAllowedIncludes('relatedModels.nestedRelatedModels')
+            ->allowedIncludes('relatedModels.nestedRelatedModels')
             ->build()
             ->execute()
             ->models()
             ->first();
+    }
 
+    /** @test */
+    public function it_does_not_allow_nested_count_via_dotted_path_when_only_nested_include_is_allowed(): void
+    {
         $this->expectException(InvalidIncludeQuery::class);
 
         $this
             ->createElasticWizardWithIncludes('related-models.nestedRelatedModelsCount')
-            ->setAllowedIncludes('relatedModels.nestedRelatedModels')
+            ->allowedIncludes('relatedModels.nestedRelatedModels')
             ->build()
             ->execute()
             ->models()
@@ -210,7 +221,7 @@ class IncludeTest extends TestCase
     {
         $models = $this
             ->createElasticWizardWithIncludes('morphModels')
-            ->setAllowedIncludes('morphModels')
+            ->allowedIncludes('morphModels')
             ->build()
             ->execute()
             ->models();
@@ -222,7 +233,7 @@ class IncludeTest extends TestCase
     public function it_can_include_reverse_morph_model_relations(): void
     {
         $models = $this->createElasticWizardWithIncludes('parent', MorphModel::class)
-            ->setAllowedIncludes('parent')
+            ->allowedIncludes('parent')
             ->build()
             ->execute()
             ->models();
@@ -235,7 +246,7 @@ class IncludeTest extends TestCase
     {
         $models = $this
             ->createElasticWizardWithIncludes('relatedModels')
-            ->setAllowedIncludes('relatedModels')
+            ->allowedIncludes('relatedModels')
             ->build()
             ->execute()
             ->models();
@@ -250,7 +261,7 @@ class IncludeTest extends TestCase
 
         $models = $this
             ->createElasticWizardWithIncludes('relatedModels')
-            ->setAllowedIncludes('relatedModels')
+            ->allowedIncludes('relatedModels')
             ->build()
             ->execute()
             ->models();
@@ -265,7 +276,7 @@ class IncludeTest extends TestCase
 
         $this
             ->createElasticWizardWithIncludes('random-model')
-            ->setAllowedIncludes('relatedModels')
+            ->allowedIncludes('relatedModels')
             ->build();
     }
 
@@ -274,7 +285,7 @@ class IncludeTest extends TestCase
     {
         $models = $this
             ->createElasticWizardWithIncludes('relatedModels')
-            ->setAllowedIncludes('relatedModels', 'otherRelatedModels')
+            ->allowedIncludes('relatedModels', 'otherRelatedModels')
             ->build()
             ->execute()
             ->models();
@@ -287,7 +298,7 @@ class IncludeTest extends TestCase
     {
         $models = $this
             ->createElasticWizardWithIncludes('relatedModels')
-            ->setAllowedIncludes(['relatedModels', 'otherRelatedModels'])
+            ->allowedIncludes(['relatedModels', 'otherRelatedModels'])
             ->build()
             ->execute()
             ->models();
@@ -300,19 +311,18 @@ class IncludeTest extends TestCase
     {
         $query = $this
             ->createElasticWizardWithIncludes('relatedModels')
-            ->setAllowedIncludes('relatedModels.nestedRelatedModels', 'relatedModels')
+            ->allowedIncludes('relatedModels.nestedRelatedModels', 'relatedModels')
             ->build();
 
         $property = (new ReflectionClass($query))->getProperty('allowedIncludes');
-        $property->setAccessible(true);
+        $includeNames = array_map(
+            fn(IncludeInterface $allowedInclude) => $allowedInclude->getName(),
+            $property->getValue($query)
+        );
 
-        $includes = $property->getValue($query)->map(function (ElasticInclude $allowedInclude) {
-            return $allowedInclude->getName();
-        });
-
-        $this->assertTrue($includes->contains('relatedModels'));
-        $this->assertTrue($includes->contains('relatedModelsCount'));
-        $this->assertTrue($includes->contains('relatedModels.nestedRelatedModels'));
+        $this->assertContains('relatedModels', $includeNames);
+        $this->assertContains('relatedModelsCount', $includeNames);
+        $this->assertContains('relatedModels.nestedRelatedModels', $includeNames);
     }
 
     /** @test */
@@ -320,7 +330,7 @@ class IncludeTest extends TestCase
     {
         $models = $this
             ->createElasticWizardWithIncludes('relatedModels,otherRelatedModels')
-            ->setAllowedIncludes(['relatedModels', 'otherRelatedModels'])
+            ->allowedIncludes(['relatedModels', 'otherRelatedModels'])
             ->build()
             ->execute()
             ->models();
@@ -336,7 +346,7 @@ class IncludeTest extends TestCase
 
         $this
             ->createElasticWizardWithIncludes('relatedThroughPivotModels')
-            ->setAllowedIncludes('relatedThroughPivotModels')
+            ->allowedIncludes('relatedThroughPivotModels')
             ->build()
             ->execute()
             ->models();
@@ -352,7 +362,7 @@ class IncludeTest extends TestCase
     {
         $models = $this
             ->createElasticWizardWithIncludes('relatedThroughPivotModels')
-            ->setAllowedIncludes('relatedThroughPivotModels')
+            ->allowedIncludes('relatedThroughPivotModels')
             ->build()
             ->execute()
             ->models();
@@ -375,9 +385,9 @@ class IncludeTest extends TestCase
     public function it_can_alias_multiple_allowed_includes(): void
     {
         $models = $this->createElasticWizardWithIncludes('relatedModelsCount,relationShipAlias')
-            ->setAllowedIncludes([
-                new CountInclude('relatedModels', 'relatedModelsCount'),
-                new RelationshipInclude('otherRelatedModels', 'relationShipAlias'),
+            ->allowedIncludes([
+                CountInclude::make('relatedModels')->alias('relatedModelsCount'),
+                RelationshipInclude::make('otherRelatedModels', 'relationShipAlias'),
             ])
             ->build()
             ->execute()
@@ -392,16 +402,31 @@ class IncludeTest extends TestCase
     /** @test */
     public function it_can_include_custom_include_class(): void
     {
-        $includeClass = new class('relatedModels') extends ElasticInclude {
-            public function handle($queryWizard, $queryBuilder): void
+        $includeClass = new class('relatedModels') extends AbstractElasticInclude {
+            public function __construct(string $relation, ?string $alias = null)
             {
-                $queryBuilder->withCount($this->getInclude());
+                parent::__construct($relation, $alias);
+            }
+
+            public static function make(string $relation, ?string $alias = null): static
+            {
+                return new static($relation, $alias);
+            }
+
+            public function getType(): string
+            {
+                return 'custom';
+            }
+
+            public function handleEloquent(Builder $eloquentBuilder): void
+            {
+                $eloquentBuilder->withCount($this->getRelation());
             }
         };
 
         $modelResult = $this
             ->createElasticWizardWithIncludes('relatedModels')
-            ->setAllowedIncludes($includeClass)
+            ->allowedIncludes($includeClass)
             ->build()
             ->execute()
             ->models()
@@ -413,16 +438,31 @@ class IncludeTest extends TestCase
     /** @test */
     public function it_can_include_custom_include_class_by_alias(): void
     {
-        $includeClass = new class('relatedModels', 'relatedModelsCount') extends ElasticInclude {
-            public function handle($queryWizard, $queryBuilder): void
+        $includeClass = (new class('relatedModels') extends AbstractElasticInclude {
+            public function __construct(string $relation, ?string $alias = null)
             {
-                $queryBuilder->withCount($this->getInclude());
+                parent::__construct($relation, $alias);
             }
-        };
+
+            public static function make(string $relation, ?string $alias = null): static
+            {
+                return new static($relation, $alias);
+            }
+
+            public function getType(): string
+            {
+                return 'custom';
+            }
+
+            public function handleEloquent(Builder $eloquentBuilder): void
+            {
+                $eloquentBuilder->withCount($this->getRelation());
+            }
+        })->alias('relatedModelsCount');
 
         $modelResult = $this
             ->createElasticWizardWithIncludes('relatedModelsCount')
-            ->setAllowedIncludes($includeClass)
+            ->allowedIncludes($includeClass)
             ->build()
             ->execute()
             ->models()
@@ -438,7 +478,7 @@ class IncludeTest extends TestCase
             ->addEloquentQueryCallback(function(Builder $query) {
                 return $query->select('id', 'name');
             })
-            ->setAllowedIncludes(new CountInclude('relatedModels', 'relatedModelsCount'))
+            ->allowedIncludes(CountInclude::make('relatedModels')->alias('relatedModelsCount'))
             ->build()
             ->execute()
             ->models()

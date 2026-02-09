@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Jackardios\ElasticQueryWizard;
 
 use Countable;
@@ -12,10 +14,11 @@ class FilterValueSanitizer
     /**
      * @param mixed $value raw filter value
      * @param string $propertyName will be used to throw exception
+     * @param float $epsilon tolerance for comparing coordinates
      * @return array{0: float, 1: float, 2: float, 3: float}
      * @throws InvalidGeoBoundingBoxValue
      */
-    public static function geoBoundingBoxValue(mixed $value, string $propertyName): array
+    public static function geoBoundingBoxValue(mixed $value, string $propertyName, float $epsilon = 0.00001): array
     {
         $bbox = [];
         $arrayValue = is_array($value) ? $value : [];
@@ -32,19 +35,20 @@ class FilterValueSanitizer
             throw InvalidGeoBoundingBoxValue::make($propertyName);
         }
 
-
         [$left, $bottom, $right, $top] = $bbox;
 
         if ($left > $right) {
             [$left, $right] = [$right, $left];
-        } elseif ($left === $right) {
-            $left -= 0.00001;
+        } elseif (abs($left - $right) < $epsilon) {
+            $left -= $epsilon;
+            $right += $epsilon;
         }
 
         if ($bottom > $top) {
             [$top, $bottom] = [$bottom, $top];
-        } elseif ($bottom === $top) {
-            $bottom -= 0.00001;
+        } elseif (abs($bottom - $top) < $epsilon) {
+            $bottom -= $epsilon;
+            $top += $epsilon;
         }
 
         return [$left, $bottom, $right, $top];
@@ -61,7 +65,8 @@ class FilterValueSanitizer
         $value = is_array($value) ? $value : [];
         $lat = is_numeric($value['lat'] ?? null) ? floatval($value['lat']) : null;
         $lon = is_numeric($value['lon'] ?? null) ? floatval($value['lon']) : null;
-        $distance = is_string($value['distance'] ?? null) ? trim($value['distance']) : null;
+        $rawDistance = $value['distance'] ?? null;
+        $distance = (is_string($rawDistance) || is_numeric($rawDistance)) ? trim((string) $rawDistance) : null;
 
         if (! isset($lat, $lon, $distance)) {
             throw InvalidGeoDistanceValue::make($propertyName);
@@ -74,7 +79,7 @@ class FilterValueSanitizer
      * @param mixed $value raw filter value
      * @param string $propertyName will be used to throw exception
      * @return array{gt?: string|number, gte?: string|number, lt?: string|number, lte?: string|number}
-     * @throws InvalidGeoDistanceValue
+     * @throws InvalidRangeValue
      */
     public static function rangeFilterValue(mixed $value, string $propertyName): array
     {
@@ -117,7 +122,6 @@ class FilterValueSanitizer
         return empty($value);
     }
 
-
     public static function isFilled($value): bool
     {
         return ! static::isBlank($value);
@@ -131,5 +135,23 @@ class FilterValueSanitizer
     public static function arrayToCommaSeparatedString(array $array): string
     {
         return implode(',', static::arrayWithOnlyFilledItems($array));
+    }
+
+    /**
+     * Converts a value to an array, handling comma-separated strings.
+     *
+     * @return array<int, mixed>
+     */
+    public static function toArray(mixed $value): array
+    {
+        if (is_array($value)) {
+            return array_values(static::arrayWithOnlyFilledItems($value));
+        }
+
+        if (is_string($value) && str_contains($value, ',')) {
+            return array_values(static::arrayWithOnlyFilledItems(explode(',', $value)));
+        }
+
+        return static::isFilled($value) ? [$value] : [];
     }
 }

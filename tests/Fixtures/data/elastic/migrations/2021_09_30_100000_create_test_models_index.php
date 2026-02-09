@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Elastic\Adapter\Indices\Mapping;
 use Elastic\Adapter\Indices\Settings;
 use Elastic\Migrations\Facades\Index;

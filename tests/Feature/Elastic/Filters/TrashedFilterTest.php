@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Filters;
 
 use Illuminate\Support\Collection;
@@ -18,14 +20,14 @@ class TrashedFilterTest extends TestCase
 {
     protected Collection $models;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         Config::set('scout.soft_delete', true);
 
-        $this->models = factory(SoftDeleteModel::class, 2)->create()
-            ->merge(factory(SoftDeleteModel::class, 1)->create(['deleted_at' => now()]));
+        $this->models = SoftDeleteModel::factory()->count(2)->create()
+            ->merge(SoftDeleteModel::factory()->create(['deleted_at' => now()]));
     }
 
     /** @test */
@@ -35,7 +37,7 @@ class TrashedFilterTest extends TestCase
             ->createQueryFromFilterRequest([
                 'trashed' => '',
             ])
-            ->setAllowedFilters(new TrashedFilter())
+            ->allowedFilters(TrashedFilter::make())
             ->build()
             ->execute()
             ->models();
@@ -50,7 +52,7 @@ class TrashedFilterTest extends TestCase
             ->createQueryFromFilterRequest([
                 'trashed' => 'only',
             ])
-            ->setAllowedFilters(new TrashedFilter())
+            ->allowedFilters(TrashedFilter::make())
             ->build()
             ->execute()
             ->models();
@@ -65,7 +67,7 @@ class TrashedFilterTest extends TestCase
             ->createQueryFromFilterRequest([
                 'trashed' => 'with',
             ])
-            ->setAllowedFilters(new TrashedFilter())
+            ->allowedFilters(TrashedFilter::make())
             ->build()
             ->execute()
             ->models();

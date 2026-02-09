@@ -1,34 +1,44 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Jackardios\ElasticQueryWizard\Filters;
 
-use Elastic\ScoutDriverPlus\Support\Query;
-use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
+use Jackardios\EsScoutDriver\Search\SearchBuilder;
+use Jackardios\EsScoutDriver\Support\Query;
 
-class TermFilter extends ElasticFilter
+class TermFilter extends AbstractElasticFilter
 {
     use HasParameters;
 
-    public function handle($queryWizard, $queryBuilder, $value): void
+    public static function make(string $property, ?string $alias = null): static
     {
-        $prepared = is_array($value)
-            ? FilterValueSanitizer::arrayWithOnlyFilledItems($value)
-            : $value;
+        return new static($property, $alias);
+    }
 
-        if (FilterValueSanitizer::isBlank($prepared)) {
+    public function getType(): string
+    {
+        return 'term';
+    }
+
+    public function handle(SearchBuilder $builder, mixed $value): void
+    {
+        $prepared = FilterValueSanitizer::toArray($value);
+
+        if (empty($prepared)) {
             return;
         }
 
-        $propertyName = $this->getPropertyName();
+        $propertyName = $this->property;
 
-        $query = is_array($prepared)
-            ? Query::terms()->field($propertyName)->values($prepared)
-            : Query::term()->field($propertyName)->value($prepared);
+        $query = count($prepared) === 1
+            ? Query::term($propertyName, $prepared[0])
+            : Query::terms($propertyName, $prepared);
 
         $query = $this->applyParametersOnQuery($query);
 
-        $queryWizard->getRootBoolQuery()->filter($query);
+        $builder->filter($query);
     }
 }

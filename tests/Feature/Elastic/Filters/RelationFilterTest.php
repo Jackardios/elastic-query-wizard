@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Filters;
 
 use Illuminate\Support\Collection;
@@ -17,11 +19,11 @@ class RelationFilterTest extends TestCase
 {
     protected Collection $models;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
-        $this->models = factory(TestModel::class, 5)->create();
+        $this->models = TestModel::factory()->count(5)->create();
 
         $this->models->each(function (TestModel $model, $index) {
             $model
@@ -38,7 +40,7 @@ class RelationFilterTest extends TestCase
             ->createElasticWizardWithFilters([
                 'relatedModels.name' => $expectedModel->name,
             ])
-            ->setAllowedFilters(new ExactFilter('relatedModels.name'))
+            ->allowedFilters(ExactFilter::make('relatedModels.name'))
             ->build()
             ->execute()
             ->models();
@@ -54,7 +56,7 @@ class RelationFilterTest extends TestCase
             ->createElasticWizardWithFilters([
                 'relatedModels.nestedRelatedModels.name' => 'test0,test1',
             ])
-            ->setAllowedFilters(new ExactFilter('relatedModels.nestedRelatedModels.name'))
+            ->allowedFilters(ExactFilter::make('relatedModels.nestedRelatedModels.name'))
             ->build()
             ->execute()
             ->models();
@@ -73,7 +75,7 @@ class RelationFilterTest extends TestCase
             ->createElasticWizardWithFilters([
                 'relatedModels.name' => 'None existing first name',
             ])
-            ->setAllowedFilters(new ExactFilter('relatedModels.name'))
+            ->allowedFilters(ExactFilter::make('relatedModels.name'))
             ->build()
             ->execute()
             ->models();
@@ -88,7 +90,7 @@ class RelationFilterTest extends TestCase
             ->createElasticWizardWithFilters([
                 'relatedModels.nestedRelatedModels.name' => 'test1',
             ])
-            ->setAllowedFilters(new ExactFilter('relatedModels.nestedRelatedModels.name'))
+            ->allowedFilters(ExactFilter::make('relatedModels.nestedRelatedModels.name'))
             ->build()
             ->execute()
             ->models();
@@ -115,9 +117,9 @@ class RelationFilterTest extends TestCase
                 'relatedModels.name' => $expectedModel->name,
                 'relatedModels.nestedRelatedModels.name' => 'test0',
             ])
-            ->setAllowedFilters(
-                new ExactFilter('relatedModels.name'),
-                new ExactFilter('relatedModels.nestedRelatedModels.name')
+            ->allowedFilters(
+                ExactFilter::make('relatedModels.name'),
+                ExactFilter::make('relatedModels.nestedRelatedModels.name')
             )
             ->build()
             ->execute()
@@ -138,7 +140,7 @@ class RelationFilterTest extends TestCase
                     return $model->relatedModels->pluck('id');
                 })->flatten()->all(),
             ])
-            ->setAllowedFilters(new ExactFilter('relatedModels.id'))
+            ->allowedFilters(ExactFilter::make('relatedModels.id'))
             ->build()
             ->execute()
             ->models();
@@ -150,13 +152,13 @@ class RelationFilterTest extends TestCase
     /** @test */
     public function it_can_filter_and_reject_results_by_exact_property(): void
     {
-        factory(TestModel::class)->create(['name' => 'John Testing Doe']);
+        TestModel::factory()->create(['name' => 'John Testing Doe']);
 
         $modelsResult = $this
             ->createElasticWizardWithFilters([
                 'relatedModels.nestedRelatedModels.name' => ' test ',
             ])
-            ->setAllowedFilters(new ExactFilter('relatedModels.nestedRelatedModels.name'))
+            ->allowedFilters(ExactFilter::make('relatedModels.nestedRelatedModels.name'))
             ->build()
             ->execute()
             ->models();

@@ -1,13 +1,27 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Jackardios\ElasticQueryWizard\Sorts;
 
-use Jackardios\ElasticQueryWizard\ElasticSort;
+use Jackardios\QueryWizard\Sorts\AbstractSort;
 
-class FieldSort extends ElasticSort
+class FieldSort extends AbstractSort
 {
-    public function handle($queryWizard, $queryBuilder, string $direction): void
+    public static function make(string $property, ?string $alias = null): static
     {
-        $queryBuilder->sort($this->getPropertyName(), $direction);
+        return new static($property, $alias);
+    }
+
+    public function getType(): string
+    {
+        return 'field';
+    }
+
+    public function apply(mixed $subject, string $direction): mixed
+    {
+        $subject->sort($this->property, $direction);
+
+        return $subject;
     }
 }

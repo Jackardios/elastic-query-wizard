@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Filters;
 
 use Illuminate\Support\Collection;
@@ -17,11 +19,11 @@ class RangeFilterTest extends TestCase
 {
     protected Collection $models;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
-        $this->models = factory(TestModel::class, 5)->create();
+        $this->models = TestModel::factory()->count(5)->create();
     }
 
     /** @test */
@@ -34,7 +36,7 @@ class RangeFilterTest extends TestCase
                     'lte' => '4'
                 ],
             ])
-            ->setAllowedFilters(new RangeFilter('id'))
+            ->allowedFilters(RangeFilter::make('id'))
             ->build()
             ->execute()
             ->models();
@@ -50,7 +52,7 @@ class RangeFilterTest extends TestCase
             ->createElasticWizardWithFilters([
                 'id' => ''
             ])
-            ->setAllowedFilters(new RangeFilter('id'))
+            ->allowedFilters(RangeFilter::make('id'))
             ->build()
             ->execute()
             ->models();
@@ -61,11 +63,11 @@ class RangeFilterTest extends TestCase
     /** @test */
     public function it_should_apply_a_default_filter_value_if_nothing_in_request(): void
     {
-        $filter = (new RangeFilter('id'))->default(['gte' => '2', 'lt' => 4]);
+        $filter = (RangeFilter::make('id'))->default(['gte' => '2', 'lt' => 4]);
 
         $modelsResult = $this
             ->createElasticWizardWithFilters([])
-            ->setAllowedFilters($filter)
+            ->allowedFilters($filter)
             ->build()
             ->execute()
             ->models();
@@ -77,7 +79,7 @@ class RangeFilterTest extends TestCase
     /** @test */
     public function it_does_not_apply_default_filter_when_filter_exists_and_default_is_set(): void
     {
-        $filter = (new RangeFilter('id'))->default(['gte' => '2', 'lt' => 4]);
+        $filter = (RangeFilter::make('id'))->default(['gte' => '2', 'lt' => 4]);
 
         $modelsResult = $this
             ->createElasticWizardWithFilters([
@@ -86,7 +88,7 @@ class RangeFilterTest extends TestCase
                     'lte' => '5'
                 ],
             ])
-            ->setAllowedFilters($filter)
+            ->allowedFilters($filter)
             ->build()
             ->execute()
             ->models();
@@ -104,8 +106,8 @@ class RangeFilterTest extends TestCase
             ->createElasticWizardWithFilters([
                 'id' => 'some value',
             ])
-            ->setAllowedFilters([
-                new RangeFilter('id')
+            ->allowedFilters([
+                RangeFilter::make('id')
             ])
             ->build();
     }
@@ -122,8 +124,8 @@ class RangeFilterTest extends TestCase
                     'lte' => '5'
                 ],
             ])
-            ->setAllowedFilters([
-                new RangeFilter('id')
+            ->allowedFilters([
+                RangeFilter::make('id')
             ])
             ->build();
     }

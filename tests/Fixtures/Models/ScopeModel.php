@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Jackardios\ElasticQueryWizard\Tests\Fixtures\Models;
 
-use Elastic\ScoutDriverPlus\Searchable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Jackardios\EsScoutDriver\Searchable;
 
 class ScopeModel extends Model
 {

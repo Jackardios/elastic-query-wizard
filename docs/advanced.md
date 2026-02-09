@@ -1,0 +1,557 @@
+# Advanced Usage
+
+This section covers advanced features and customization options for Elastic Query Wizard.
+
+> **Note:** Code examples in this document assume the following imports:
+> ```php
+> use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
+> use Jackardios\ElasticQueryWizard\ElasticFilter;
+> use Jackardios\ElasticQueryWizard\ElasticSort;
+> use Jackardios\ElasticQueryWizard\ElasticInclude;
+> use Jackardios\EsScoutDriver\Support\Query;
+> use Illuminate\Database\Eloquent\Builder;
+> use Illuminate\Database\Eloquent\Collection;
+> ```
+
+## Table of Contents
+
+- [Accessing the SearchBuilder](#accessing-the-searchbuilder)
+- [Custom Aggregations](#custom-aggregations)
+- [Working with Bool Query](#working-with-bool-query)
+- [Eloquent Query Callbacks](#eloquent-query-callbacks)
+- [Collection Callbacks](#collection-callbacks)
+- [Resource Schemas](#resource-schemas)
+- [Fields and Appends](#fields-and-appends)
+- [Creating Custom Filters](#creating-custom-filters)
+- [Creating Custom Sorts](#creating-custom-sorts)
+- [Creating Custom Includes](#creating-custom-includes)
+
+## Accessing the SearchBuilder
+
+After building the wizard, you can access the underlying `SearchBuilder` to add custom Elasticsearch functionality:
+
+```php
+$wizard = ElasticQueryWizard::for(Post::class)
+    ->allowedFilters([
+        ElasticFilter::term('status'),
+    ])
+    ->build();
+
+// Access the SearchBuilder
+$searchBuilder = $wizard->getSubject();
+
+// Add custom query
+$searchBuilder->must(Query::matchPhrase('content', 'exact phrase'));
+
+// Execute and get results
+$results = $wizard->execute();
+```
+
+---
+
+## Custom Aggregations
+
+Add Elasticsearch aggregations to collect analytics alongside search results:
+
+```php
+$wizard = ElasticQueryWizard::for(Product::class)
+    ->allowedFilters([
+        ElasticFilter::term('category'),
+        ElasticFilter::range('price'),
+    ])
+    ->build();
+
+// Add aggregations
+$wizard->getSubject()
+    ->aggregate('categories', [
+        'terms' => ['field' => 'category', 'size' => 20],
+    ])
+    ->aggregate('price_stats', [
+        'stats' => ['field' => 'price'],
+    ])
+    ->aggregate('price_histogram', [
+        'histogram' => ['field' => 'price', 'interval' => 100],
+    ]);
+
+$results = $wizard->execute();
+
+// Get aggregation results
+$aggregations = $results->aggregations();
+$categories = $aggregations['categories']['buckets'];
+$priceStats = $aggregations['price_stats'];
+```
+
+### Nested Aggregations
+
+```php
+$wizard->getSubject()->aggregate('categories', [
+    'terms' => ['field' => 'category'],
+    'aggs' => [
+        'avg_price' => [
+            'avg' => ['field' => 'price'],
+        ],
+        'brands' => [
+            'terms' => ['field' => 'brand', 'size' => 5],
+        ],
+    ],
+]);
+```
+
+---
+
+## Working with Bool Query
+
+Access the root bool query for complex query logic:
+
+```php
+$wizard = ElasticQueryWizard::for(Post::class)
+    ->allowedFilters([
+        ElasticFilter::term('status'),
+    ])
+    ->build();
+
+// Access the bool query directly
+$boolQuery = $wizard->boolQuery();
+
+// Add must clause
+$boolQuery->must(Query::match('title', 'search term'));
+
+// Add should clause with minimum_should_match
+$boolQuery->should(Query::term('is_featured', true));
+$boolQuery->should(Query::range('views')->gte(1000));
+$boolQuery->minimumShouldMatch(1);
+
+// Add must_not clause
+$boolQuery->mustNot(Query::term('is_hidden', true));
+```
+
+---
+
+## Eloquent Query Callbacks
+
+Add callbacks that modify the Eloquent query after Elasticsearch returns results:
+
+```php
+$wizard = ElasticQueryWizard::for(Post::class)
+    ->allowedFilters([
+        ElasticFilter::match('title'),
+    ])
+    ->addEloquentQueryCallback(function (Builder $builder, SearchResult $searchResult) {
+        // Add additional Eloquent constraints
+        $builder->where('is_published', true);
+
+        // Access Elasticsearch result metadata
+        $hits = $searchResult->hits();
+        $total = $searchResult->total();
+    })
+    ->build();
+```
+
+### Use Cases
+
+#### Adding Scopes
+
+```php
+->addEloquentQueryCallback(function (Builder $builder, SearchResult $searchResult) {
+    $builder->withoutGlobalScope('active');
+})
+```
+
+#### Custom Eager Loading
+
+```php
+->addEloquentQueryCallback(function (Builder $builder, SearchResult $searchResult) {
+    $builder->with(['author' => function ($query) {
+        $query->select('id', 'name', 'avatar');
+    }]);
+})
+```
+
+---
+
+## Collection Callbacks
+
+Add callbacks that transform the collection of models after they're loaded:
+
+```php
+$wizard = ElasticQueryWizard::for(Post::class)
+    ->allowedFilters([
+        ElasticFilter::match('title'),
+    ])
+    ->addEloquentCollectionCallback(function (Collection $collection) {
+        // Transform the collection
+        return $collection->map(function ($post) {
+            $post->computed_field = calculateSomething($post);
+            return $post;
+        });
+    })
+    ->build();
+```
+
+### Use Cases
+
+#### Adding Computed Properties
+
+```php
+->addEloquentCollectionCallback(function (Collection $collection) {
+    return $collection->each(function ($model) {
+        $model->setAttribute('score', $model->likes * 2 + $model->views);
+    });
+})
+```
+
+#### Filtering Results
+
+```php
+->addEloquentCollectionCallback(function (Collection $collection) {
+    return $collection->filter(function ($model) {
+        return $model->canBeViewed(auth()->user());
+    })->values();
+})
+```
+
+---
+
+## Resource Schemas
+
+Use resource schemas for reusable query configurations:
+
+```php
+use Jackardios\QueryWizard\Schema\ResourceSchemaInterface;
+
+class PostSchema implements ResourceSchemaInterface
+{
+    public function model(): string
+    {
+        return Post::class;
+    }
+
+    public function type(): string
+    {
+        return 'posts';
+    }
+
+    public function filters(): array
+    {
+        return [
+            ElasticFilter::term('status'),
+            ElasticFilter::match('title'),
+            ElasticFilter::range('created_at'),
+        ];
+    }
+
+    public function sorts(): array
+    {
+        return [
+            ElasticSort::field('created_at'),
+            ElasticSort::field('title'),
+        ];
+    }
+
+    public function includes(): array
+    {
+        return [
+            'author',
+            'comments',
+            ElasticInclude::count('comments'),
+        ];
+    }
+
+    public function fields(): array
+    {
+        return ['id', 'title', 'status', 'body', 'created_at'];
+    }
+
+    public function appends(): array
+    {
+        return ['excerpt', 'reading_time'];
+    }
+
+    public function defaultSorts(): array
+    {
+        return ['-created_at'];
+    }
+}
+```
+
+### Using Schemas
+
+```php
+// Create wizard from schema
+$wizard = ElasticQueryWizard::forSchema(PostSchema::class)->build();
+
+// Or with schema instance
+$schema = new PostSchema();
+$wizard = ElasticQueryWizard::forSchema($schema)->build();
+```
+
+---
+
+## Fields and Appends
+
+### Allowed Fields
+
+Control which fields can be requested via the `fields` parameter:
+
+```php
+ElasticQueryWizard::for(Post::class)
+    ->allowedFields(['id', 'title', 'status', 'body', 'created_at'])
+    ->build();
+```
+
+```
+GET /posts?fields[posts]=id,title,status
+```
+
+### Allowed Appends
+
+Control which Eloquent accessors can be appended:
+
+```php
+ElasticQueryWizard::for(Post::class)
+    ->allowedAppends(['excerpt', 'reading_time', 'author_name'])
+    ->build();
+```
+
+```
+GET /posts?append=excerpt,reading_time
+```
+
+---
+
+## Creating Custom Filters
+
+### Extending AbstractElasticFilter
+
+```php
+use Jackardios\ElasticQueryWizard\Filters\AbstractElasticFilter;
+use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
+use Jackardios\EsScoutDriver\Search\SearchBuilder;
+use Jackardios\EsScoutDriver\Support\Query;
+
+class CustomFilter extends AbstractElasticFilter
+{
+    use HasParameters;
+
+    public static function make(string $property, ?string $alias = null): static
+    {
+        return new static($property, $alias);
+    }
+
+    public function getType(): string
+    {
+        return 'custom';
+    }
+
+    public function handle(SearchBuilder $builder, mixed $value): void
+    {
+        if (empty($value)) {
+            return;
+        }
+
+        // Your custom filter logic
+        $query = Query::bool()
+            ->should(Query::term($this->property, $value))
+            ->should(Query::match($this->property . '_text', $value))
+            ->minimumShouldMatch(1);
+
+        $query = $this->applyParametersOnQuery($query);
+
+        $builder->filter($query);
+    }
+}
+```
+
+### Using Custom Filters
+
+```php
+ElasticQueryWizard::for(Product::class)
+    ->allowedFilters([
+        CustomFilter::make('product_code'),
+    ])
+    ->build();
+```
+
+---
+
+## Creating Custom Sorts
+
+### Extending AbstractSort
+
+```php
+use Jackardios\QueryWizard\Sorts\AbstractSort;
+use Jackardios\EsScoutDriver\Sort\Sort;
+
+class PopularitySort extends AbstractSort
+{
+    protected float $viewsWeight;
+    protected float $likesWeight;
+
+    protected function __construct(
+        string $property,
+        float $viewsWeight = 1.0,
+        float $likesWeight = 2.0,
+        ?string $alias = null
+    ) {
+        parent::__construct($property, $alias);
+        $this->viewsWeight = $viewsWeight;
+        $this->likesWeight = $likesWeight;
+    }
+
+    public static function make(
+        string $property,
+        float $viewsWeight = 1.0,
+        float $likesWeight = 2.0,
+        ?string $alias = null
+    ): static {
+        return new static($property, $viewsWeight, $likesWeight, $alias);
+    }
+
+    public function getType(): string
+    {
+        return 'popularity';
+    }
+
+    public function apply(mixed $subject, string $direction): mixed
+    {
+        $script = [
+            'source' => "doc['views'].value * params.vw + doc['likes'].value * params.lw",
+            'params' => [
+                'vw' => $this->viewsWeight,
+                'lw' => $this->likesWeight,
+            ],
+        ];
+
+        $sort = Sort::script($script, 'number')->order($direction);
+        $subject->sort($sort);
+
+        return $subject;
+    }
+}
+```
+
+### Using Custom Sorts
+
+```php
+ElasticQueryWizard::for(Post::class)
+    ->allowedSorts([
+        PopularitySort::make('popularity', 1.0, 3.0, 'popular'),
+    ])
+    ->build();
+```
+
+```
+GET /posts?sort=-popular
+```
+
+---
+
+## Creating Custom Includes
+
+### Extending AbstractElasticInclude
+
+For includes that need access to Elasticsearch results:
+
+```php
+use Jackardios\ElasticQueryWizard\Includes\AbstractElasticInclude;
+use Illuminate\Database\Eloquent\Builder;
+
+class HighlightedInclude extends AbstractElasticInclude
+{
+    public static function make(string $property, ?string $alias = null): static
+    {
+        return new static($property, $alias);
+    }
+
+    public function getType(): string
+    {
+        return 'highlighted';
+    }
+
+    public function handleEloquent(Builder $eloquentBuilder): void
+    {
+        $searchResult = $this->getSearchResult();
+
+        if ($searchResult) {
+            // Access highlights from Elasticsearch results
+            $highlights = $searchResult->highlights();
+
+            // Store for later use
+            // You can attach this data to models in a collection callback
+        }
+    }
+}
+```
+
+### Using CallbackInclude for Simple Cases
+
+For simpler cases, use the callback include:
+
+```php
+use Jackardios\ElasticQueryWizard\ElasticInclude;
+
+ElasticQueryWizard::for(Post::class)
+    ->allowedIncludes([
+        ElasticInclude::callback('recentActivity', function (Builder $builder) {
+            $builder->with(['activities' => function ($query) {
+                $query->latest()->limit(10);
+            }]);
+        }),
+    ])
+    ->build();
+```
+
+---
+
+## Execution Methods
+
+After building the wizard, you have several execution options:
+
+```php
+$wizard = ElasticQueryWizard::for(Post::class)
+    ->allowedFilters([...])
+    ->build();
+
+// Execute and get SearchResult
+$searchResult = $wizard->execute();
+
+// Get models
+$models = $searchResult->models();
+
+// Get total count
+$total = $searchResult->total();
+
+// Get raw hits
+$hits = $searchResult->hits();
+
+// Get aggregations
+$aggregations = $searchResult->aggregations();
+
+// Paginate
+$paginated = $wizard->paginate(15);
+
+// Simple paginate (more efficient for large datasets)
+$paginated = $wizard->simplePaginate(15);
+```
+
+---
+
+## Method Chaining
+
+The wizard supports method chaining with the underlying SearchBuilder:
+
+```php
+$results = ElasticQueryWizard::for(Post::class)
+    ->allowedFilters([
+        ElasticFilter::term('status'),
+    ])
+    ->build()
+    ->highlight('title')           // SearchBuilder method
+    ->highlight('body')            // SearchBuilder method
+    ->size(50)                     // SearchBuilder method
+    ->from(0)                      // SearchBuilder method
+    ->execute()
+    ->models();
+```
+
+> **Note:** Once you call SearchBuilder methods after `build()`, you cannot modify wizard configuration (allowedFilters, allowedSorts, etc.) anymore.

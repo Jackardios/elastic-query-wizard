@@ -1,254 +1,305 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Jackardios\ElasticQueryWizard;
 
-use Elastic\Adapter\Search\SearchResult;
-use Elastic\ScoutDriverPlus\Builders\SearchParametersBuilder;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Jackardios\ElasticQueryWizard\Filters\AbstractElasticFilter;
 use Jackardios\ElasticQueryWizard\Filters\TermFilter;
-use Jackardios\ElasticQueryWizard\Includes\CountInclude;
-use Jackardios\ElasticQueryWizard\Includes\RelationshipInclude;
+use Jackardios\ElasticQueryWizard\Includes\AbstractElasticInclude;
 use Jackardios\ElasticQueryWizard\Sorts\FieldSort;
-use Jackardios\QueryWizard\Abstracts\AbstractQueryWizard;
-use Jackardios\QueryWizard\Concerns\HandlesAppends;
-use Jackardios\QueryWizard\Concerns\HandlesFields;
-use Jackardios\QueryWizard\Concerns\HandlesFilters;
-use Jackardios\QueryWizard\Concerns\HandlesIncludes;
-use Jackardios\QueryWizard\Concerns\HandlesSorts;
-use Jackardios\QueryWizard\Eloquent\EloquentFilter;
-use Jackardios\QueryWizard\Exceptions\InvalidSubject;
+use Jackardios\EsScoutDriver\Query\Compound\BoolQuery;
+use Jackardios\EsScoutDriver\Search\SearchBuilder;
+use Jackardios\EsScoutDriver\Search\SearchResult;
+use Jackardios\QueryWizard\BaseQueryWizard;
+use Jackardios\QueryWizard\Config\QueryWizardConfig;
+use Jackardios\QueryWizard\Contracts\FilterInterface;
+use Jackardios\QueryWizard\Contracts\IncludeInterface;
+use Jackardios\QueryWizard\Contracts\SortInterface;
+use Jackardios\QueryWizard\Eloquent\Includes\RelationshipInclude;
 use Jackardios\QueryWizard\QueryParametersManager;
-use Jackardios\QueryWizard\Values\Sort;
+use Jackardios\QueryWizard\Schema\ResourceSchemaInterface;
 
 /**
- * @mixin SearchParametersBuilder
- * @method static static for(Model|string $subject, QueryParametersManager|null $parametersManager = null)
+ * @mixin SearchBuilder
  */
-class ElasticQueryWizard extends AbstractQueryWizard
+class ElasticQueryWizard extends BaseQueryWizard
 {
-    use HandlesAppends;
-    use HandlesFields;
-    use HandlesFilters;
-    use HandlesIncludes;
-    use HandlesSorts;
+    /** @var SearchBuilder */
+    protected mixed $subject;
 
-    protected array $baseFilterHandlerClasses = [EloquentFilter::class, ElasticFilter::class];
-    protected array $baseIncludeHandlerClasses = [ElasticInclude::class];
-    protected array $baseSortHandlerClasses = [ElasticSort::class];
-
-    /** @var SearchParametersBuilder */
-    protected $subject;
-
-    /** @var array<int, callable(Builder, SearchResult): void> $eloquentQueryCallbacks */
+    /** @var array<int, callable(Builder, SearchResult): void> */
     protected array $eloquentQueryCallbacks = [];
 
-    /** @var array<int, callable(Collection): Collection> $eloquentCollectionCallbacks */
+    /** @var array<int, callable(Collection): Collection> */
     protected array $eloquentCollectionCallbacks = [];
-
-    protected ElasticRootBoolQuery $rootBoolQuery;
 
     protected string $modelClass;
 
-    public function __construct(Model|string $subject, ?QueryParametersManager $parametersManager = null)
-    {
+    private bool $proxyModified = false;
+
+    public function __construct(
+        Model|string $subject,
+        ?QueryParametersManager $parameters = null,
+        ?QueryWizardConfig $config = null,
+        ?ResourceSchemaInterface $schema = null,
+    ) {
         if (! (is_subclass_of($subject, Model::class) && method_exists($subject, 'searchQuery'))) {
-            throw new InvalidSubject('$subject must be a model that uses `Elastic\ScoutDriverPlus\Searchable` trait');
+            throw new \InvalidArgumentException('$subject must be a model that uses `Jackardios\EsScoutDriver\Searchable` trait');
         }
 
         $this->modelClass = is_string($subject) ? $subject : $subject::class;
-        $subject = $subject::searchQuery([]);
-
-        $this->rootBoolQuery = new ElasticRootBoolQuery();
-
-        parent::__construct($subject, $parametersManager);
+        $this->subject = $this->modelClass::searchQuery();
+        $this->originalSubject = clone $this->subject;
+        $this->parameters = $parameters ?? app(QueryParametersManager::class);
+        $this->config = $config ?? app(QueryWizardConfig::class);
+        $this->schema = $schema;
     }
 
-    public function rootFieldsKey(): string
+    public static function for(Model|string $subject, ?QueryParametersManager $parameters = null): static
     {
-        return Str::camel(class_basename($this->modelClass));
+        return new static($subject, $parameters);
     }
 
-    public function makeDefaultFilterHandler(string $filterName): TermFilter
+    public static function forSchema(string|ResourceSchemaInterface $schema): static
     {
-        return new TermFilter($filterName);
+        $schema = is_string($schema) ? app($schema) : $schema;
+
+        /** @var class-string<Model> $modelClass */
+        $modelClass = $schema->model();
+
+        return new static(
+            $modelClass,
+            app(QueryParametersManager::class),
+            app(QueryWizardConfig::class),
+            $schema
+        );
     }
 
-    /**
-     * @param string $includeName
-     * @return RelationshipInclude|CountInclude
-     */
-    public function makeDefaultIncludeHandler(string $includeName): ElasticInclude
-    {
-        $countSuffix = config('query-wizard.count_suffix');
-        if (Str::endsWith($includeName, $countSuffix)) {
-            $relation = Str::before($includeName, $countSuffix);
-            return new CountInclude($relation, $includeName);
-        }
-        return new RelationshipInclude($includeName);
-    }
-
-    public function makeDefaultSortHandler(string $sortName): FieldSort
-    {
-        return new FieldSort($sortName);
-    }
-
-    public function getSubject(): SearchParametersBuilder
+    public function getSubject(): SearchBuilder
     {
         return $this->subject;
     }
 
-    public function getRootBoolQuery(): ElasticRootBoolQuery
+    public function boolQuery(): BoolQuery
     {
-        return $this->rootBoolQuery;
+        return $this->subject->boolQuery();
     }
 
     /**
-     * Set the callback that should have an opportunity to modify the database query.
-     * This method overrides the Scout Query Builder method
-     *
-     * @param  callable(Builder, SearchResult): void  $callback
-     * @return $this
+     * @param callable(Builder, SearchResult): void $callback
      */
-    public function addEloquentQueryCallback(callable $callback): self
+    public function addEloquentQueryCallback(callable $callback): static
     {
         $this->eloquentQueryCallbacks[] = $callback;
+
         return $this;
     }
 
     /**
-     * Set the callback that should have an opportunity to modify the database query.
-     * This method overrides the Scout Query Builder method
-     *
-     * @param  callable(Collection<int, Model>): Collection<int, Model>  $callback
-     * @return $this
+     * @param callable(Collection): Collection $callback
      */
-    public function addEloquentCollectionCallback(callable $callback): self
+    public function addEloquentCollectionCallback(callable $callback): static
     {
         $this->eloquentCollectionCallbacks[] = $callback;
+
         return $this;
     }
 
-    public function build(): static
+    // === Abstract implementations ===
+
+    protected function normalizeStringToFilter(string $name): FilterInterface
     {
-        return $this->handleAppends()
-            ->handleFields()
-            ->handleIncludes()
-            ->handleFilters()
-            ->handleSorts()
-            ->handleSubject();
+        return TermFilter::make($name);
     }
 
-    protected function handleSubject(): self
+    protected function normalizeStringToSort(string $name): SortInterface
     {
+        $property = ltrim($name, '-');
+
+        return FieldSort::make($property);
+    }
+
+    protected function normalizeStringToInclude(string $name): IncludeInterface
+    {
+        return RelationshipInclude::fromString($name, $this->config->getCountSuffix());
+    }
+
+    protected function applyFields(array $fields): void
+    {
+        /** @var Model $model */
+        $model = new $this->modelClass;
+        $keyName = $model->getKeyName();
+        $scoutKeyName = $model->getScoutKeyName();
+
+        $requiredFields = array_unique(array_filter([$keyName, $scoutKeyName]));
+        $fields = array_values(array_unique(array_merge($requiredFields, $fields)));
+
+        $this->addEloquentQueryCallback(function (Builder $eloquentBuilder) use ($fields) {
+            $eloquentBuilder->select($fields);
+        });
+    }
+
+    public function getResourceKey(): string
+    {
+        if ($this->schema !== null) {
+            return $this->schema->type();
+        }
+
+        return Str::camel(class_basename($this->modelClass));
+    }
+
+    // === Filter / Include hooks ===
+
+    protected function applyFilter(FilterInterface $filter, mixed $preparedValue): void
+    {
+        if ($filter instanceof AbstractElasticFilter) {
+            $filter->handle($this->subject, $preparedValue);
+        } else {
+            $this->subject = $filter->apply($this->subject, $preparedValue);
+        }
+    }
+
+    /**
+     * @param  array<int, string>  $validRequestedIncludes
+     * @param  array<string, IncludeInterface>  $includesIndex
+     */
+    protected function applyValidatedIncludes(array $validRequestedIncludes, array $includesIndex): void
+    {
+        $elasticIncludes = [];
+        $baseIncludes = [];
+
+        foreach ($validRequestedIncludes as $includeName) {
+            $include = $includesIndex[$includeName];
+            if ($include instanceof AbstractElasticInclude) {
+                $elasticIncludes[] = $include;
+            } else {
+                $baseIncludes[] = $include;
+            }
+        }
+
+        if (! empty($baseIncludes)) {
+            $this->addEloquentQueryCallback(
+                function (Builder $builder, SearchResult $searchResult) use ($baseIncludes) {
+                    foreach ($baseIncludes as $include) {
+                        $include->apply($builder);
+                    }
+                }
+            );
+        }
+
+        if (! empty($elasticIncludes)) {
+            $this->addEloquentQueryCallback(
+                function (Builder $builder, SearchResult $searchResult) use ($elasticIncludes) {
+                    foreach ($elasticIncludes as $include) {
+                        $include->setSearchResult($searchResult)->handleEloquent($builder);
+                    }
+                }
+            );
+        }
+    }
+
+    // === Build ===
+
+    public function build(): mixed
+    {
+        if ($this->built) {
+            return $this->subject;
+        }
+
+        $this->applyTapCallbacks();
+        $this->applyFiltersToSubject();
+        $this->applySortsToSubject();
+        $this->applyIncludesToSubject();
+        $this->applyFieldsToSubject();
+        $this->finalizeSubject();
+
+        $this->built = true;
+
+        return $this->subject;
+    }
+
+    protected function invalidateBuild(): void
+    {
+        if ($this->proxyModified) {
+            throw new \LogicException(
+                'Cannot modify query wizard configuration after calling query builder methods. '
+                .'Call all configuration methods (allowedFilters, allowedSorts, etc.) before query builder methods.'
+            );
+        }
+
+        parent::invalidateBuild();
+        $this->eloquentQueryCallbacks = [];
+        $this->eloquentCollectionCallbacks = [];
+    }
+
+    protected function finalizeSubject(): void
+    {
+        $appends = $this->getValidRequestedAppends();
+        $requestedFields = $this->parameters->getFields();
+        $resourceKey = $this->getResourceKey();
+        $rootFields = $requestedFields->get($resourceKey, []);
+
+        $eloquentQueryCallbacks = $this->eloquentQueryCallbacks;
+        $eloquentCollectionCallbacks = $this->eloquentCollectionCallbacks;
+
         $this->subject
-            ->query($this->getRootBoolQuery()->buildQuery())
-            ->setEloquentQueryCallback(function() {
-                $args = func_get_args();
-                foreach($this->eloquentQueryCallbacks as $callback) {
-                    call_user_func_array($callback, $args);
+            ->modifyQuery(function (Builder $builder, array $rawResult) use ($eloquentQueryCallbacks) {
+                $searchResult = new SearchResult($rawResult, fn () => collect());
+                foreach ($eloquentQueryCallbacks as $callback) {
+                    $callback($builder, $searchResult);
                 }
             })
-            ->setEloquentCollectionCallback(function(Collection $collection) {
-                foreach($this->eloquentCollectionCallbacks as $callback) {
+            ->modifyModels(function (Collection $collection) use ($appends, $rootFields, $eloquentCollectionCallbacks) {
+                foreach ($eloquentCollectionCallbacks as $callback) {
                     $collection = call_user_func($callback, $collection);
+                }
+
+                if (! empty($appends)) {
+                    $this->applyAppendsTo($collection);
+                }
+
+                if (! empty($rootFields) && ! in_array('*', $rootFields)) {
+                    /** @var Model|null $firstModel */
+                    $firstModel = $collection->first();
+                    if ($firstModel) {
+                        $newHidden = array_values(array_unique([
+                            ...$firstModel->getHidden(),
+                            ...array_diff(array_keys($firstModel->getAttributes()), $rootFields),
+                        ]));
+                        $collection = $collection->setHidden($newHidden);
+                    }
                 }
 
                 return $collection;
             });
-
-        return $this;
     }
 
-    protected function handleFields(): self
+    /**
+     * @param array<int, mixed> $arguments
+     */
+    public function __call(string $name, array $arguments): mixed
     {
-        if ($rootFields = $this->getRootFields()) {
-            $this->addEloquentQueryCallback(function(EloquentBuilder $eloquentBuilder) use ($rootFields) {
-                return $eloquentBuilder->select($rootFields);
-            });
+        $this->build();
+
+        $result = $this->subject->$name(...$arguments);
+
+        if ($result === $this->subject) {
+            $this->proxyModified = true;
+
+            return $this;
         }
 
-        return $this;
+        return $result;
     }
 
-    protected function handleIncludes(): self
+    public function __clone(): void
     {
-        $requestedIncludes = $this->getIncludes();
-        $handlers = $this->getAllowedIncludes();
-
-        $this->addEloquentQueryCallback(function(EloquentBuilder $eloquentBuilder, SearchResult $searchResult) use ($requestedIncludes, $handlers) {
-            $requestedIncludes->each(function($include) use (&$eloquentBuilder, &$searchResult, $handlers) {
-                /** @var ElasticInclude $handler */
-                $handler = $handlers->get($include);
-
-                $handler?->setSearchResult($searchResult)->handle($this, $eloquentBuilder);
-            });
-        });
-
-        return $this;
-    }
-
-    protected function handleFilters(): self
-    {
-        $requestedFilters = $this->getFilters();
-        $handlers = $this->getAllowedFilters();
-
-        $requestedFilters->each(function($value, $name) use ($handlers) {
-            /** @var ElasticFilter|EloquentFilter $handler */
-            $handler = $handlers->get($name);
-            if ($handler instanceof ElasticFilter) {
-                $handler->handle($this, $this->subject, $value);
-            } elseif ($handler instanceof EloquentFilter) {
-                $this->addEloquentQueryCallback(function(EloquentBuilder $eloquentBuilder) use ($handler, $value) {
-                    $handler->handle($this, $eloquentBuilder, $value);
-                });
-            }
-        });
-
-        return $this;
-    }
-
-    protected function handleSorts(): self
-    {
-        $requestedSorts = $this->getSorts();
-        $handlers = $this->getAllowedSorts();
-
-        $requestedSorts->each(function(Sort $sort) use ($handlers) {
-            /** @var ElasticSort $handler */
-            $handler = $handlers->get($sort->getField());
-            $handler?->handle($this, $this->subject, $sort->getDirection());
-        });
-
-        return $this;
-    }
-
-    protected function handleAppends(): self
-    {
-        if ($requestedAppends = $this->getAppends()->toArray()) {
-            $this->addEloquentCollectionCallback(function(Collection $collection) use ($requestedAppends) {
-                return $collection->append($requestedAppends);
-            });
-        }
-
-        if ($rootFields = $this->getRootFields()) {
-            $this->addEloquentCollectionCallback(function(Collection $collection) use ($rootFields) {
-                /** @var Model|null $firstModel */
-                $firstModel = $collection->first();
-                if (! $firstModel) {
-                    return $collection;
-                }
-
-                $newHidden = array_values(array_unique([
-                    ...$firstModel->getHidden(),
-                    ...(in_array('*', $rootFields) ? [] : array_diff(array_keys($firstModel->getAttributes()), $rootFields)),
-                ]));
-                return $collection->setHidden($newHidden);
-            });
-        }
-
-        return $this;
+        parent::__clone();
+        $this->proxyModified = false;
     }
 }

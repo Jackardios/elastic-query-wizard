@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic;
 
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
@@ -18,18 +20,18 @@ use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\AppendModel;
  */
 class AppendTest extends TestCase
 {
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
-        factory(AppendModel::class, 5)->create();
+        AppendModel::factory()->count(5)->create();
     }
 
     /** @test */
     public function it_does_not_require_appends(): void
     {
         $result = $this->createElasticWizardFromQuery([], AppendModel::class)
-            ->setAllowedAppends('fullname')
+            ->allowedAppends('fullname')
             ->build()
             ->execute();
 
@@ -41,7 +43,7 @@ class AppendTest extends TestCase
     {
         $model = $this
             ->createElasticWizardWithAppends('fullname')
-            ->setAllowedAppends('fullname')
+            ->allowedAppends('fullname')
             ->build()
             ->size(1)
             ->execute()
@@ -58,7 +60,7 @@ class AppendTest extends TestCase
 
         $this
             ->createElasticWizardWithAppends('FullName')
-            ->setAllowedAppends('fullname')
+            ->allowedAppends('fullname')
             ->build()
             ->size(1)
             ->execute()
@@ -71,7 +73,7 @@ class AppendTest extends TestCase
     {
         $models = $this
             ->createElasticWizardWithAppends('FullName')
-            ->setAllowedAppends('FullName')
+            ->allowedAppends('FullName')
             ->build()
             ->execute()
             ->models();
@@ -84,7 +86,7 @@ class AppendTest extends TestCase
     {
         $models = $this
             ->createElasticWizardWithAppends('FullName')
-            ->setAllowedAppends('FullName')
+            ->allowedAppends('FullName')
             ->build()
             ->paginate()
             ->onlyModels();
@@ -99,7 +101,7 @@ class AppendTest extends TestCase
 
         $this
             ->createElasticWizardWithAppends('random-attribute-to-append')
-            ->setAllowedAppends('attribute-to-append')
+            ->allowedAppends('attribute-to-append')
             ->build();
     }
 
@@ -108,7 +110,7 @@ class AppendTest extends TestCase
     {
         $model = $this
             ->createElasticWizardWithAppends('fullname')
-            ->setAllowedAppends('fullname', 'randomAttribute')
+            ->allowedAppends('fullname', 'randomAttribute')
             ->build()
             ->size(1)
             ->execute()
@@ -123,7 +125,7 @@ class AppendTest extends TestCase
     {
         $model = $this
             ->createElasticWizardWithAppends('fullname')
-            ->setAllowedAppends(['fullname', 'randomAttribute'])
+            ->allowedAppends(['fullname', 'randomAttribute'])
             ->build()
             ->size(1)
             ->execute()
@@ -138,7 +140,7 @@ class AppendTest extends TestCase
     {
         $model = $this
             ->createElasticWizardWithAppends('fullname,reversename')
-            ->setAllowedAppends(['fullname', 'reversename'])
+            ->allowedAppends(['fullname', 'reversename'])
             ->build()
             ->size(1)
             ->execute()

@@ -1,14 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Sorts;
 
-use Elastic\ScoutDriverPlus\Builders\SearchParametersBuilder;
 use Illuminate\Support\Collection;
-use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
-use Jackardios\ElasticQueryWizard\Sorts\CallbackSort;
 use Jackardios\ElasticQueryWizard\Tests\Concerns\AssertsCollectionSorting;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
+use Jackardios\EsScoutDriver\Search\SearchBuilder;
+use Jackardios\QueryWizard\Sorts\CallbackSort;
 
 /**
  * @group elastic
@@ -21,11 +22,11 @@ class CallbackSortTest extends TestCase
 
     protected Collection $models;
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
-        $this->models = factory(TestModel::class, 5)->create();
+        $this->models = TestModel::factory()->count(5)->create();
     }
 
     /** @test */
@@ -33,9 +34,9 @@ class CallbackSortTest extends TestCase
     {
         $sortedModels = $this
             ->createElasticWizardWithSorts('-callbackSort')
-            ->setAllowedSorts(
-                new CallbackSort('callbackSort', function (ElasticQueryWizard $queryWizard, SearchParametersBuilder $queryBuilder, string $direction) {
-                    $queryBuilder->sort('category', $direction);
+            ->allowedSorts(
+                CallbackSort::make('callbackSort', function (SearchBuilder $builder, string $direction, string $property) {
+                    $builder->sort('category', $direction);
                 })
             )
             ->build()
@@ -50,7 +51,7 @@ class CallbackSortTest extends TestCase
     {
         $sortedModels = $this
             ->createElasticWizardWithSorts('callbackSort')
-            ->setAllowedSorts(new CallbackSort('callbackSort', [$this, 'sortCallback']))
+            ->allowedSorts(CallbackSort::make('callbackSort', [$this, 'sortCallback']))
             ->build()
             ->execute()
             ->models();
@@ -58,8 +59,8 @@ class CallbackSortTest extends TestCase
         $this->assertSortedAscending($sortedModels, 'category');
     }
 
-    public function sortCallback(ElasticQueryWizard $queryWizard, SearchParametersBuilder $queryBuilder, string $direction): void
+    public function sortCallback(SearchBuilder $builder, string $direction, string $property): void
     {
-        $queryBuilder->sort('category', $direction);
+        $builder->sort('category', $direction);
     }
 }

@@ -1,26 +1,38 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Jackardios\ElasticQueryWizard\Filters;
 
-use Jackardios\ElasticQueryWizard\ElasticFilter;
+use Jackardios\EsScoutDriver\Search\SearchBuilder;
 
-class TrashedFilter extends ElasticFilter
+class TrashedFilter extends AbstractElasticFilter
 {
-    public function __construct(string $propertyName = "trashed", ?string $alias = null, $default = null)
+    protected function __construct(?string $alias = null)
     {
-        parent::__construct($propertyName, $alias, $default);
+        parent::__construct('trashed', $alias);
     }
 
-    public function handle($queryWizard, $queryBuilder, $value): void
+    public static function make(?string $alias = null): static
+    {
+        return new static($alias);
+    }
+
+    public function getType(): string
+    {
+        return 'trashed';
+    }
+
+    public function handle(SearchBuilder $builder, mixed $value): void
     {
         if ($value === 'with') {
-            $queryWizard->getRootBoolQuery()->withTrashed();
+            $builder->boolQuery()->withTrashed();
 
             return;
         }
 
         if ($value === 'only') {
-            $queryWizard->getRootBoolQuery()->onlyTrashed();
+            $builder->boolQuery()->onlyTrashed();
 
             return;
         }

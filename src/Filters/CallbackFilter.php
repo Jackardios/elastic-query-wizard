@@ -1,33 +1,42 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Jackardios\ElasticQueryWizard\Filters;
 
-use Elastic\ScoutDriverPlus\Builders\SearchParametersBuilder;
-use Jackardios\ElasticQueryWizard\ElasticFilter;
-use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
+use Jackardios\EsScoutDriver\Search\SearchBuilder;
 
-class CallbackFilter extends ElasticFilter
+/**
+ * The callback receives arguments in this order:
+ * ($builder, $value, $property)
+ */
+class CallbackFilter extends AbstractElasticFilter
 {
-    /**
-     * @var callable(ElasticQueryWizard, SearchParametersBuilder, mixed):mixed
-     */
-    private $callback;
+    /** @var callable(SearchBuilder, mixed, string): void */
+    private mixed $callback;
 
-    /**
-     * @param string $propertyName
-     * @param callable(ElasticQueryWizard, SearchParametersBuilder, mixed):mixed $callback
-     * @param string|null $alias
-     * @param mixed $default
-     */
-    public function __construct(string $propertyName, callable $callback, ?string $alias = null, $default = null)
+    protected function __construct(string $property, callable $callback, ?string $alias = null)
     {
-        parent::__construct($propertyName, $alias, $default);
+        parent::__construct($property, $alias);
 
         $this->callback = $callback;
     }
 
-    public function handle($queryWizard, $queryBuilder, $value): void
+    /**
+     * @param callable(SearchBuilder, mixed, string): void $callback
+     */
+    public static function make(string $property, callable $callback, ?string $alias = null): static
     {
-        call_user_func($this->callback, $queryWizard, $queryBuilder, $value);
+        return new static($property, $callback, $alias);
+    }
+
+    public function getType(): string
+    {
+        return 'callback';
+    }
+
+    public function handle(SearchBuilder $builder, mixed $value): void
+    {
+        call_user_func($this->callback, $builder, $value, $this->property);
     }
 }
