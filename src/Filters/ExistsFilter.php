@@ -29,10 +29,15 @@ class ExistsFilter extends AbstractElasticFilter
             return;
         }
 
+        $normalized = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+        if ($normalized === null) {
+            return;
+        }
+
         $query = Query::exists($this->property);
         $query = $this->applyParametersOnQuery($query);
 
-        if (filter_var($value, FILTER_VALIDATE_BOOLEAN)) {
+        if ($normalized) {
             $builder->filter($query);
         } else {
             $builder->mustNot($query);

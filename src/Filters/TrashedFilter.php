@@ -25,16 +25,34 @@ class TrashedFilter extends AbstractElasticFilter
 
     public function handle(SearchBuilder $builder, mixed $value): void
     {
-        if ($value === 'with') {
+        if ($value === true) {
+            $value = 'with';
+        } elseif ($value === false) {
+            $value = 'without';
+        }
+
+        $normalized = is_string($value) ? strtolower($value) : $value;
+
+        if ($normalized === '1' || $normalized === 'true') {
+            $normalized = 'with';
+        } elseif ($normalized === '0' || $normalized === 'false') {
+            $normalized = 'without';
+        }
+
+        if ($normalized === 'with') {
             $builder->boolQuery()->withTrashed();
 
             return;
         }
 
-        if ($value === 'only') {
+        if ($normalized === 'only') {
             $builder->boolQuery()->onlyTrashed();
 
             return;
+        }
+
+        if ($normalized === 'without') {
+            $builder->boolQuery()->excludeTrashed();
         }
     }
 }
