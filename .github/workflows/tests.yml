@@ -1,46 +1,52 @@
-name: Tests
+name: CI
 
 on:
   push:
-    branches: [master, main]
+    branches: [main, master, '*.x']
   pull_request:
-    branches: [master, main]
+    branches: [main, master, '*.x']
 
 jobs:
-  test:
+  tests:
+    name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }} / ES ${{ matrix.elasticsearch }}
     runs-on: ubuntu-latest
 
     services:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_DATABASE: testing
-          MYSQL_USER: testing
-          MYSQL_PASSWORD: testing
           MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: testing
         ports:
           - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
-
-      elasticsearch:
-        image: elasticsearch:8.11.0
-        env:
-          discovery.type: single-node
-          xpack.security.enabled: false
-        ports:
-          - 9200:9200
-        options: --health-cmd="curl -s http://localhost:9200/_cluster/health" --health-interval=10s --health-timeout=5s --health-retries=10
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
 
     strategy:
       fail-fast: false
       matrix:
         php: ['8.1', '8.2', '8.3', '8.4']
         laravel: ['10', '11', '12']
+        elasticsearch: ['8.19.11', '9.3.0']
+        include:
+          - laravel: '10'
+            testbench: '8'
+          - laravel: '11'
+            testbench: '9'
+          - laravel: '12'
+            testbench: '10'
+          - elasticsearch: '8.19.11'
+            es_client: '8'
+          - elasticsearch: '9.3.0'
+            es_client: '9'
         exclude:
           - php: '8.1'
+            laravel: '11'
+          - php: '8.1'
             laravel: '12'
-
-    name: PHP ${{ matrix.php }} - Laravel ${{ matrix.laravel }}
 
     steps:
       - name: Checkout code
@@ -50,44 +56,61 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: mbstring, pdo, pdo_mysql, curl
+          extensions: dom, curl, libxml, mbstring, zip, json, pdo, pdo_mysql
           coverage: none
+          tools: composer:v2
 
-      - name: Get Composer cache directory
+      - name: Get composer cache directory
         id: composer-cache
         run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
 
-      - name: Cache Composer dependencies
+      - name: Cache composer dependencies
         uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-php-${{ matrix.php }}-laravel-${{ matrix.laravel }}-composer-${{ hashFiles('**/composer.json') }}
+          key: ${{ runner.os }}-php-${{ matrix.php }}-laravel-${{ matrix.laravel }}-es-${{ matrix.es_client }}-composer-${{ hashFiles('**/composer.json') }}
           restore-keys: |
-            ${{ runner.os }}-php-${{ matrix.php }}-laravel-${{ matrix.laravel }}-composer-
+            ${{ runner.os }}-php-${{ matrix.php }}-laravel-${{ matrix.laravel }}-es-${{ matrix.es_client }}-composer-
 
       - name: Install dependencies
         run: |
-          composer require "laravel/framework:^${{ matrix.laravel }}.0" --no-update --no-interaction
-          composer install --prefer-dist --no-progress --no-interaction
+          composer update \
+            --with="orchestra/testbench:^${{ matrix.testbench }}.0" \
+            --with="elasticsearch/elasticsearch:^${{ matrix.es_client }}.0" \
+            --prefer-dist --no-interaction --no-progress
+
+      - name: Start Elasticsearch
+        run: |
+          docker run -d --name elasticsearch \
+            -p 9200:9200 \
+            -e "discovery.type=single-node" \
+            -e "xpack.security.enabled=false" \
+            -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \
+            elasticsearch:${{ matrix.elasticsearch }}
 
       - name: Wait for Elasticsearch
         run: |
-          until curl -s http://localhost:9200/_cluster/health | grep -q '"status":"green"\|"status":"yellow"'; do
-            echo "Waiting for Elasticsearch..."
-            sleep 5
+          echo "Waiting for Elasticsearch..."
+          for i in {1..60}; do
+            if curl -s "http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=1s" > /dev/null 2>&1; then
+              echo "Elasticsearch is ready!"
+              curl -s http://localhost:9200
+              exit 0
+            fi
+            echo "Attempt $i/60..."
+            sleep 2
           done
-          echo "Elasticsearch is ready"
+          echo "Elasticsearch failed to start"
+          docker logs elasticsearch
+          exit 1
 
-      - name: Run unit tests
-        run: vendor/bin/phpunit --group=unit
-
-      - name: Run feature tests
-        run: vendor/bin/phpunit --group=elastic
+      - name: Run tests
+        run: vendor/bin/phpunit --colors=always
         env:
+          ELASTIC_HOST: 127.0.0.1:9200
           DB_CONNECTION: mysql
           DB_HOST: 127.0.0.1
           DB_PORT: 3306
           DB_DATABASE: testing
-          DB_USERNAME: testing
-          DB_PASSWORD: testing
-          ELASTIC_HOST: http://127.0.0.1:9200
+          DB_USERNAME: root
+          DB_PASSWORD: root
