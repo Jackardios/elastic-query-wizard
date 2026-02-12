@@ -708,9 +708,6 @@ GET /areas?filter[boundary][type]=envelope&filter[boundary][coordinates][0][0]=-
 # Point
 GET /areas?filter[boundary][type]=point&filter[boundary][coordinates][0]=37.62&filter[boundary][coordinates][1]=55.75
 
-# Circle (requires Elasticsearch 6.6+)
-GET /areas?filter[boundary][type]=circle&filter[boundary][coordinates][0]=37.62&filter[boundary][coordinates][1]=55.75&filter[boundary][radius]=10km
-
 # Indexed shape (reference to another document)
 GET /areas?filter[boundary][type]=indexed_shape&filter[boundary][index]=shapes&filter[boundary][id]=region_123
 ```
@@ -722,8 +719,9 @@ GET /areas?filter[boundary][type]=indexed_shape&filter[boundary][index]=shapes&f
 | `envelope` | Bounding box defined by two corner points |
 | `polygon` | Closed polygon defined by coordinate array |
 | `point` | Single geographic point |
-| `circle` | Circle defined by center point and radius (ES 6.6+) |
 | `indexed_shape` | Reference to a shape stored in another document |
+
+> **Note:** Circle type is not supported as an inline shape in geo_shape queries (ES 8.x/9.x). For radius-based filtering, use [Geo Distance Filter](#geo-distance-filter) instead.
 
 ### Elasticsearch Query
 
