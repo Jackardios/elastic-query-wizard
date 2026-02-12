@@ -68,6 +68,9 @@ jobs:
             laravel: '11'
           - php: '8.1'
             laravel: '12'
+          # ES 9 requires elastic-migrations ^4.0 which requires PHP 8.2+
+          - php: '8.1'
+            elasticsearch: '9.3.0'
 
     steps:
       - name: Checkout code

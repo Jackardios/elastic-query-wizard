@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Factories\GeoModelFactory;
 use Jackardios\EsScoutDriver\Searchable;
-use MatanYadaev\EloquentSpatial\Objects\Point;
+use Jackardios\EloquentSpatial\Objects\Point;
 
 /**
  * @property Point $location

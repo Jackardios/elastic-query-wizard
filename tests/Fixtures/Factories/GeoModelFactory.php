@@ -6,7 +6,7 @@ namespace Jackardios\ElasticQueryWizard\Tests\Fixtures\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\GeoModel;
-use MatanYadaev\EloquentSpatial\Objects\Point;
+use Jackardios\EloquentSpatial\Objects\Point;
 
 class GeoModelFactory extends Factory
 {

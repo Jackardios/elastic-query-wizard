@@ -10,7 +10,7 @@ use Jackardios\ElasticQueryWizard\Exceptions\InvalidGeoDistanceValue;
 use Jackardios\ElasticQueryWizard\Filters\GeoDistanceFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\GeoModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
-use MatanYadaev\EloquentSpatial\Objects\Point;
+use Jackardios\EloquentSpatial\Objects\Point;
 
 /**
  * @group elastic

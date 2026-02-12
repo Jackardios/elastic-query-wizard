@@ -9,7 +9,7 @@ use Jackardios\ElasticQueryWizard\Exceptions\InvalidGeoShapeValue;
 use Jackardios\ElasticQueryWizard\Filters\GeoShapeFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\GeoModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
-use MatanYadaev\EloquentSpatial\Objects\Point;
+use Jackardios\EloquentSpatial\Objects\Point;
 
 /**
  * @group elastic

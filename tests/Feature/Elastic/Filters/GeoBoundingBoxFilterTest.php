@@ -10,7 +10,7 @@ use Jackardios\ElasticQueryWizard\Exceptions\InvalidGeoBoundingBoxValue;
 use Jackardios\ElasticQueryWizard\Filters\GeoBoundingBoxFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\GeoModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
-use MatanYadaev\EloquentSpatial\Objects\Point;
+use Jackardios\EloquentSpatial\Objects\Point;
 
 /**
  * @group elastic
