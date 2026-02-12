@@ -1,8 +1,8 @@
 # Elastic Query Wizard
 
-[![Tests](https://github.com/Jackardios/elastic-query-wizard/actions/workflows/tests.yml/badge.svg)](https://github.com/Jackardios/elastic-query-wizard/actions/workflows/tests.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![PHP Version](https://img.shields.io/badge/php-%5E8.1-8892BF.svg)](https://www.php.net/)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/jackardios/elastic-query-wizard.svg)](https://packagist.org/packages/jackardios/elastic-query-wizard)
+[![License](https://img.shields.io/packagist/l/jackardios/elastic-query-wizard.svg)](https://packagist.org/packages/jackardios/elastic-query-wizard)                                                            
+[![CI](https://github.com/jackardios/elastic-query-wizard/actions/workflows/ci.yml/badge.svg)](https://github.com/jackardios/elastic-query-wizard/actions)
 
 A powerful Laravel package for building Elasticsearch queries with JSON:API style filtering, sorting, and relation loading. Built on top of [laravel-query-wizard](https://github.com/Jackardios/laravel-query-wizard) and [es-scout-driver](https://github.com/Jackardios/es-scout-driver).
 
