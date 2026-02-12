@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Sorts;
 
+use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Sort\Sort;
-use Jackardios\QueryWizard\Sorts\AbstractSort;
 
-class ScoreSort extends AbstractSort
+class ScoreSort extends AbstractElasticSort
 {
     public static function make(?string $alias = null): static
     {
@@ -19,10 +19,8 @@ class ScoreSort extends AbstractSort
         return 'score';
     }
 
-    public function apply(mixed $subject, string $direction): mixed
+    public function handle(SearchBuilder $builder, string $direction): void
     {
-        $subject->sort(Sort::score()->order($direction));
-
-        return $subject;
+        $builder->sort(Sort::score()->order($direction));
     }
 }

@@ -14,6 +14,7 @@ A powerful Laravel package for building Elasticsearch queries with JSON:API styl
 - [Quick Start](#quick-start)
 - [Documentation](#documentation)
 - [Usage Examples](#usage-examples)
+- [Elasticsearch Version Compatibility](#elasticsearch-version-compatibility)
 - [License](#license)
 
 ## Features
@@ -23,6 +24,8 @@ A powerful Laravel package for building Elasticsearch queries with JSON:API styl
 - **Full-text Search** — match, multi_match, fuzzy and other Elasticsearch query types
 - **Geo Queries** — filter and sort by geographic coordinates
 - **Flexible Configuration** — pass additional parameters to any query
+- **SearchBuilder DSL Integration** — configure `query`, bool clauses, aggregations, highlight, suggest, KNN, and more directly on the wizard
+- **Consistent DSL Facades** — use `ElasticQuery` and `ElasticAggregation` as package-local proxies for full `es-scout-driver` capabilities
 - **Eloquent Integration** — load relations and accessors after Elasticsearch query execution
 - **JSON:API Compatible** — standardized query parameter format
 
@@ -30,7 +33,7 @@ A powerful Laravel package for building Elasticsearch queries with JSON:API styl
 
 - PHP 8.1+
 - Laravel 10, 11, or 12
-- Elasticsearch 8.x
+- Elasticsearch 8.x or 9.x
 - [es-scout-driver](https://github.com/Jackardios/es-scout-driver)
 - [laravel-query-wizard](https://github.com/Jackardios/laravel-query-wizard)
 
@@ -78,6 +81,27 @@ $posts = ElasticQueryWizard::for(Post::class)
     ->build()
     ->execute()
     ->models();
+```
+
+### Advanced SearchBuilder DSL Example
+
+```php
+use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
+use Jackardios\ElasticQueryWizard\ElasticQuery;
+use Jackardios\ElasticQueryWizard\ElasticAggregation;
+
+$results = ElasticQueryWizard::for(Article::class)
+    ->allowedFilters([
+        ElasticFilter::term('status'),
+        ElasticFilter::multiMatch(['title^3', 'body'], 'search'),
+    ])
+    ->query(ElasticQuery::match('language', 'en'))
+    ->must(ElasticQuery::range('published_at')->gte('2024-01-01'))
+    ->highlight('title')
+    ->aggregate('by_author', ElasticAggregation::terms('author')->size(10))
+    ->trackTotalHits(true)
+    ->build()
+    ->execute();
 ```
 
 ### Geo Filtering Example
@@ -179,7 +203,7 @@ ElasticQueryWizard::for(Product::class)
 ### Field Selection
 
 ```php
-// GET /posts?fields[posts]=id,title,status
+// GET /posts?fields[post]=id,title,status
 
 ElasticQueryWizard::for(Post::class)
     ->allowedFields(['id', 'title', 'status', 'body', 'created_at'])
@@ -187,6 +211,9 @@ ElasticQueryWizard::for(Post::class)
     ->execute()
     ->models();
 ```
+
+> By default, `resource` is the model class basename in camelCase (for `Post` it is `post`).
+> If you use `forSchema()`, it uses schema `type()`.
 
 ### Using Aliases
 
@@ -225,6 +252,8 @@ ElasticQueryWizard::for(Post::class)
 ```php
 // GET /posts?filter[trashed]=with (include trashed)
 // GET /posts?filter[trashed]=only (only trashed)
+// GET /posts?filter[trashed]=without (exclude trashed)
+// GET /posts?filter[trashed]=true|false (aliases)
 
 ElasticQueryWizard::for(Post::class)
     ->allowedFilters([
@@ -244,13 +273,50 @@ The package uses a standardized JSON:API style parameter format:
 | Filters | `filter[field]=value` | `?filter[status]=active` |
 | Sorting | `sort=field` or `sort=-field` | `?sort=-created_at` |
 | Includes | `include=relation1,relation2` | `?include=author,comments` |
-| Fields | `fields[resource]=field1,field2` | `?fields[posts]=id,title` |
+| Fields | `fields[resource]=field1,field2` | `?fields[post]=id,title` |
 | Appends | `append=accessor1,accessor2` | `?append=full_name` |
+
+## Elasticsearch Version Compatibility
+
+This package supports Elasticsearch 8.x and 9.x. However, there are important differences between versions.
+
+### Elasticsearch 9.x Breaking Changes
+
+If you're using or upgrading to Elasticsearch 9.x, be aware of the following:
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Range query `from`/`to` params | Removed | Use `gt`/`gte`/`lt`/`lte` instead (this package already uses correct params) |
+| `_knn_search` endpoint | Removed | Use `knn` within `_search` endpoint |
+| `force_source` highlighting | Removed | Don't pass this parameter via `tapSearchBuilder()` |
+| Boolean histogram aggregation | Removed | Use `terms` aggregation for boolean fields |
+| `random_score` default field | Changed | Default changed from `_id` to `_seq_no`; specify field explicitly for consistent behavior |
+| Frozen indices | Removed | Unfreeze indices before upgrading to ES 9.x |
+
+### Safe Usage Examples
+
+```php
+// Range filter - uses correct ES 9.x compatible operators
+ElasticFilter::range('price')  // Accepts: gt, gte, lt, lte
+
+// For random scoring, specify field explicitly
+->tapSearchBuilder(function ($builder) {
+    $builder->functionScore([
+        'random_score' => [
+            '_seed' => 12345,
+            'field' => '_id',  // Explicit field for consistent behavior across ES versions
+        ],
+    ]);
+})
+
+// For boolean aggregations, use terms instead of histogram
+->aggregate('by_status', ElasticAggregation::terms('is_active'))
+```
 
 ## Testing
 
 ```bash
-composer test
+make test
 ```
 
 ## License

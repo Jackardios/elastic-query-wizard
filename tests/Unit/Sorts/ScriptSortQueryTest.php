@@ -133,6 +133,31 @@ class ScriptSortQueryTest extends UnitTestCase
     }
 
     /** @test */
+    public function it_applies_nested_sorting_context(): void
+    {
+        $wizard = $this
+            ->createElasticWizardWithSorts('custom')
+            ->allowedSorts(
+                ScriptSort::make("doc['price'].value", 'custom')->nested(['path' => 'offers'])
+            );
+        $wizard->build();
+
+        $sorts = $this->getSorts($wizard->getSubject());
+
+        $this->assertCount(1, $sorts);
+        $this->assertEquals([
+            '_script' => [
+                'type' => 'number',
+                'script' => [
+                    'source' => "doc['price'].value",
+                ],
+                'order' => 'asc',
+                'nested' => ['path' => 'offers'],
+            ],
+        ], $sorts[0]);
+    }
+
+    /** @test */
     public function it_applies_all_options(): void
     {
         $wizard = $this

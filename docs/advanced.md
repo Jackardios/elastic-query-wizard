@@ -8,7 +8,9 @@ This section covers advanced features and customization options for Elastic Quer
 > use Jackardios\ElasticQueryWizard\ElasticFilter;
 > use Jackardios\ElasticQueryWizard\ElasticSort;
 > use Jackardios\ElasticQueryWizard\ElasticInclude;
-> use Jackardios\EsScoutDriver\Support\Query;
+> use Jackardios\ElasticQueryWizard\ElasticQuery;
+> use Jackardios\ElasticQueryWizard\ElasticAggregation;
+> use Jackardios\EsScoutDriver\Search\SearchResult;
 > use Illuminate\Database\Eloquent\Builder;
 > use Illuminate\Database\Eloquent\Collection;
 > ```
@@ -16,10 +18,12 @@ This section covers advanced features and customization options for Elastic Quer
 ## Table of Contents
 
 - [Accessing the SearchBuilder](#accessing-the-searchbuilder)
+- [Declarative SearchBuilder Methods](#declarative-searchbuilder-methods)
+- [DSL Proxies](#dsl-proxies)
 - [Custom Aggregations](#custom-aggregations)
 - [Working with Bool Query](#working-with-bool-query)
-- [Eloquent Query Callbacks](#eloquent-query-callbacks)
-- [Collection Callbacks](#collection-callbacks)
+- [Modify Query Callbacks](#modify-query-callbacks)
+- [Modify Models Callbacks](#modify-models-callbacks)
 - [Resource Schemas](#resource-schemas)
 - [Fields and Appends](#fields-and-appends)
 - [Creating Custom Filters](#creating-custom-filters)
@@ -28,7 +32,7 @@ This section covers advanced features and customization options for Elastic Quer
 
 ## Accessing the SearchBuilder
 
-After building the wizard, you can access the underlying `SearchBuilder` to add custom Elasticsearch functionality:
+After building the wizard, you can access the underlying `SearchBuilder` for any low-level functionality not covered by helper methods:
 
 ```php
 $wizard = ElasticQueryWizard::for(Post::class)
@@ -41,11 +45,59 @@ $wizard = ElasticQueryWizard::for(Post::class)
 $searchBuilder = $wizard->getSubject();
 
 // Add custom query
-$searchBuilder->must(Query::matchPhrase('content', 'exact phrase'));
+$searchBuilder->must(ElasticQuery::matchPhrase('content', 'exact phrase'));
 
 // Execute and get results
 $results = $wizard->execute();
 ```
+
+---
+
+## Declarative SearchBuilder Methods
+
+`ElasticQueryWizard` exposes most useful `SearchBuilder` operations directly.
+These methods are declarative: you can call them before or after `build()`, and they remain consistent with wizard configuration.
+
+```php
+$results = ElasticQueryWizard::for(Post::class)
+    ->allowedFilters([
+        ElasticFilter::term('status'),
+    ])
+    ->query(ElasticQuery::match('language', 'en'))
+    ->must(ElasticQuery::range('published_at')->gte('2024-01-01'))
+    ->highlight('title')
+    ->aggregate('by_author', ElasticAggregation::terms('author')->size(10))
+    ->from(0)
+    ->size(20)
+    ->build()
+    ->execute();
+```
+
+You can also use `tapSearchBuilder()` to apply arbitrary mutations:
+
+```php
+ElasticQueryWizard::for(Post::class)
+    ->tapSearchBuilder(function ($builder) {
+        $builder->trackTotalHits(true);
+        $builder->minScore(0.5);
+    });
+```
+
+---
+
+## DSL Proxies
+
+To keep API style consistent inside this package, use:
+
+- `ElasticQuery` as a proxy to `Jackardios\EsScoutDriver\Support\Query`
+- `ElasticAggregation` as a proxy to `Jackardios\EsScoutDriver\Aggregations\Agg`
+
+```php
+ElasticQuery::multiMatch(['title^2', 'body'], 'laravel search');
+ElasticAggregation::stats('price');
+```
+
+Both proxies expose the full underlying `es-scout-driver` factory surface.
 
 ---
 
@@ -59,19 +111,10 @@ $wizard = ElasticQueryWizard::for(Product::class)
         ElasticFilter::term('category'),
         ElasticFilter::range('price'),
     ])
+    ->aggregate('categories', ElasticAggregation::terms('category')->size(20))
+    ->aggregate('price_stats', ElasticAggregation::stats('price'))
+    ->aggregate('price_histogram', ElasticAggregation::histogram('price', 100))
     ->build();
-
-// Add aggregations
-$wizard->getSubject()
-    ->aggregate('categories', [
-        'terms' => ['field' => 'category', 'size' => 20],
-    ])
-    ->aggregate('price_stats', [
-        'stats' => ['field' => 'price'],
-    ])
-    ->aggregate('price_histogram', [
-        'histogram' => ['field' => 'price', 'interval' => 100],
-    ]);
 
 $results = $wizard->execute();
 
@@ -84,17 +127,12 @@ $priceStats = $aggregations['price_stats'];
 ### Nested Aggregations
 
 ```php
-$wizard->getSubject()->aggregate('categories', [
-    'terms' => ['field' => 'category'],
-    'aggs' => [
-        'avg_price' => [
-            'avg' => ['field' => 'price'],
-        ],
-        'brands' => [
-            'terms' => ['field' => 'brand', 'size' => 5],
-        ],
-    ],
-]);
+$wizard->aggregate(
+    'categories',
+    ElasticAggregation::terms('category')
+        ->agg('avg_price', ElasticAggregation::avg('price'))
+        ->agg('brands', ElasticAggregation::terms('brand')->size(5))
+);
 ```
 
 ---
@@ -114,35 +152,37 @@ $wizard = ElasticQueryWizard::for(Post::class)
 $boolQuery = $wizard->boolQuery();
 
 // Add must clause
-$boolQuery->must(Query::match('title', 'search term'));
+$boolQuery->addMust(ElasticQuery::match('title', 'search term'));
 
 // Add should clause with minimum_should_match
-$boolQuery->should(Query::term('is_featured', true));
-$boolQuery->should(Query::range('views')->gte(1000));
+$boolQuery->addShould(ElasticQuery::term('is_featured', true));
+$boolQuery->addShould(ElasticQuery::range('views')->gte(1000));
 $boolQuery->minimumShouldMatch(1);
 
 // Add must_not clause
-$boolQuery->mustNot(Query::term('is_hidden', true));
+$boolQuery->addMustNot(ElasticQuery::term('is_hidden', true));
 ```
 
 ---
 
-## Eloquent Query Callbacks
+## Modify Query Callbacks
 
-Add callbacks that modify the Eloquent query after Elasticsearch returns results:
+Add callbacks that modify the Eloquent query before loading models.
+This API is consistent with `SearchBuilder::modifyQuery()` from `es-scout-driver`:
+the second callback argument receives raw Elasticsearch response array.
 
 ```php
 $wizard = ElasticQueryWizard::for(Post::class)
     ->allowedFilters([
         ElasticFilter::match('title'),
     ])
-    ->addEloquentQueryCallback(function (Builder $builder, SearchResult $searchResult) {
+    ->modifyQuery(function (Builder $builder, array $rawResult) {
         // Add additional Eloquent constraints
         $builder->where('is_published', true);
 
         // Access Elasticsearch result metadata
-        $hits = $searchResult->hits();
-        $total = $searchResult->total();
+        $hits = $rawResult['hits']['hits'] ?? [];
+        $total = $rawResult['hits']['total']['value'] ?? 0;
     })
     ->build();
 ```
@@ -152,7 +192,7 @@ $wizard = ElasticQueryWizard::for(Post::class)
 #### Adding Scopes
 
 ```php
-->addEloquentQueryCallback(function (Builder $builder, SearchResult $searchResult) {
+->modifyQuery(function (Builder $builder, array $rawResult) {
     $builder->withoutGlobalScope('active');
 })
 ```
@@ -160,7 +200,7 @@ $wizard = ElasticQueryWizard::for(Post::class)
 #### Custom Eager Loading
 
 ```php
-->addEloquentQueryCallback(function (Builder $builder, SearchResult $searchResult) {
+->modifyQuery(function (Builder $builder, array $rawResult) {
     $builder->with(['author' => function ($query) {
         $query->select('id', 'name', 'avatar');
     }]);
@@ -169,16 +209,17 @@ $wizard = ElasticQueryWizard::for(Post::class)
 
 ---
 
-## Collection Callbacks
+## Modify Models Callbacks
 
-Add callbacks that transform the collection of models after they're loaded:
+Add callbacks that transform the collection of models after they're loaded.
+This API is consistent with `SearchBuilder::modifyModels()` from `es-scout-driver`:
 
 ```php
 $wizard = ElasticQueryWizard::for(Post::class)
     ->allowedFilters([
         ElasticFilter::match('title'),
     ])
-    ->addEloquentCollectionCallback(function (Collection $collection) {
+    ->modifyModels(function (Collection $collection) {
         // Transform the collection
         return $collection->map(function ($post) {
             $post->computed_field = calculateSomething($post);
@@ -193,7 +234,7 @@ $wizard = ElasticQueryWizard::for(Post::class)
 #### Adding Computed Properties
 
 ```php
-->addEloquentCollectionCallback(function (Collection $collection) {
+->modifyModels(function (Collection $collection) {
     return $collection->each(function ($model) {
         $model->setAttribute('score', $model->likes * 2 + $model->views);
     });
@@ -203,7 +244,7 @@ $wizard = ElasticQueryWizard::for(Post::class)
 #### Filtering Results
 
 ```php
-->addEloquentCollectionCallback(function (Collection $collection) {
+->modifyModels(function (Collection $collection) {
     return $collection->filter(function ($model) {
         return $model->canBeViewed(auth()->user());
     })->values();
@@ -300,7 +341,7 @@ ElasticQueryWizard::for(Post::class)
 ```
 
 ```
-GET /posts?fields[posts]=id,title,status
+GET /posts?fields[post]=id,title,status
 ```
 
 ### Allowed Appends
@@ -519,7 +560,7 @@ $searchResult = $wizard->execute();
 $models = $searchResult->models();
 
 // Get total count
-$total = $searchResult->total();
+$total = $searchResult->total;
 
 // Get raw hits
 $hits = $searchResult->hits();
@@ -529,9 +570,6 @@ $aggregations = $searchResult->aggregations();
 
 // Paginate
 $paginated = $wizard->paginate(15);
-
-// Simple paginate (more efficient for large datasets)
-$paginated = $wizard->simplePaginate(15);
 ```
 
 ---

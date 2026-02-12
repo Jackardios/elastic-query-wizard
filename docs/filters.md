@@ -13,6 +13,12 @@ Filters allow you to limit Elasticsearch query results based on query parameters
 - [Wildcard Filter](#wildcard-filter)
 - [Prefix Filter](#prefix-filter)
 - [Fuzzy Filter](#fuzzy-filter)
+- [Ids Filter](#ids-filter)
+- [Regexp Filter](#regexp-filter)
+- [Match Phrase Filter](#match-phrase-filter)
+- [Match Phrase Prefix Filter](#match-phrase-prefix-filter)
+- [Query String Filter](#query-string-filter)
+- [Simple Query String Filter](#simple-query-string-filter)
 - [Geo Distance Filter](#geo-distance-filter)
 - [Geo Bounding Box Filter](#geo-bounding-box-filter)
 - [Trashed Filter](#trashed-filter)
@@ -40,7 +46,9 @@ ElasticQueryWizard::for(Post::class)
 
 ### Security
 
-Only explicitly allowed filters will be applied. If a client passes an unallowed filter, it will be ignored:
+Only explicitly allowed filters will be applied.
+By default, unknown filters trigger `InvalidFilterQuery`.
+If you disable this exception in config, unknown filters are ignored:
 
 ```php
 // Only 'status' filter is allowed
@@ -49,7 +57,8 @@ Only explicitly allowed filters will be applied. If a client passes an unallowed
 ])
 
 // GET /posts?filter[status]=active&filter[secret_field]=value
-// filter[secret_field] will be ignored
+// By default: throws InvalidFilterQuery
+// With disable_invalid_filter_query_exception=true: ignored
 ```
 
 ---
@@ -409,6 +418,114 @@ ElasticFilter::fuzzy('name')->withParameters([
 
 ---
 
+## Ids Filter
+
+Filter documents by ID list.
+
+### Usage
+
+```php
+ElasticFilter::ids('_id')
+```
+
+### Query Parameters
+
+```
+GET /posts?filter[_id]=1,2,3
+```
+
+---
+
+## Regexp Filter
+
+Filter by regular expression.
+
+### Usage
+
+```php
+ElasticFilter::regexp('slug')
+```
+
+### Query Parameters
+
+```
+GET /posts?filter[slug]=post-.*
+```
+
+---
+
+## Match Phrase Filter
+
+Match an exact phrase in the same word order.
+
+### Usage
+
+```php
+ElasticFilter::matchPhrase('title')
+```
+
+### Query Parameters
+
+```
+GET /posts?filter[title]=exact phrase
+```
+
+---
+
+## Match Phrase Prefix Filter
+
+Phrase-prefix search (useful for autocomplete).
+
+### Usage
+
+```php
+ElasticFilter::matchPhrasePrefix('title', 'autocomplete')
+```
+
+### Query Parameters
+
+```
+GET /posts?filter[autocomplete]=laravel que
+```
+
+---
+
+## Query String Filter
+
+Raw query-string syntax with operators and field-qualified terms.
+
+### Usage
+
+```php
+ElasticFilter::queryString('search')
+```
+
+### Query Parameters
+
+```
+GET /posts?filter[search]=title:laravel AND status:published
+```
+
+---
+
+## Simple Query String Filter
+
+Safer query-string syntax that ignores invalid operators.
+
+### Usage
+
+```php
+ElasticFilter::simpleQueryString('search')
+```
+
+### Query Parameters
+
+```
+GET /posts?filter[search]=laravel +wizard -draft
+```
+
+---
+
 ## Geo Distance Filter
 
 Filter by distance from a geographic point. For `geo_point` field types.
@@ -519,9 +636,16 @@ ElasticFilter::trashed('deleted')
 
 # Include deleted
 GET /posts?filter[trashed]=with
+GET /posts?filter[trashed]=true
+GET /posts?filter[trashed]=1
 
 # Only deleted
 GET /posts?filter[trashed]=only
+
+# Explicitly exclude deleted
+GET /posts?filter[trashed]=without
+GET /posts?filter[trashed]=false
+GET /posts?filter[trashed]=0
 ```
 
 ### Parameter Values
@@ -529,8 +653,9 @@ GET /posts?filter[trashed]=only
 | Value | Description |
 |-------|-------------|
 | (not specified) | Only non-deleted records |
-| `with` | All records, including deleted |
+| `with`, `true`, `1` | All records, including deleted |
 | `only` | Only deleted records |
+| `without`, `false`, `0` | Only non-deleted records |
 
 ---
 
@@ -642,4 +767,4 @@ GET /products?filter[category]=electronics
 This is useful for:
 - Hiding internal data structure
 - Creating more convenient parameter names
-- Backward compatibility when changing schema
+- Stable external API naming across schema changes

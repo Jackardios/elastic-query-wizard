@@ -16,9 +16,7 @@ use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\AppendModel;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\SoftDeleteModel;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
-use Jackardios\EsScoutDriver\Search\SearchResult;
 use Jackardios\QueryWizard\Eloquent\Includes\RelationshipInclude;
-use Jackardios\QueryWizard\Exceptions\InvalidSubject;
 
 /**
  * @group elastic
@@ -32,7 +30,7 @@ class ElasticQueryWizardTest extends TestCase
     /** @test */
     public function it_can_not_be_given_a_string_that_is_not_a_class_name(): void
     {
-        $this->expectException(InvalidSubject::class);
+        $this->expectException(\InvalidArgumentException::class);
 
         $this->expectExceptionMessage('$subject must be a model that uses `Jackardios\EsScoutDriver\Searchable` trait');
 
@@ -76,7 +74,7 @@ class ElasticQueryWizardTest extends TestCase
             'sort' => 'name',
         ])
             ->allowedFilters('category')
-            ->allowedSorts('name')
+            ->allowedSorts(FieldSort::make('name.keyword', 'name'))
             ->build()
             ->execute()
             ->models();
@@ -98,7 +96,7 @@ class ElasticQueryWizardTest extends TestCase
             'sort' => '-name',
         ])
             ->allowedFilters(TermFilter::make('category'))
-            ->allowedSorts(FieldSort::make('name'))
+            ->allowedSorts(FieldSort::make('name.keyword', 'name'))
             ->build()
             ->execute()
             ->models();
@@ -125,7 +123,7 @@ class ElasticQueryWizardTest extends TestCase
             'include' => 'relatedModels',
         ])
             ->allowedFilters('category')
-            ->allowedSorts('name')
+            ->allowedSorts(FieldSort::make('name.keyword', 'name'))
             ->allowedIncludes('relatedModels')
             ->build()
             ->execute()
@@ -136,16 +134,16 @@ class ElasticQueryWizardTest extends TestCase
         $this->assertRelationLoaded($models, 'relatedModels');
     }
 
-    // === Eloquent query callback tests ===
+    // === modifyQuery callback tests ===
 
     /** @test */
-    public function it_executes_eloquent_query_callback(): void
+    public function it_executes_modify_query_callback(): void
     {
         TestModel::factory()->count(3)->create();
         $callbackExecuted = false;
 
         $models = ElasticQueryWizard::for(TestModel::class)
-            ->addEloquentQueryCallback(function (Builder $builder, SearchResult $result) use (&$callbackExecuted) {
+            ->modifyQuery(function (Builder $builder, array $rawResult) use (&$callbackExecuted) {
                 $callbackExecuted = true;
                 $builder->select(['id', 'name']);
             })
@@ -159,19 +157,19 @@ class ElasticQueryWizardTest extends TestCase
     }
 
     /** @test */
-    public function it_executes_multiple_eloquent_query_callbacks_in_order(): void
+    public function it_executes_multiple_modify_query_callbacks_in_order(): void
     {
         TestModel::factory()->count(2)->create();
         $order = [];
 
         $models = ElasticQueryWizard::for(TestModel::class)
-            ->addEloquentQueryCallback(function (Builder $builder) use (&$order) {
+            ->modifyQuery(function (Builder $builder) use (&$order) {
                 $order[] = 'first';
             })
-            ->addEloquentQueryCallback(function (Builder $builder) use (&$order) {
+            ->modifyQuery(function (Builder $builder) use (&$order) {
                 $order[] = 'second';
             })
-            ->addEloquentQueryCallback(function (Builder $builder) use (&$order) {
+            ->modifyQuery(function (Builder $builder) use (&$order) {
                 $order[] = 'third';
             })
             ->build()
@@ -182,32 +180,33 @@ class ElasticQueryWizardTest extends TestCase
     }
 
     /** @test */
-    public function it_passes_search_result_to_eloquent_query_callback(): void
+    public function it_passes_raw_result_to_modify_query_callback_when_array_is_expected(): void
     {
         TestModel::factory()->count(2)->create();
-        $receivedResult = null;
+        $receivedRawResult = null;
 
         ElasticQueryWizard::for(TestModel::class)
-            ->addEloquentQueryCallback(function (Builder $builder, SearchResult $result) use (&$receivedResult) {
-                $receivedResult = $result;
+            ->modifyQuery(function (Builder $builder, array $rawResult) use (&$receivedRawResult) {
+                $receivedRawResult = $rawResult;
             })
             ->build()
             ->execute()
             ->models();
 
-        $this->assertInstanceOf(SearchResult::class, $receivedResult);
+        $this->assertIsArray($receivedRawResult);
+        $this->assertArrayHasKey('hits', $receivedRawResult);
     }
 
-    // === Eloquent collection callback tests ===
+    // === modifyModels callback tests ===
 
     /** @test */
-    public function it_executes_eloquent_collection_callback(): void
+    public function it_executes_modify_models_callback(): void
     {
         TestModel::factory()->count(3)->create();
         $callbackExecuted = false;
 
         $models = ElasticQueryWizard::for(TestModel::class)
-            ->addEloquentCollectionCallback(function (Collection $collection) use (&$callbackExecuted) {
+            ->modifyModels(function (Collection $collection) use (&$callbackExecuted) {
                 $callbackExecuted = true;
                 return $collection;
             })
@@ -220,17 +219,17 @@ class ElasticQueryWizardTest extends TestCase
     }
 
     /** @test */
-    public function it_executes_multiple_eloquent_collection_callbacks_in_order(): void
+    public function it_executes_multiple_modify_models_callbacks_in_order(): void
     {
         TestModel::factory()->count(2)->create();
         $order = [];
 
         ElasticQueryWizard::for(TestModel::class)
-            ->addEloquentCollectionCallback(function (Collection $collection) use (&$order) {
+            ->modifyModels(function (Collection $collection) use (&$order) {
                 $order[] = 'first';
                 return $collection;
             })
-            ->addEloquentCollectionCallback(function (Collection $collection) use (&$order) {
+            ->modifyModels(function (Collection $collection) use (&$order) {
                 $order[] = 'second';
                 return $collection;
             })

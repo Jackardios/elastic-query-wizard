@@ -51,13 +51,16 @@ GET /posts?include=author,comments,tagsCount
 
 ### Security
 
-Only explicitly allowed includes will be loaded:
+Only explicitly allowed includes will be loaded.
+By default, unknown includes trigger `InvalidIncludeQuery`.
+If you disable this exception in config, unknown includes are ignored:
 
 ```php
 ->allowedIncludes(['author', 'comments'])
 
 // GET /posts?include=author,secret_relation
-// secret_relation will be ignored
+// By default: throws InvalidIncludeQuery
+// With disable_invalid_include_query_exception=true: ignored
 ```
 
 ---

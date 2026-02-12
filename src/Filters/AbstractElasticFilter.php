@@ -13,6 +13,10 @@ abstract class AbstractElasticFilter extends AbstractFilter
 
     public function apply(mixed $subject, mixed $value): mixed
     {
+        if ($subject instanceof SearchBuilder) {
+            $this->handle($subject, $value);
+        }
+
         return $subject;
     }
 }

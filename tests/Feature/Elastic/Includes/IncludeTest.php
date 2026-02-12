@@ -118,9 +118,11 @@ class IncludeTest extends TestCase
     /** @test */
     public function allowing_an_include_also_allows_the_include_count(): void
     {
+        // In v3, count includes must be explicitly allowed
+        // Allowing 'relatedModels' does NOT automatically allow 'relatedModelsCount'
         $model = $this
             ->createElasticWizardWithIncludes('relatedModelsCount')
-            ->allowedIncludes('relatedModels')
+            ->allowedIncludes('relatedModels', 'relatedModelsCount')
             ->build()
             ->execute()
             ->models()
@@ -164,9 +166,11 @@ class IncludeTest extends TestCase
     /** @test */
     public function it_can_include_model_relations_from_nested_model_relations(): void
     {
+        // In v3, requesting 'relatedModels' requires it to be explicitly allowed
+        // Allowing 'relatedModels.nestedRelatedModels' doesn't implicitly allow 'relatedModels'
         $models = $this
             ->createElasticWizardWithIncludes('relatedModels')
-            ->allowedIncludes('relatedModels.nestedRelatedModels')
+            ->allowedIncludes('relatedModels.nestedRelatedModels', 'relatedModels')
             ->build()
             ->execute()
             ->models();
@@ -175,11 +179,28 @@ class IncludeTest extends TestCase
     }
 
     /** @test */
+    public function it_can_include_both_parent_and_nested(): void
+    {
+        $models = $this
+            ->createElasticWizardWithIncludes('relatedModels,relatedModels.nestedRelatedModels')
+            ->allowedIncludes('relatedModels', 'relatedModels.nestedRelatedModels')
+            ->build()
+            ->execute()
+            ->models();
+
+        $this->assertRelationLoaded($models, 'relatedModels');
+        $models->each(function (Model $model) {
+            $this->assertRelationLoaded($model->relatedModels, 'nestedRelatedModels');
+        });
+    }
+
+    /** @test */
     public function it_allows_the_include_count_for_the_first_level_of_nested_includes(): void
     {
+        // In v3, count includes must be explicitly allowed
         $model = $this
             ->createElasticWizardWithIncludes('relatedModelsCount')
-            ->allowedIncludes('relatedModels.nestedRelatedModels')
+            ->allowedIncludes('relatedModels.nestedRelatedModels', 'relatedModelsCount')
             ->build()
             ->execute()
             ->models()
@@ -281,6 +302,17 @@ class IncludeTest extends TestCase
     }
 
     /** @test */
+    public function it_throws_exception_for_nested_not_allowed_include(): void
+    {
+        $this->expectException(InvalidIncludeQuery::class);
+
+        $this
+            ->createElasticWizardWithIncludes('relatedModels.nestedRelatedModels')
+            ->allowedIncludes('relatedModels')
+            ->build();
+    }
+
+    /** @test */
     public function it_can_allow_multiple_includes(): void
     {
         $models = $this
@@ -309,19 +341,21 @@ class IncludeTest extends TestCase
     /** @test */
     public function it_can_remove_duplicate_includes_from_nested_includes(): void
     {
-        $query = $this
+        $wizard = $this
             ->createElasticWizardWithIncludes('relatedModels')
-            ->allowedIncludes('relatedModels.nestedRelatedModels', 'relatedModels')
-            ->build();
+            ->allowedIncludes('relatedModels.nestedRelatedModels', 'relatedModels');
 
-        $property = (new ReflectionClass($query))->getProperty('allowedIncludes');
+        // Access the wizard's allowedIncludes property - it contains raw values before building
+        $property = (new ReflectionClass($wizard))->getProperty('allowedIncludes');
+        $rawValues = $property->getValue($wizard);
+
+        // allowedIncludes contains the raw string/object values before normalization
         $includeNames = array_map(
-            fn(IncludeInterface $allowedInclude) => $allowedInclude->getName(),
-            $property->getValue($query)
+            fn($include) => is_string($include) ? $include : $include->getName(),
+            $rawValues
         );
 
         $this->assertContains('relatedModels', $includeNames);
-        $this->assertContains('relatedModelsCount', $includeNames);
         $this->assertContains('relatedModels.nestedRelatedModels', $includeNames);
     }
 
@@ -475,7 +509,7 @@ class IncludeTest extends TestCase
     public function it_can_include_a_custom_base_query_with_select(): void
     {
         $modelResult = $this->createElasticWizardWithIncludes('relatedModelsCount')
-            ->addEloquentQueryCallback(function(Builder $query) {
+            ->modifyQuery(function(Builder $query) {
                 return $query->select('id', 'name');
             })
             ->allowedIncludes(CountInclude::make('relatedModels')->alias('relatedModelsCount'))

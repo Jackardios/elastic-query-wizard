@@ -27,7 +27,7 @@ class TrashedFilterTest extends TestCase
         Config::set('scout.soft_delete', true);
 
         $this->models = SoftDeleteModel::factory()->count(2)->create()
-            ->merge(SoftDeleteModel::factory()->create(['deleted_at' => now()]));
+            ->merge(SoftDeleteModel::factory()->count(1)->create(['deleted_at' => now()]));
     }
 
     /** @test */
@@ -73,6 +73,36 @@ class TrashedFilterTest extends TestCase
             ->models();
 
         $this->assertCount(3, $models);
+    }
+
+    /** @test */
+    public function it_can_filter_with_trashed_using_true_alias()
+    {
+        $models = $this
+            ->createQueryFromFilterRequest([
+                'trashed' => 'true',
+            ])
+            ->allowedFilters(TrashedFilter::make())
+            ->build()
+            ->execute()
+            ->models();
+
+        $this->assertCount(3, $models);
+    }
+
+    /** @test */
+    public function it_can_explicitly_filter_without_trashed()
+    {
+        $models = $this
+            ->createQueryFromFilterRequest([
+                'trashed' => 'without',
+            ])
+            ->allowedFilters(TrashedFilter::make())
+            ->build()
+            ->execute()
+            ->models();
+
+        $this->assertCount(2, $models);
     }
 
     protected function createQueryFromFilterRequest(array $filters): ElasticQueryWizard

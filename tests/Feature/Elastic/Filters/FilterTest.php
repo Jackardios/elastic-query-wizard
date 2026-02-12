@@ -13,8 +13,6 @@ use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Support\Query;
-use Jackardios\QueryWizard\Eloquent\Filters\ExactFilter;
-use Jackardios\QueryWizard\Eloquent\Filters\ScopeFilter;
 use Jackardios\QueryWizard\Exceptions\InvalidFilterQuery;
 
 /**
@@ -90,7 +88,7 @@ class FilterTest extends TestCase
             ->find($this->models->random()->id);
 
         $modelResult = $this->createElasticWizardWithFilters(['category' => $expectedModel->category])
-            ->addEloquentQueryCallback(function(Builder $query) {
+            ->modifyQuery(function(Builder $query) {
                 return $query->select('id', 'category');
             })
             ->allowedFilters('category', 'id')
@@ -119,54 +117,11 @@ class FilterTest extends TestCase
         $this->assertEqualsCanonicalizing($expectedModels->pluck('id')->all(), $modelsResult->pluck('id')->all());
     }
 
-    /** @test */
-    public function it_can_filter_results_by_eloquent_filter(): void
-    {
-        $expectedModel = TestModel::factory()->create(['category' => 'Some Testing Category']);
-
-        $modelsResult = $this
-            ->createElasticWizardWithFilters(['category' => 'Some Testing Category'])
-            ->allowedFilters(ExactFilter::make('category'))
-            ->build()
-            ->execute()
-            ->models();
-
-        $this->assertCount(1, $modelsResult);
-        $this->assertEquals($expectedModel->id, $modelsResult->first()->id);
-    }
-
-    /** @test */
-    public function it_can_filter_results_by_eloquent_scope(): void
-    {
-        $expectedModel = TestModel::factory()->create(['category' => 'Some Testing Category']);
-
-        $modelsResult = $this
-            ->createElasticWizardWithFilters(['categorized' => 'Some Testing Category'])
-            ->allowedFilters(ScopeFilter::make('categorized'))
-            ->build()
-            ->execute()
-            ->models();
-
-        $this->assertCount(1, $modelsResult);
-        $this->assertEquals($expectedModel->id, $modelsResult->first()->id);
-    }
-
-    /** @test */
-    public function it_can_filter_results_by_nested_relation_eloquent_scope(): void
-    {
-        $expectedModel = TestModel::factory()->create(['name' => 'John Testing Doe 234234']);
-        $expectedModel->relatedModels()->create(['name' => 'John\'s Post']);
-
-        $modelsResult = $this
-            ->createElasticWizardWithFilters(['relatedModels.named' => 'John\'s Post'])
-            ->allowedFilters(ScopeFilter::make('relatedModels.named'))
-            ->build()
-            ->execute()
-            ->models();
-
-        $this->assertCount(1, $modelsResult);
-        $this->assertEquals($expectedModel->id, $modelsResult->first()->id);
-    }
+    /**
+     * Note: Eloquent filters (ExactFilter, ScopeFilter) are not compatible with ElasticQueryWizard.
+     * They expect Eloquent\Builder but ElasticQueryWizard uses SearchBuilder.
+     * Use Elastic-specific filters (TermFilter, MatchFilter, etc.) instead.
+     */
 
     /** @test */
     public function it_can_filter_results_by_a_custom_filter_class(): void

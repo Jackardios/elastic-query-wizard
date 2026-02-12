@@ -9,6 +9,16 @@ use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Support\Query;
 
+/**
+ * Range filter for numeric and date fields.
+ *
+ * Accepts only ES 9.x compatible operators: gt, gte, lt, lte.
+ * Legacy operators (from, to, include_lower, include_upper) are NOT supported
+ * as they were removed in Elasticsearch 9.x.
+ *
+ * @example filter[price][gte]=100&filter[price][lte]=500
+ * @example filter[created_at][gte]=2024-01-01
+ */
 class RangeFilter extends AbstractElasticFilter
 {
     use HasParameters;

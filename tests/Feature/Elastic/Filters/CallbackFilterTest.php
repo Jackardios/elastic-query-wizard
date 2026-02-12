@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Filters;
 
 use Illuminate\Support\Collection;
-use Jackardios\ElasticQueryWizard\Filters\CallbackFilter;
+use Jackardios\QueryWizard\Filters\CallbackFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;

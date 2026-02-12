@@ -62,6 +62,21 @@ class ExistsFilterQueryTest extends UnitTestCase
     }
 
     /** @test */
+    public function it_ignores_invalid_boolean_value(): void
+    {
+        $wizard = $this
+            ->createElasticWizardWithFilters(['has_image' => 'definitely'])
+            ->allowedFilters(ExistsFilter::make('has_image'));
+        $wizard->build();
+
+        $filterQueries = $this->getFilterQueries($wizard->boolQuery());
+        $mustNotQueries = $this->getMustNotQueries($wizard->boolQuery());
+
+        $this->assertEmpty($filterQueries);
+        $this->assertEmpty($mustNotQueries);
+    }
+
+    /** @test */
     public function it_adds_a_filter_clause_for_integer_1(): void
     {
         $wizard = $this
@@ -88,5 +103,4 @@ class ExistsFilterQueryTest extends UnitTestCase
         $this->assertCount(1, $mustNotQueries);
         $this->assertEquals(['exists' => ['field' => 'has_image']], $mustNotQueries[0]);
     }
-
 }

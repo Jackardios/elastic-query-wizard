@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard;
 
+use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
-use Jackardios\ElasticQueryWizard\Filters\AbstractElasticFilter;
 use Jackardios\ElasticQueryWizard\Filters\TermFilter;
 use Jackardios\ElasticQueryWizard\Includes\AbstractElasticInclude;
 use Jackardios\ElasticQueryWizard\Sorts\FieldSort;
@@ -16,6 +16,8 @@ use Jackardios\EsScoutDriver\Query\Compound\BoolQuery;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Search\SearchResult;
 use Jackardios\QueryWizard\BaseQueryWizard;
+use Jackardios\QueryWizard\Concerns\HandlesRelationPostProcessing;
+use Jackardios\QueryWizard\Concerns\HandlesSafeRelationSelect;
 use Jackardios\QueryWizard\Config\QueryWizardConfig;
 use Jackardios\QueryWizard\Contracts\FilterInterface;
 use Jackardios\QueryWizard\Contracts\IncludeInterface;
@@ -25,20 +27,66 @@ use Jackardios\QueryWizard\QueryParametersManager;
 use Jackardios\QueryWizard\Schema\ResourceSchemaInterface;
 
 /**
+ * Query wizard for Elasticsearch queries via Scout.
+ *
+ * Handles list queries with filters, sorts, includes, fields, and appends.
+ * Supports Elasticsearch 8.x and 9.x.
+ *
+ * ES 9.x compatibility notes:
+ * - Don't use `force_source` highlighting parameter (removed in ES 9.x)
+ * - For `random_score`, specify `field` explicitly (default changed from `_id` to `_seq_no`)
+ * - Don't use histogram aggregation on boolean fields (use terms aggregation instead)
+ *
+ * Query execution methods (delegated to SearchBuilder):
+ * @method SearchResult execute() Execute query and get full SearchResult (hits, models, documents, aggregations, suggestions)
+ * @method \Jackardios\EsScoutDriver\Search\Paginator paginate(int $perPage = 15, string $pageName = 'page', ?int $page = null) Paginate results (call ->withModels() or ->withDocuments() on result)
+ * @method \Jackardios\EsScoutDriver\Search\Hit|null first() Get first hit (use ->model() to get Model)
+ * @method \Jackardios\EsScoutDriver\Search\Hit firstOrFail() Get first hit or throw ModelNotFoundException
+ * @method int count() Get total count without loading models
+ * @method array raw() Get raw Elasticsearch response array
+ *
  * @mixin SearchBuilder
  */
-class ElasticQueryWizard extends BaseQueryWizard
+final class ElasticQueryWizard extends BaseQueryWizard
 {
+    use HandlesSafeRelationSelect;
+    use HandlesRelationPostProcessing;
+
     /** @var SearchBuilder */
     protected mixed $subject;
 
-    /** @var array<int, callable(Builder, SearchResult): void> */
-    protected array $eloquentQueryCallbacks = [];
+    /** @var array<int, Closure(Builder, array): void> */
+    protected array $queryModifiers = [];
 
-    /** @var array<int, callable(Collection): Collection> */
-    protected array $eloquentCollectionCallbacks = [];
+    /** @var array<int, Closure(Collection): Collection> */
+    protected array $modelModifiers = [];
+
+    /** @var array<int, Closure(Builder, SearchResult): void> */
+    protected array $buildQueryModifiers = [];
+
+    /** @var array<int, Closure(SearchBuilder): void> */
+    protected array $searchBuilderModifiers = [];
 
     protected string $modelClass;
+
+    /** @var array<int, string> */
+    protected array $validatedRequestedRootFields = [];
+
+    /** @var array<string> */
+    protected array $safeRootHiddenFields = [];
+
+    /** @var array{fields: array<string>, relations: array<string, mixed>} */
+    protected array $relationFieldTree;
+
+    /** @var array{appends: array<string>, relations: array<string, mixed>} */
+    protected array $appendTree;
+
+    protected bool $relationFieldTreePrepared = false;
+
+    protected bool $appendTreePrepared = false;
+
+    /** @var array<string, bool> */
+    private static array $searchBuilderFluentMethods = [];
 
     private bool $proxyModified = false;
 
@@ -58,6 +106,8 @@ class ElasticQueryWizard extends BaseQueryWizard
         $this->parameters = $parameters ?? app(QueryParametersManager::class);
         $this->config = $config ?? app(QueryWizardConfig::class);
         $this->schema = $schema;
+        $this->relationFieldTree = $this->emptyRelationFieldTree();
+        $this->appendTree = $this->emptyAppendTree();
     }
 
     public static function for(Model|string $subject, ?QueryParametersManager $parameters = null): static
@@ -87,30 +137,46 @@ class ElasticQueryWizard extends BaseQueryWizard
 
     public function boolQuery(): BoolQuery
     {
+        if ($this->built) {
+            $this->proxyModified = true;
+        }
+
         return $this->subject->boolQuery();
     }
 
     /**
-     * @param callable(Builder, SearchResult): void $callback
+     * Apply custom SearchBuilder mutations declaratively (before/after build).
+     *
+     * @param Closure(SearchBuilder): void $callback
      */
-    public function addEloquentQueryCallback(callable $callback): static
+    public function tapSearchBuilder(Closure $callback): static
     {
-        $this->eloquentQueryCallbacks[] = $callback;
+        return $this->queueSearchBuilderMutation($callback);
+    }
+
+    /**
+     * Add a callback to modify the Eloquent query before loading models.
+     *
+     * @param Closure(Builder, array): void $callback
+     */
+    public function modifyQuery(Closure $callback): static
+    {
+        $this->queryModifiers[] = $callback;
 
         return $this;
     }
 
     /**
-     * @param callable(Collection): Collection $callback
+     * Add a callback to modify the loaded Eloquent collection.
+     *
+     * @param Closure(Collection): Collection $callback
      */
-    public function addEloquentCollectionCallback(callable $callback): static
+    public function modifyModels(Closure $callback): static
     {
-        $this->eloquentCollectionCallbacks[] = $callback;
+        $this->modelModifiers[] = $callback;
 
         return $this;
     }
-
-    // === Abstract implementations ===
 
     protected function normalizeStringToFilter(string $name): FilterInterface
     {
@@ -126,11 +192,16 @@ class ElasticQueryWizard extends BaseQueryWizard
 
     protected function normalizeStringToInclude(string $name): IncludeInterface
     {
-        return RelationshipInclude::fromString($name, $this->config->getCountSuffix());
+        return RelationshipInclude::fromString($name, $this->config->getCountSuffix(), $this->config->getExistsSuffix());
     }
 
     protected function applyFields(array $fields): void
     {
+        $requestedFields = $fields;
+        $fields = $this->applySafeRootFieldRequirements($fields);
+        $this->safeRootHiddenFields = array_values(array_diff($fields, $requestedFields));
+        $this->validatedRequestedRootFields = array_values(array_unique($requestedFields));
+
         /** @var Model $model */
         $model = new $this->modelClass;
         $keyName = $model->getKeyName();
@@ -139,7 +210,7 @@ class ElasticQueryWizard extends BaseQueryWizard
         $requiredFields = array_unique(array_filter([$keyName, $scoutKeyName]));
         $fields = array_values(array_unique(array_merge($requiredFields, $fields)));
 
-        $this->addEloquentQueryCallback(function (Builder $eloquentBuilder) use ($fields) {
+        $this->addBuildQueryModifier(function (Builder $eloquentBuilder) use ($fields) {
             $eloquentBuilder->select($fields);
         });
     }
@@ -153,15 +224,67 @@ class ElasticQueryWizard extends BaseQueryWizard
         return Str::camel(class_basename($this->modelClass));
     }
 
-    // === Filter / Include hooks ===
+    /**
+     * Apply post-processing to externally-loaded results.
+     *
+     * Use this method when executing queries outside the wizard (e.g., via getSubject())
+     * to apply sparse fieldsets and appends to loaded models.
+     *
+     * @template T of Model|\Traversable<mixed>|array<mixed>
+     *
+     * @param  T  $results  Single model, collection, or iterable of models
+     * @return T The same results with post-processing applied
+     */
+    public function applyPostProcessingTo(mixed $results): mixed
+    {
+        $this->build();
+        $this->applyPostProcessingToResults($results);
+
+        return $results;
+    }
+
+    /**
+     * Apply post-processing to results (appends + relation field hiding).
+     *
+     * @param  Model|\Traversable<mixed>|array<mixed>  $results
+     */
+    protected function applyPostProcessingToResults(mixed $results): void
+    {
+        if (! empty($this->safeRootHiddenFields)) {
+            if ($results instanceof Model) {
+                $results->makeHidden($this->safeRootHiddenFields);
+            } else {
+                foreach ($results as $item) {
+                    if ($item instanceof Model) {
+                        $item->makeHidden($this->safeRootHiddenFields);
+                    }
+                }
+            }
+        }
+
+        $this->applyRelationPostProcessingToResults($results, $this->appendTree, $this->relationFieldTree);
+
+        $rootFields = $this->validatedRequestedRootFields;
+        if (! empty($rootFields) && ! in_array('*', $rootFields)) {
+            if ($results instanceof Model) {
+                $this->hideModelAttributesExcept($results, $rootFields);
+            } elseif ($results instanceof Collection) {
+                /** @var Model|null $firstModel */
+                $firstModel = $results->first();
+                if ($firstModel) {
+                    $newHidden = array_values(array_unique([
+                        ...$firstModel->getHidden(),
+                        ...array_diff(array_keys($firstModel->getAttributes()), $rootFields),
+                    ]));
+                    $results->each(fn (Model $model) => $model->setHidden($newHidden));
+                }
+            }
+        }
+    }
 
     protected function applyFilter(FilterInterface $filter, mixed $preparedValue): void
     {
-        if ($filter instanceof AbstractElasticFilter) {
-            $filter->handle($this->subject, $preparedValue);
-        } else {
-            $this->subject = $filter->apply($this->subject, $preparedValue);
-        }
+        $this->subject = $filter->apply($this->subject, $preparedValue);
     }
 
     /**
@@ -171,47 +294,84 @@ class ElasticQueryWizard extends BaseQueryWizard
     protected function applyValidatedIncludes(array $validRequestedIncludes, array $includesIndex): void
     {
         $elasticIncludes = [];
-        $baseIncludes = [];
+        $relationshipIncludes = [];
+        $otherIncludes = [];
+        $relationshipPaths = [];
 
         foreach ($validRequestedIncludes as $includeName) {
             $include = $includesIndex[$includeName];
             if ($include instanceof AbstractElasticInclude) {
                 $elasticIncludes[] = $include;
+            } elseif ($include->getType() === 'relationship') {
+                $relationshipIncludes[] = $include;
+                $relationshipPaths[] = $include->getRelation();
             } else {
-                $baseIncludes[] = $include;
+                $otherIncludes[] = $include;
             }
         }
 
-        if (! empty($baseIncludes)) {
-            $this->addEloquentQueryCallback(
-                function (Builder $builder, SearchResult $searchResult) use ($baseIncludes) {
-                    foreach ($baseIncludes as $include) {
+        /** @var Model $model */
+        $model = new $this->modelClass;
+        $this->prepareSafeRelationSelectPlan($model, $relationshipPaths);
+
+        if (! empty($otherIncludes)) {
+            $this->addBuildQueryModifier(
+                function (Builder $builder, SearchResult $searchResult) use ($otherIncludes) {
+                    foreach ($otherIncludes as $include) {
                         $include->apply($builder);
                     }
                 }
             );
         }
 
+        if (! empty($relationshipIncludes)) {
+            $safeRelationSelectColumnsByPath = $this->safeRelationSelectColumnsByPath;
+
+            $this->addBuildQueryModifier(
+                function (Builder $builder, SearchResult $searchResult) use ($relationshipIncludes, $safeRelationSelectColumnsByPath) {
+                    foreach ($relationshipIncludes as $include) {
+                        $relationPath = $include->getRelation();
+                        $columns = $safeRelationSelectColumnsByPath[$relationPath] ?? null;
+
+                        if ($columns === null) {
+                            $include->apply($builder);
+                            continue;
+                        }
+
+                        $builder->with([
+                            $relationPath => static function ($query) use ($columns): void {
+                                $query->select($columns);
+                            },
+                        ]);
+                    }
+                }
+            );
+        }
+
         if (! empty($elasticIncludes)) {
-            $this->addEloquentQueryCallback(
+            $this->addBuildQueryModifier(
                 function (Builder $builder, SearchResult $searchResult) use ($elasticIncludes) {
                     foreach ($elasticIncludes as $include) {
-                        $include->setSearchResult($searchResult)->handleEloquent($builder);
+                        $include->setSearchResult($searchResult)->apply($builder);
                     }
                 }
             );
         }
     }
 
-    // === Build ===
-
     public function build(): mixed
     {
+        $currentScopeSignature = $this->resolveBuildScopeSignature();
+
         if ($this->built) {
-            return $this->subject;
+            if ($this->builtScopeSignature === $currentScopeSignature) {
+                return $this->subject;
+            }
+            $this->invalidateBuild();
         }
 
         $this->applyTapCallbacks();
+        $this->applySearchBuilderModifiers();
         $this->applyFiltersToSubject();
         $this->applySortsToSubject();
         $this->applyIncludesToSubject();
@@ -219,6 +379,7 @@ class ElasticQueryWizard extends BaseQueryWizard
         $this->finalizeSubject();
 
         $this->built = true;
+        $this->builtScopeSignature = $currentScopeSignature;
 
         return $this->subject;
     }
@@ -232,51 +393,101 @@ class ElasticQueryWizard extends BaseQueryWizard
             );
         }
 
+        $this->resetSafeRelationSelectState();
+        $this->relationFieldTree = $this->emptyRelationFieldTree();
+        $this->relationFieldTreePrepared = false;
+        $this->appendTree = $this->emptyAppendTree();
+        $this->appendTreePrepared = false;
+        $this->safeRootHiddenFields = [];
         parent::invalidateBuild();
-        $this->eloquentQueryCallbacks = [];
-        $this->eloquentCollectionCallbacks = [];
+        $this->buildQueryModifiers = [];
+        $this->validatedRequestedRootFields = [];
     }
 
     protected function finalizeSubject(): void
     {
-        $appends = $this->getValidRequestedAppends();
-        $requestedFields = $this->parameters->getFields();
-        $resourceKey = $this->getResourceKey();
-        $rootFields = $requestedFields->get($resourceKey, []);
+        $this->prepareRelationFieldData();
+        $this->prepareAppendTreeData();
 
-        $eloquentQueryCallbacks = $this->eloquentQueryCallbacks;
-        $eloquentCollectionCallbacks = $this->eloquentCollectionCallbacks;
+        $queryModifiers = $this->queryModifiers;
+        $buildQueryModifiers = $this->buildQueryModifiers;
+        $modelModifiers = $this->modelModifiers;
 
         $this->subject
-            ->modifyQuery(function (Builder $builder, array $rawResult) use ($eloquentQueryCallbacks) {
-                $searchResult = new SearchResult($rawResult, fn () => collect());
-                foreach ($eloquentQueryCallbacks as $callback) {
+            ->modifyQuery(function (Builder $builder, array $rawResult) use ($queryModifiers, $buildQueryModifiers) {
+                foreach ($queryModifiers as $callback) {
+                    $callback($builder, $rawResult);
+                }
+
+                if ($buildQueryModifiers === []) {
+                    return;
+                }
+
+                $searchResult = new SearchResult($rawResult);
+                foreach ($buildQueryModifiers as $callback) {
                     $callback($builder, $searchResult);
                 }
             })
-            ->modifyModels(function (Collection $collection) use ($appends, $rootFields, $eloquentCollectionCallbacks) {
-                foreach ($eloquentCollectionCallbacks as $callback) {
+            ->modifyModels(function (Collection $collection) use ($modelModifiers) {
+                foreach ($modelModifiers as $callback) {
                     $collection = call_user_func($callback, $collection);
                 }
 
-                if (! empty($appends)) {
-                    $this->applyAppendsTo($collection);
-                }
-
-                if (! empty($rootFields) && ! in_array('*', $rootFields)) {
-                    /** @var Model|null $firstModel */
-                    $firstModel = $collection->first();
-                    if ($firstModel) {
-                        $newHidden = array_values(array_unique([
-                            ...$firstModel->getHidden(),
-                            ...array_diff(array_keys($firstModel->getAttributes()), $rootFields),
-                        ]));
-                        $collection = $collection->setHidden($newHidden);
-                    }
-                }
+                $this->applyPostProcessingToResults($collection);
 
                 return $collection;
             });
+    }
+
+    protected function prepareRelationFieldData(): void
+    {
+        if ($this->relationFieldTreePrepared) {
+            return;
+        }
+
+        $this->relationFieldTreePrepared = true;
+        $relationFieldMap = $this->buildValidatedRelationFieldMap();
+        $this->relationFieldTree = $this->buildRelationFieldTree($relationFieldMap);
+    }
+
+    protected function prepareAppendTreeData(): void
+    {
+        if ($this->appendTreePrepared) {
+            return;
+        }
+
+        $this->appendTreePrepared = true;
+        $this->appendTree = $this->getValidRequestedAppendsTree();
+    }
+
+    protected function applySearchBuilderModifiers(): void
+    {
+        foreach ($this->searchBuilderModifiers as $callback) {
+            $callback($this->subject);
+        }
+    }
+
+    /**
+     * @param Closure(Builder, SearchResult): void $callback
+     */
+    protected function addBuildQueryModifier(Closure $callback): void
+    {
+        $this->buildQueryModifiers[] = $callback;
+    }
+
+    /**
+     * @param Closure(SearchBuilder): void $callback
+     */
+    protected function queueSearchBuilderMutation(Closure $callback): static
+    {
+        $this->searchBuilderModifiers[] = $callback;
+
+        if ($this->built) {
+            $this->proxyModified = true;
+            $callback($this->subject);
+        }
+
+        return $this;
     }
 
     /**
@@ -284,8 +495,19 @@ class ElasticQueryWizard extends BaseQueryWizard
      */
     public function __call(string $name, array $arguments): mixed
     {
-        $this->build();
+        if ($this->isSearchBuilderFluentMethod($name)) {
+            return $this->queueSearchBuilderMutation(
+                fn (SearchBuilder $builder) => $builder->{$name}(...$arguments)
+            );
+        }
 
+        if (! method_exists($this->subject, $name)) {
+            throw new \BadMethodCallException(
+                sprintf('Method %s::%s does not exist.', static::class, $name)
+            );
+        }
+
+        $this->build();
         $result = $this->subject->$name(...$arguments);
 
         if ($result === $this->subject) {
@@ -297,9 +519,67 @@ class ElasticQueryWizard extends BaseQueryWizard
         return $result;
     }
 
+    private function isSearchBuilderFluentMethod(string $name): bool
+    {
+        if (array_key_exists($name, self::$searchBuilderFluentMethods)) {
+            return self::$searchBuilderFluentMethods[$name];
+        }
+
+        if (! method_exists(SearchBuilder::class, $name)) {
+            self::$searchBuilderFluentMethods[$name] = false;
+
+            return false;
+        }
+
+        $method = new \ReflectionMethod(SearchBuilder::class, $name);
+        $returnType = $method->getReturnType();
+
+        if ($returnType === null) {
+            self::$searchBuilderFluentMethods[$name] = false;
+
+            return false;
+        }
+
+        $isFluent = false;
+        if ($returnType instanceof \ReflectionNamedType) {
+            $isFluent = $this->isFluentNamedReturnType($returnType);
+        } elseif ($returnType instanceof \ReflectionUnionType) {
+            foreach ($returnType->getTypes() as $type) {
+                if ($type instanceof \ReflectionNamedType && $this->isFluentNamedReturnType($type)) {
+                    $isFluent = true;
+
+                    break;
+                }
+            }
+        }
+
+        self::$searchBuilderFluentMethods[$name] = $isFluent;
+
+        return $isFluent;
+    }
+
+    private function isFluentNamedReturnType(\ReflectionNamedType $returnType): bool
+    {
+        $typeName = $returnType->getName();
+
+        if ($typeName === 'self' || $typeName === 'static') {
+            return true;
+        }
+
+        return is_a($typeName, SearchBuilder::class, true);
+    }
+
     public function __clone(): void
     {
         parent::__clone();
         $this->proxyModified = false;
+        $this->resetSafeRelationSelectState();
+        $this->relationFieldTree = $this->emptyRelationFieldTree();
+        $this->relationFieldTreePrepared = false;
+        $this->appendTree = $this->emptyAppendTree();
+        $this->appendTreePrepared = false;
+        $this->safeRootHiddenFields = [];
+        $this->buildQueryModifiers = [];
+        $this->validatedRequestedRootFields = [];
     }
 }

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Sorts;
 
+use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Sort\Sort;
-use Jackardios\QueryWizard\Sorts\AbstractSort;
 
-class GeoDistanceSort extends AbstractSort
+class GeoDistanceSort extends AbstractElasticSort
 {
     protected float $lat;
     protected float $lon;
@@ -65,7 +65,7 @@ class GeoDistanceSort extends AbstractSort
         return 'geo_distance';
     }
 
-    public function apply(mixed $subject, string $direction): mixed
+    public function handle(SearchBuilder $builder, string $direction): void
     {
         $sort = Sort::geoDistance($this->property, $this->lat, $this->lon)
             ->order($direction)
@@ -83,8 +83,6 @@ class GeoDistanceSort extends AbstractSort
             $sort->ignoreUnmapped($this->ignoreUnmapped);
         }
 
-        $subject->sort($sort);
-
-        return $subject;
+        $builder->sort($sort);
     }
 }

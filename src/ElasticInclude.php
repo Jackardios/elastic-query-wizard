@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jackardios\ElasticQueryWizard;
 
 use Jackardios\QueryWizard\Eloquent\Includes\CountInclude;
+use Jackardios\QueryWizard\Eloquent\Includes\ExistsInclude;
 use Jackardios\QueryWizard\Eloquent\Includes\RelationshipInclude;
 use Jackardios\QueryWizard\Includes\CallbackInclude;
 
@@ -18,6 +19,11 @@ final class ElasticInclude
     public static function count(string $relation, ?string $alias = null): CountInclude
     {
         return CountInclude::make($relation, $alias);
+    }
+
+    public static function exists(string $relation, ?string $alias = null): ExistsInclude
+    {
+        return ExistsInclude::make($relation, $alias);
     }
 
     public static function callback(string $name, callable $callback, ?string $alias = null): CallbackInclude

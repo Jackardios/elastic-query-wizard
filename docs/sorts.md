@@ -44,7 +44,9 @@ GET /posts?sort=-created_at,title
 
 ### Security
 
-Only explicitly allowed sorts will be applied:
+Only explicitly allowed sorts will be applied.
+By default, unknown sorts trigger `InvalidSortQuery`.
+If you disable this exception in config, unknown sorts are ignored:
 
 ```php
 ->allowedSorts([
@@ -52,7 +54,8 @@ Only explicitly allowed sorts will be applied:
 ])
 
 // GET /posts?sort=secret_field
-// secret_field will be ignored
+// By default: throws InvalidSortQuery
+// With disable_invalid_sort_query_exception=true: ignored
 ```
 
 ---
@@ -84,7 +87,7 @@ GET /products?sort=-price
 ```json
 {
   "sort": [
-    { "price": { "order": "asc" } }
+    { "price": "asc" }
   ]
 }
 ```
@@ -97,6 +100,31 @@ Text fields cannot be sorted directly. Use the keyword subfield:
 // If mapping has title.keyword
 ElasticSort::field('title.keyword', 'title')
 ```
+
+### Advanced Field Sort Options
+
+`ElasticSort::field()` supports all field-sort options available in `es-scout-driver`:
+
+```php
+ElasticSort::field('price')
+    ->missingLast()
+    ->mode('avg')
+    ->unmappedType('long')
+    ->nested(['path' => 'offers'])
+    ->numericType('double')
+    ->format('strict_date_optional_time')
+```
+
+| Method | Description |
+|--------|-------------|
+| `missing(string|int|float|bool)` | Explicit value for missing docs (`_first`, `_last`, or scalar) |
+| `missingFirst()` | Shortcut for `missing('_first')` |
+| `missingLast()` | Shortcut for `missing('_last')` |
+| `mode(string)` | Mode for multi-valued fields (`min`, `max`, `avg`, `sum`, `median`) |
+| `unmappedType(string)` | Fallback type when field is unmapped |
+| `nested(array)` | Nested sort context |
+| `numericType(string)` | Force numeric sort type (`double`, `long`, etc.) |
+| `format(string)` | Date format for date sort values |
 
 ---
 
@@ -219,6 +247,7 @@ GET /products?sort=-custom
 | `type(string)` | Return value type | `number` |
 | `params(array)` | Script parameters | `[]` |
 | `mode(string)` | Mode for arrays | `null` |
+| `nested(array)` | Nested sort context | `null` |
 
 ### Examples
 

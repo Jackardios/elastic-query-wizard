@@ -28,6 +28,10 @@ abstract class AbstractElasticInclude extends AbstractInclude
 
     public function apply(mixed $subject): mixed
     {
+        if ($subject instanceof Builder) {
+            $this->handleEloquent($subject);
+        }
+
         return $subject;
     }
 }

@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard;
 
-use Jackardios\ElasticQueryWizard\Filters\CallbackFilter;
+use Jackardios\QueryWizard\Filters\CallbackFilter;
+use Jackardios\ElasticQueryWizard\Filters\DateRangeFilter;
 use Jackardios\ElasticQueryWizard\Filters\ExistsFilter;
 use Jackardios\ElasticQueryWizard\Filters\FuzzyFilter;
 use Jackardios\ElasticQueryWizard\Filters\GeoBoundingBoxFilter;
@@ -14,6 +15,7 @@ use Jackardios\ElasticQueryWizard\Filters\MatchFilter;
 use Jackardios\ElasticQueryWizard\Filters\MatchPhraseFilter;
 use Jackardios\ElasticQueryWizard\Filters\MatchPhrasePrefixFilter;
 use Jackardios\ElasticQueryWizard\Filters\MultiMatchFilter;
+use Jackardios\ElasticQueryWizard\Filters\NullFilter;
 use Jackardios\ElasticQueryWizard\Filters\PrefixFilter;
 use Jackardios\ElasticQueryWizard\Filters\QueryStringFilter;
 use Jackardios\ElasticQueryWizard\Filters\RangeFilter;
@@ -113,6 +115,16 @@ final class ElasticFilter
     public static function trashed(?string $alias = null): TrashedFilter
     {
         return TrashedFilter::make($alias);
+    }
+
+    public static function dateRange(string $property, ?string $alias = null): DateRangeFilter
+    {
+        return DateRangeFilter::make($property, $alias);
+    }
+
+    public static function null(string $property, ?string $alias = null): NullFilter
+    {
+        return NullFilter::make($property, $alias);
     }
 
     /**

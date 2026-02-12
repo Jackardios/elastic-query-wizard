@@ -13,6 +13,14 @@ class NestedRelatedModel extends Model
 
     public $timestamps = false;
 
+    /**
+     * Get the formatted name attribute.
+     */
+    public function getFormattedNameAttribute(): string
+    {
+        return 'Nested: '.$this->name;
+    }
+
     public function relatedModel(): BelongsTo
     {
         return $this->belongsTo(RelatedModel::class);

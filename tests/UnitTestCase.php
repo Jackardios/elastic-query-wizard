@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Tests;
 
+use Elastic\Client\ServiceProvider as ElasticClientServiceProvider;
 use Elastic\Migrations\ServiceProvider as ElasticMigrationsServiceProvider;
 use Jackardios\ElasticQueryWizard\Tests\Concerns\AssertsElasticQuery;
 use Jackardios\ElasticQueryWizard\Tests\Concerns\QueryWizardTestingHelpers;
@@ -22,6 +23,7 @@ abstract class UnitTestCase extends Orchestra
         return [
             QueryWizardServiceProvider::class,
             ScoutServiceProvider::class,
+            ElasticClientServiceProvider::class,
             ElasticMigrationsServiceProvider::class,
             EsScoutDriverServiceProvider::class,
         ];

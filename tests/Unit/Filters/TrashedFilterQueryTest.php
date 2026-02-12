@@ -65,6 +65,54 @@ class TrashedFilterQueryTest extends UnitTestCase
     }
 
     /** @test */
+    public function true_value_sets_soft_delete_mode_to_with_trashed(): void
+    {
+        Config::set('scout.soft_delete', true);
+
+        $wizard = $this
+            ->createElasticWizardWithFilters(['trashed' => 'true'], SoftDeleteModel::class)
+            ->allowedFilters(ElasticFilter::trashed());
+        $wizard->build();
+
+        $this->assertEquals(
+            SoftDeleteMode::WithTrashed,
+            $wizard->boolQuery()->getSoftDeleteMode()
+        );
+    }
+
+    /** @test */
+    public function false_value_sets_soft_delete_mode_to_exclude_trashed(): void
+    {
+        Config::set('scout.soft_delete', true);
+
+        $wizard = $this
+            ->createElasticWizardWithFilters(['trashed' => 'false'], SoftDeleteModel::class)
+            ->allowedFilters(ElasticFilter::trashed());
+        $wizard->build();
+
+        $this->assertEquals(
+            SoftDeleteMode::ExcludeTrashed,
+            $wizard->boolQuery()->getSoftDeleteMode()
+        );
+    }
+
+    /** @test */
+    public function without_value_sets_soft_delete_mode_to_exclude_trashed(): void
+    {
+        Config::set('scout.soft_delete', true);
+
+        $wizard = $this
+            ->createElasticWizardWithFilters(['trashed' => 'without'], SoftDeleteModel::class)
+            ->allowedFilters(ElasticFilter::trashed());
+        $wizard->build();
+
+        $this->assertEquals(
+            SoftDeleteMode::ExcludeTrashed,
+            $wizard->boolQuery()->getSoftDeleteMode()
+        );
+    }
+
+    /** @test */
     public function no_soft_delete_config_keeps_default_mode(): void
     {
         Config::set('scout.soft_delete', false);

@@ -33,9 +33,9 @@ class TrashedFilter extends AbstractElasticFilter
 
         $normalized = is_string($value) ? strtolower($value) : $value;
 
-        if ($normalized === '1' || $normalized === 'true') {
+        if ($normalized === 'true') {
             $normalized = 'with';
-        } elseif ($normalized === '0' || $normalized === 'false') {
+        } elseif ($normalized === 'false') {
             $normalized = 'without';
         }
 

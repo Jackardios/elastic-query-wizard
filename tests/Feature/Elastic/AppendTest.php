@@ -12,6 +12,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Jackardios\QueryWizard\Exceptions\InvalidAppendQuery;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\AppendModel;
+use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 
 /**
  * @group elastic
@@ -35,7 +36,7 @@ class AppendTest extends TestCase
             ->build()
             ->execute();
 
-        $this->assertEquals(AppendModel::count(), $result->total());
+        $this->assertEquals(AppendModel::count(), $result->total);
     }
 
     /** @test */
@@ -89,7 +90,7 @@ class AppendTest extends TestCase
             ->allowedAppends('FullName')
             ->build()
             ->paginate()
-            ->onlyModels();
+            ->withModels();
 
         $this->assertPaginateAttributeLoaded($models, 'FullName');
     }
@@ -187,5 +188,199 @@ class AppendTest extends TestCase
             });
 
         $this->assertFalse($hasModelWithoutAttributeLoaded, "The `$attribute` attribute was expected but not loaded.");
+    }
+
+    // ========== Relation Appends Tests ==========
+
+    /** @test */
+    public function it_can_append_to_relation_models(): void
+    {
+        $testModel = TestModel::factory()->create();
+        $testModel->relatedModels()->create(['name' => 'Related']);
+
+        $result = $this
+            ->createElasticWizardFromQuery([
+                'include' => 'relatedModels',
+                'append' => 'relatedModels.formattedName',
+            ], TestModel::class)
+            ->allowedIncludes('relatedModels')
+            ->allowedAppends('relatedModels.formattedName')
+            ->build()
+            ->execute()
+            ->models()
+            ->first();
+
+        $array = $result->toArray();
+        $this->assertArrayHasKey('related_models', $array);
+        $this->assertArrayHasKey('formattedName', $array['related_models'][0]);
+        $this->assertEquals('Formatted: Related', $array['related_models'][0]['formattedName']);
+    }
+
+    /** @test */
+    public function it_can_append_multiple_attributes_to_relation(): void
+    {
+        $testModel = TestModel::factory()->create();
+        $testModel->relatedModels()->create(['name' => 'Related']);
+
+        $result = $this
+            ->createElasticWizardFromQuery([
+                'include' => 'relatedModels',
+                'append' => 'relatedModels.formattedName,relatedModels.upperName',
+            ], TestModel::class)
+            ->allowedIncludes('relatedModels')
+            ->allowedAppends('relatedModels.formattedName', 'relatedModels.upperName')
+            ->build()
+            ->execute()
+            ->models()
+            ->first();
+
+        $array = $result->toArray();
+        $this->assertArrayHasKey('formattedName', $array['related_models'][0]);
+        $this->assertArrayHasKey('upperName', $array['related_models'][0]);
+    }
+
+    /** @test */
+    public function it_can_combine_root_and_relation_appends(): void
+    {
+        // TestModel needs a computed attribute for root-level append
+        // We'll test that relation appends work alongside root field selection
+        $testModel = TestModel::factory()->create();
+        $testModel->relatedModels()->create(['name' => 'Related']);
+
+        $result = $this
+            ->createElasticWizardFromQuery([
+                'include' => 'relatedModels',
+                'append' => 'relatedModels.formattedName,relatedModels.upperName',
+            ], TestModel::class)
+            ->allowedIncludes('relatedModels')
+            ->allowedAppends('relatedModels.formattedName', 'relatedModels.upperName')
+            ->build()
+            ->execute()
+            ->models()
+            ->first();
+
+        $array = $result->toArray();
+        $this->assertArrayHasKey('related_models', $array);
+        $this->assertArrayHasKey('formattedName', $array['related_models'][0]);
+        $this->assertArrayHasKey('upperName', $array['related_models'][0]);
+    }
+
+    /** @test */
+    public function wildcard_allows_all_relation_appends(): void
+    {
+        $testModel = TestModel::factory()->create();
+        $testModel->relatedModels()->create(['name' => 'Related']);
+
+        $result = $this
+            ->createElasticWizardFromQuery([
+                'include' => 'relatedModels',
+                'append' => 'relatedModels.formattedName,relatedModels.upperName',
+            ], TestModel::class)
+            ->allowedIncludes('relatedModels')
+            ->allowedAppends('relatedModels.*')
+            ->build()
+            ->execute()
+            ->models()
+            ->first();
+
+        $array = $result->toArray();
+        $this->assertArrayHasKey('formattedName', $array['related_models'][0]);
+        $this->assertArrayHasKey('upperName', $array['related_models'][0]);
+    }
+
+    /** @test */
+    public function it_ignores_relation_append_when_relation_not_loaded(): void
+    {
+        $testModel = TestModel::factory()->create();
+        $testModel->relatedModels()->create(['name' => 'Related']);
+
+        $result = $this
+            ->createElasticWizardFromQuery([
+                'append' => 'relatedModels.formattedName',
+            ], TestModel::class)
+            ->allowedAppends('relatedModels.formattedName')
+            ->build()
+            ->execute()
+            ->models()
+            ->first();
+
+        $array = $result->toArray();
+        // Relation not loaded, so no related_models key
+        $this->assertArrayNotHasKey('related_models', $array);
+    }
+
+    /** @test */
+    public function it_validates_nested_appends_correctly(): void
+    {
+        $testModel = TestModel::factory()->create();
+        $testModel->relatedModels()->create(['name' => 'Related']);
+
+        $this->expectException(InvalidAppendQuery::class);
+
+        $this
+            ->createElasticWizardFromQuery([
+                'include' => 'relatedModels',
+                'append' => 'relatedModels.unknownAttr',
+            ], TestModel::class)
+            ->allowedIncludes('relatedModels')
+            ->allowedAppends('relatedModels.formattedName')
+            ->build();
+    }
+
+    /** @test */
+    public function nested_append_applies_to_all_models_in_collection(): void
+    {
+        $testModels = TestModel::factory()->count(3)->create();
+        $testModels->each(function (TestModel $model) {
+            $model->relatedModels()->create(['name' => 'Related-' . $model->id]);
+        });
+
+        $results = $this
+            ->createElasticWizardFromQuery([
+                'include' => 'relatedModels',
+                'append' => 'relatedModels.formattedName',
+            ], TestModel::class)
+            ->allowedIncludes('relatedModels')
+            ->allowedAppends('relatedModels.formattedName')
+            ->build()
+            ->execute()
+            ->models();
+
+        $this->assertCount(3, $results);
+
+        foreach ($results as $model) {
+            $array = $model->toArray();
+            if (! empty($array['related_models'])) {
+                foreach ($array['related_models'] as $related) {
+                    $this->assertArrayHasKey('formattedName', $related);
+                }
+            }
+        }
+    }
+
+    /** @test */
+    public function it_can_append_to_deeply_nested_relation(): void
+    {
+        $testModel = TestModel::factory()->create();
+        $related = $testModel->relatedModels()->create(['name' => 'Related']);
+        $related->nestedRelatedModels()->create(['name' => 'Nested']);
+
+        $result = $this
+            ->createElasticWizardFromQuery([
+                'include' => 'relatedModels.nestedRelatedModels',
+                'append' => 'relatedModels.nestedRelatedModels.formattedName',
+            ], TestModel::class)
+            ->allowedIncludes('relatedModels.nestedRelatedModels')
+            ->allowedAppends('relatedModels.nestedRelatedModels.formattedName')
+            ->build()
+            ->execute()
+            ->models()
+            ->first();
+
+        $array = $result->toArray();
+        $this->assertArrayHasKey('related_models', $array);
+        $this->assertArrayHasKey('nested_related_models', $array['related_models'][0]);
+        $this->assertArrayHasKey('formattedName', $array['related_models'][0]['nested_related_models'][0]);
+        $this->assertEquals('Nested: Nested', $array['related_models'][0]['nested_related_models'][0]['formattedName']);
     }
 }

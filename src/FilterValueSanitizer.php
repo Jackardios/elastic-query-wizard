@@ -11,6 +11,9 @@ use Jackardios\ElasticQueryWizard\Exceptions\InvalidRangeValue;
 
 class FilterValueSanitizer
 {
+    public const RANGE_OPERATORS = ['gt', 'gte', 'lt', 'lte'];
+
+    public const LEGACY_RANGE_OPERATORS = ['from', 'to', 'include_lower', 'include_upper'];
     /**
      * @param mixed $value raw filter value
      * @param string $propertyName will be used to throw exception
@@ -76,6 +79,11 @@ class FilterValueSanitizer
     }
 
     /**
+     * Validates and extracts range filter parameters.
+     *
+     * Only ES 9.x compatible operators are allowed: gt, gte, lt, lte.
+     * Legacy operators (from, to, include_lower, include_upper) will throw InvalidRangeValue.
+     *
      * @param mixed $value raw filter value
      * @param string $propertyName will be used to throw exception
      * @return array{gt?: string|number, gte?: string|number, lt?: string|number, lte?: string|number}
@@ -89,7 +97,11 @@ class FilterValueSanitizer
 
         $prepared = [];
         foreach ($value as $itemKey => $itemValue) {
-            if (! in_array($itemKey, ['gt', 'gte', 'lt', 'lte']) || ! (is_string($itemValue) || is_numeric($itemValue))) {
+            if (in_array($itemKey, self::LEGACY_RANGE_OPERATORS, true)) {
+                throw InvalidRangeValue::legacyOperator($propertyName, $itemKey);
+            }
+
+            if (! in_array($itemKey, self::RANGE_OPERATORS, true) || ! (is_string($itemValue) || is_numeric($itemValue))) {
                 throw InvalidRangeValue::make($propertyName);
             }
 

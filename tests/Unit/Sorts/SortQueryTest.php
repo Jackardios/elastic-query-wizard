@@ -176,6 +176,37 @@ class SortQueryTest extends UnitTestCase
         $this->assertEquals([['name' => 'asc']], $this->getSorts($wizard->getSubject()));
     }
 
+    /** @test */
+    public function it_applies_advanced_field_sort_options(): void
+    {
+        $wizard = $this
+            ->createElasticWizardWithSorts('price_sort')
+            ->allowedSorts(
+                FieldSort::make('price', 'price_sort')
+                    ->missingLast()
+                    ->mode('avg')
+                    ->unmappedType('long')
+                    ->nested(['path' => 'offers'])
+                    ->numericType('double')
+                    ->format('strict_date_optional_time')
+            );
+        $wizard->build();
+
+        $this->assertEquals([
+            [
+                'price' => [
+                    'order' => 'asc',
+                    'missing' => '_last',
+                    'mode' => 'avg',
+                    'unmapped_type' => 'long',
+                    'nested' => ['path' => 'offers'],
+                    'numeric_type' => 'double',
+                    'format' => 'strict_date_optional_time',
+                ],
+            ],
+        ], $this->getSorts($wizard->getSubject()));
+    }
+
     private function createCustomSort(): AbstractSort
     {
         return new class('custom_name') extends AbstractSort {

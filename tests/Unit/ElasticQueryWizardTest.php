@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Tests\Unit;
 
+use Jackardios\ElasticQueryWizard\ElasticQuery;
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
 use Jackardios\ElasticQueryWizard\Filters\TermFilter;
 use Jackardios\ElasticQueryWizard\Sorts\FieldSort;
@@ -124,5 +125,82 @@ class ElasticQueryWizardTest extends UnitTestCase
         $wizard = ElasticQueryWizard::for(TestModel::class);
 
         $this->assertInstanceOf(\Jackardios\EsScoutDriver\Search\SearchBuilder::class, $wizard->getSubject());
+    }
+
+    /** @test */
+    public function it_applies_declarative_search_builder_mutations_before_build(): void
+    {
+        $wizard = ElasticQueryWizard::for(TestModel::class)
+            ->query(ElasticQuery::match('name', 'John'))
+            ->must(ElasticQuery::term('category', 'users'))
+            ->from(10)
+            ->size(5)
+            ->trackTotalHits(true)
+            ->allowedSorts('name')
+            ->defaultSorts('name');
+
+        $wizard->build();
+
+        $mustQueries = $this->getMustQueries($wizard->boolQuery());
+        $this->assertCount(1, $mustQueries);
+        $this->assertSame(
+            ['term' => ['category' => ['value' => 'users']]],
+            $mustQueries[0]
+        );
+
+        $params = $wizard->getSubject()->toArray();
+
+        $this->assertSame(10, $params['body']['from']);
+        $this->assertSame(5, $params['body']['size']);
+        $this->assertTrue($params['body']['track_total_hits']);
+
+        $mustQueriesFromBody = $params['body']['query']['bool']['must'];
+        $this->assertContains(['match' => ['name' => ['query' => 'John']]], $mustQueriesFromBody);
+        $this->assertContains(['term' => ['category' => ['value' => 'users']]], $mustQueriesFromBody);
+    }
+
+    /** @test */
+    public function it_reapplies_search_builder_mutations_after_build_invalidation(): void
+    {
+        $wizard = ElasticQueryWizard::for(TestModel::class)
+            ->from(20)
+            ->size(15);
+
+        $wizard->build();
+
+        // invalidate build with configuration change
+        $wizard->allowedSorts('name');
+        $wizard->build();
+
+        $params = $wizard->getSubject()->toArray();
+
+        $this->assertSame(20, $params['body']['from']);
+        $this->assertSame(15, $params['body']['size']);
+    }
+
+    /** @test */
+    public function it_applies_tap_search_builder_callback(): void
+    {
+        $wizard = ElasticQueryWizard::for(TestModel::class)
+            ->tapSearchBuilder(fn ($builder) => $builder->minScore(0.75));
+
+        $wizard->build();
+
+        $params = $wizard->getSubject()->toArray();
+        $this->assertSame(0.75, $params['body']['min_score']);
+    }
+
+    /** @test */
+    public function bool_query_after_build_locks_configuration_changes(): void
+    {
+        $wizard = ElasticQueryWizard::for(TestModel::class);
+        $wizard->build();
+
+        $wizard->boolQuery();
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Cannot modify query wizard configuration after calling query builder methods.');
+
+        $wizard->allowedFilters(TermFilter::make('name'));
     }
 }
