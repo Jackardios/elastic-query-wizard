@@ -26,7 +26,7 @@ class FilterValueSanitizer
         $bbox = [];
         $arrayValue = is_array($value) ? $value : [];
 
-        foreach($arrayValue as $item) {
+        foreach ($arrayValue as $item) {
             if (! is_numeric($item)) {
                 throw InvalidGeoBoundingBoxValue::make($propertyName);
             }

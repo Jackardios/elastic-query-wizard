@@ -203,7 +203,7 @@ final class ElasticQueryWizard extends BaseQueryWizard
         $this->validatedRequestedRootFields = array_values(array_unique($requestedFields));
 
         /** @var Model $model */
-        $model = new $this->modelClass;
+        $model = new $this->modelClass();
         $keyName = $model->getKeyName();
         $scoutKeyName = $model->getScoutKeyName();
 
@@ -276,7 +276,7 @@ final class ElasticQueryWizard extends BaseQueryWizard
                         ...$firstModel->getHidden(),
                         ...array_diff(array_keys($firstModel->getAttributes()), $rootFields),
                     ]));
-                    $results->each(fn (Model $model) => $model->setHidden($newHidden));
+                    $results->each(fn(Model $model) => $model->setHidden($newHidden));
                 }
             }
         }
@@ -311,7 +311,7 @@ final class ElasticQueryWizard extends BaseQueryWizard
         }
 
         /** @var Model $model */
-        $model = new $this->modelClass;
+        $model = new $this->modelClass();
         $this->prepareSafeRelationSelectPlan($model, $relationshipPaths);
 
         if (! empty($otherIncludes)) {
@@ -389,7 +389,7 @@ final class ElasticQueryWizard extends BaseQueryWizard
         if ($this->proxyModified) {
             throw new \LogicException(
                 'Cannot modify query wizard configuration after calling query builder methods. '
-                .'Call all configuration methods (allowedFilters, allowedSorts, etc.) before query builder methods.'
+                . 'Call all configuration methods (allowedFilters, allowedSorts, etc.) before query builder methods.'
             );
         }
 
@@ -497,7 +497,7 @@ final class ElasticQueryWizard extends BaseQueryWizard
     {
         if ($this->isSearchBuilderFluentMethod($name)) {
             return $this->queueSearchBuilderMutation(
-                fn (SearchBuilder $builder) => $builder->{$name}(...$arguments)
+                fn(SearchBuilder $builder) => $builder->{$name}(...$arguments)
             );
         }
 

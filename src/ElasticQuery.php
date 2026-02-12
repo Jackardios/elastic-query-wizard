@@ -62,4 +62,3 @@ final class ElasticQuery
         return Query::$name(...$arguments);
     }
 }
-

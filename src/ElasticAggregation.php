@@ -39,4 +39,3 @@ final class ElasticAggregation
         return Agg::$name(...$arguments);
     }
 }
-
