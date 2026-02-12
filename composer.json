@@ -44,9 +44,11 @@
     "require-dev": {
         "ext-json": "*",
         "babenkoivan/elastic-migrations": "^v3.4.0",
-        "laravel/scout": "^v10.8.0",
+        "friendsofphp/php-cs-fixer": "^3.14",
         "jackardios/laravel-eloquent-spatial": "^2.0",
+        "laravel/scout": "^v10.8.0",
         "orchestra/testbench": "^8.0 || ^9.0 || ^10.0",
+        "phpstan/phpstan": "^1.10 || ^2.0",
         "phpunit/phpunit": "^10.5 || ^11.0",
         "roave/security-advisories": "dev-latest"
     },
@@ -61,8 +63,12 @@
         }
     },
     "scripts": {
-        "test": "vendor/bin/phpunit",
-        "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
+        "test": "phpunit",
+        "test:unit": "phpunit --testsuite=Unit",
+        "test:feature": "phpunit --testsuite=Feature",
+        "analyse": "phpstan analyse --memory-limit=512M",
+        "format-check": "php-cs-fixer fix --dry-run --diff",
+        "format": "php-cs-fixer fix"
     },
     "config": {
         "sort-packages": true,
