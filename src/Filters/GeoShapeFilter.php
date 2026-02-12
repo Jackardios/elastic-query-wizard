@@ -117,7 +117,16 @@ final class GeoShapeFilter extends AbstractElasticFilter
             throw InvalidGeoShapeValue::invalidPolygon($this->property);
         }
 
-        $query->polygon($coordinates);
+        // GeoJSON polygon format: coordinates = [outer_ring, hole1, hole2, ...]
+        // es-scout-driver polygon() expects just the outer ring (array of [lon, lat] pairs)
+        // and wraps it internally, so we pass only the first ring
+        $outerRing = $coordinates[0] ?? null;
+
+        if (!is_array($outerRing) || count($outerRing) < 4) {
+            throw InvalidGeoShapeValue::invalidPolygon($this->property);
+        }
+
+        $query->polygon($outerRing);
     }
 
     /**
