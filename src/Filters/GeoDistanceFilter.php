@@ -9,7 +9,7 @@ use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Support\Query;
 
-class GeoDistanceFilter extends AbstractElasticFilter
+final class GeoDistanceFilter extends AbstractElasticFilter
 {
     use HasParameters;
 

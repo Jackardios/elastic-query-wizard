@@ -17,7 +17,7 @@ use Jackardios\EsScoutDriver\Support\Query;
  *
  * @example filter[created_at][from]=2024-01-01&filter[created_at][to]=2024-12-31
  */
-class DateRangeFilter extends AbstractElasticFilter
+final class DateRangeFilter extends AbstractElasticFilter
 {
     use HasParameters;
 

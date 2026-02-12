@@ -18,7 +18,7 @@ use Jackardios\EsScoutDriver\Support\Query;
  *
  * @see https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html
  */
-class GeoShapeFilter extends AbstractElasticFilter
+final class GeoShapeFilter extends AbstractElasticFilter
 {
     protected ?string $relation = null;
 

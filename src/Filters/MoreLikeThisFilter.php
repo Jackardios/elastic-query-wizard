@@ -16,7 +16,7 @@ use Jackardios\EsScoutDriver\Support\Query;
  *
  * @see https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-mlt-query.html
  */
-class MoreLikeThisFilter extends AbstractElasticFilter
+final class MoreLikeThisFilter extends AbstractElasticFilter
 {
     /** @var string[] */
     protected array $fields;

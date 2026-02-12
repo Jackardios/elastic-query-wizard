@@ -7,7 +7,7 @@ namespace Jackardios\ElasticQueryWizard\Sorts;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Sort\Sort;
 
-class ScoreSort extends AbstractElasticSort
+final class ScoreSort extends AbstractElasticSort
 {
     public static function make(?string $alias = null): static
     {

@@ -45,4 +45,3 @@ class ElasticQueryProxyTest extends TestCase
         ElasticQuery::unknownMethod();
     }
 }
-

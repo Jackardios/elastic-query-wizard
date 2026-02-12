@@ -7,7 +7,7 @@ namespace Jackardios\ElasticQueryWizard\Sorts;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Sort\Sort;
 
-class FieldSort extends AbstractElasticSort
+final class FieldSort extends AbstractElasticSort
 {
     protected string|int|float|bool|null $missing = null;
     protected ?string $mode = null;

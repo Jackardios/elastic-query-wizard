@@ -20,7 +20,7 @@ class RelatedModel extends Model
      */
     public function getFormattedNameAttribute(): string
     {
-        return 'Formatted: '.$this->name;
+        return 'Formatted: ' . $this->name;
     }
 
     /**

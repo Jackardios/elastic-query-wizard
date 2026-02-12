@@ -30,8 +30,8 @@ class DateRangeFilterQueryTest extends UnitTestCase
                 'created_at' => [
                     'gte' => '2024-01-01',
                     'lte' => '2024-12-31',
-                ]
-            ]
+                ],
+            ],
         ], $filterQueries[0]);
     }
 
@@ -50,8 +50,8 @@ class DateRangeFilterQueryTest extends UnitTestCase
             'range' => [
                 'created_at' => [
                     'gte' => '2024-01-01',
-                ]
-            ]
+                ],
+            ],
         ], $filterQueries[0]);
     }
 
@@ -70,8 +70,8 @@ class DateRangeFilterQueryTest extends UnitTestCase
             'range' => [
                 'created_at' => [
                     'lte' => '2024-12-31',
-                ]
-            ]
+                ],
+            ],
         ], $filterQueries[0]);
     }
 
@@ -121,8 +121,8 @@ class DateRangeFilterQueryTest extends UnitTestCase
                 'created_at' => [
                     'gte' => '2024-01-01',
                     'lte' => '2024-12-31',
-                ]
-            ]
+                ],
+            ],
         ], $filterQueries[0]);
     }
 
@@ -145,8 +145,8 @@ class DateRangeFilterQueryTest extends UnitTestCase
                 'created_at' => [
                     'gte' => '01/01/2024',
                     'format' => 'dd/MM/yyyy',
-                ]
-            ]
+                ],
+            ],
         ], $filterQueries[0]);
     }
 
@@ -169,8 +169,8 @@ class DateRangeFilterQueryTest extends UnitTestCase
                 'created_at' => [
                     'gte' => '2024-01-01',
                     'time_zone' => 'Europe/Moscow',
-                ]
-            ]
+                ],
+            ],
         ], $filterQueries[0]);
     }
 

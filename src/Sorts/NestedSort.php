@@ -17,7 +17,7 @@ use Jackardios\EsScoutDriver\Sort\Sort;
  *
  * @see https://www.elastic.co/guide/en/elasticsearch/reference/current/sort-search-results.html#nested-sorting
  */
-class NestedSort extends AbstractElasticSort
+final class NestedSort extends AbstractElasticSort
 {
     protected string $path;
     protected string $nestedField;

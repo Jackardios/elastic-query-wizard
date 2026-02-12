@@ -65,7 +65,7 @@ class TermFilterTest extends TestCase
     {
         $modelsResult = $this
             ->createElasticWizardWithFilters([
-                'category' => ''
+                'category' => '',
             ])
             ->allowedFilters(TermFilter::make('category'))
             ->build()
@@ -80,7 +80,7 @@ class TermFilterTest extends TestCase
     {
         $expectedModels = collect([
             TestModel::factory()->create(['category' => 'some-testing-category']),
-            TestModel::factory()->create(['category' => 'another-testing-category'])
+            TestModel::factory()->create(['category' => 'another-testing-category']),
         ]);
 
         $results = $this

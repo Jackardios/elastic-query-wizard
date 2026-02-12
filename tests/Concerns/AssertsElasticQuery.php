@@ -43,7 +43,7 @@ trait AssertsElasticQuery
     private function clausesToArray(array $clauses): array
     {
         return array_values(array_map(
-            fn ($query) => $query instanceof QueryInterface ? $query->toArray() : $query,
+            fn($query) => $query instanceof QueryInterface ? $query->toArray() : $query,
             $clauses
         ));
     }

@@ -104,36 +104,6 @@ class GeoShapeFilterQueryTest extends UnitTestCase
     }
 
     /** @test */
-    public function it_builds_circle_query(): void
-    {
-        $wizard = $this
-            ->createElasticWizardWithFilters([
-                'location' => [
-                    'type' => 'circle',
-                    'coordinates' => [37.62, 55.75],
-                    'radius' => '10km',
-                ],
-            ])
-            ->allowedFilters(GeoShapeFilter::make('location'));
-        $wizard->build();
-
-        $queries = $this->getFilterQueries($wizard->boolQuery());
-
-        $this->assertCount(1, $queries);
-        $this->assertEquals([
-            'geo_shape' => [
-                'location' => [
-                    'shape' => [
-                        'type' => 'circle',
-                        'coordinates' => [37.62, 55.75],
-                        'radius' => '10km',
-                    ],
-                ],
-            ],
-        ], $queries[0]);
-    }
-
-    /** @test */
     public function it_builds_indexed_shape_query(): void
     {
         $wizard = $this
@@ -331,24 +301,6 @@ class GeoShapeFilterQueryTest extends UnitTestCase
                 'location' => [
                     'type' => 'point',
                     'coordinates' => [0], // Only one value instead of two
-                ],
-            ])
-            ->allowedFilters(GeoShapeFilter::make('location'));
-        $wizard->build();
-    }
-
-    /** @test */
-    public function it_throws_for_invalid_circle(): void
-    {
-        $this->expectException(InvalidGeoShapeValue::class);
-        $this->expectExceptionMessage('circle requires coordinates');
-
-        $wizard = $this
-            ->createElasticWizardWithFilters([
-                'location' => [
-                    'type' => 'circle',
-                    'coordinates' => [37.62, 55.75],
-                    'radius' => 100, // Numeric instead of string
                 ],
             ])
             ->allowedFilters(GeoShapeFilter::make('location'));

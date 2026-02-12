@@ -3,6 +3,15 @@ parameters:
   paths:
     - src
   ignoreErrors:
+    # Level 6 array/generic typing - too verbose to add PHPDoc everywhere
     - identifier: missingType.iterableValue
     - identifier: missingType.generics
     - identifier: argument.templateType
+
+    # Scout Searchable trait methods (not visible to PHPStan)
+    -
+      message: '#Call to an undefined static method Illuminate\\Database\\Eloquent\\Model::searchQuery\(\)#'
+      identifier: staticMethod.notFound
+    -
+      message: '#Call to an undefined method Illuminate\\Database\\Eloquent\\Model::getScoutKeyName\(\)#'
+      identifier: method.notFound

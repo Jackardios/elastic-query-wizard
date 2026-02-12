@@ -21,7 +21,7 @@ trait QueryWizardTestingHelpers
     {
         return $this->createElasticWizardFromQuery([
             'append' => $appends,
-        ],  $subject ?? AppendModel::class);
+        ], $subject ?? AppendModel::class);
     }
 
     protected function createElasticWizardWithIncludes(array|string $includes, $subject = null): ElasticQueryWizard

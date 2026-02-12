@@ -209,7 +209,7 @@ class SortQueryTest extends UnitTestCase
 
     private function createCustomSort(): AbstractSort
     {
-        return new class('custom_name') extends AbstractSort {
+        return new class ('custom_name') extends AbstractSort {
             public function __construct(string $property, ?string $alias = null)
             {
                 parent::__construct($property, $alias);

@@ -15,7 +15,7 @@ use Jackardios\EsScoutDriver\Sort\Sort;
  * changed from `_id` to `_seq_no` in ES 9.x. Specify the field explicitly
  * for consistent behavior across ES versions.
  */
-class ScriptSort extends AbstractElasticSort
+final class ScriptSort extends AbstractElasticSort
 {
     protected string $scriptSource;
     protected string $type = 'number';

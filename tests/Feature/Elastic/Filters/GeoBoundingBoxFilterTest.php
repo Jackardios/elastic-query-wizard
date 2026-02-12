@@ -34,7 +34,7 @@ class GeoBoundingBoxFilterTest extends TestCase
         $this->expectException(InvalidGeoBoundingBoxValue::class);
         $this
             ->createQueryFromFilterRequest([
-                'bbox' => '29.8431393959961,59.70658123789505,30.76667760400391'
+                'bbox' => '29.8431393959961,59.70658123789505,30.76667760400391',
             ])
             ->allowedFilters(GeoBoundingBoxFilter::make('location', 'bbox'))
             ->build();
@@ -45,7 +45,7 @@ class GeoBoundingBoxFilterTest extends TestCase
     {
         $modelsResult = $this
             ->createQueryFromFilterRequest([
-                'bbox' => ''
+                'bbox' => '',
             ])
             ->allowedFilters(GeoBoundingBoxFilter::make('location', 'bbox'))
             ->build()
@@ -117,7 +117,7 @@ class GeoBoundingBoxFilterTest extends TestCase
 
         $modelsResult = $this
             ->createQueryFromFilterRequest([
-                'bbox' => '29.8431393959961,59.70658123789505,30.76667760400391,60.12821910231846'
+                'bbox' => '29.8431393959961,59.70658123789505,30.76667760400391,60.12821910231846',
             ])
             ->allowedFilters(
                 (GeoBoundingBoxFilter::make('location', 'bbox'))

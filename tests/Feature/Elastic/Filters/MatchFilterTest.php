@@ -48,7 +48,7 @@ class MatchFilterTest extends TestCase
     {
         $modelsResult = $this
             ->createElasticWizardWithFilters([
-                'name' => ''
+                'name' => '',
             ])
             ->allowedFilters(MatchFilter::make('name'))
             ->build()

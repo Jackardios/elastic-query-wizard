@@ -33,7 +33,7 @@ class CallbackFilterTest extends TestCase
         $expectedModel = TestModel::factory()->create(['name' => 'Some New Testing Name']);
         $modelsResult = $this
             ->createElasticWizardWithFilters([
-                'callback' => $expectedModel->name
+                'callback' => $expectedModel->name,
             ])
             ->allowedFilters(
                 CallbackFilter::make('callback', function (SearchBuilder $builder, mixed $value, string $property) {

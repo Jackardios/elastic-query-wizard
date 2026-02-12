@@ -17,7 +17,7 @@ use Jackardios\EsScoutDriver\Support\Query;
  *
  * When invertLogic is true, the behavior is reversed.
  */
-class NullFilter extends AbstractElasticFilter
+final class NullFilter extends AbstractElasticFilter
 {
     protected bool $invertLogic = false;
 

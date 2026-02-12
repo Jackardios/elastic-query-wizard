@@ -9,7 +9,7 @@ use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Support\Query;
 
-class FuzzyFilter extends AbstractElasticFilter
+final class FuzzyFilter extends AbstractElasticFilter
 {
     use HasParameters;
 

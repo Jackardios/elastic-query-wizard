@@ -88,7 +88,7 @@ class FilterTest extends TestCase
             ->find($this->models->random()->id);
 
         $modelResult = $this->createElasticWizardWithFilters(['category' => $expectedModel->category])
-            ->modifyQuery(function(Builder $query) {
+            ->modifyQuery(function (Builder $query) {
                 return $query->select('id', 'category');
             })
             ->allowedFilters('category', 'id')
@@ -128,7 +128,7 @@ class FilterTest extends TestCase
     {
         $testModel = $this->models->first();
 
-        $filterClass = new class('custom_name') extends AbstractElasticFilter {
+        $filterClass = new class ('custom_name') extends AbstractElasticFilter {
             public function __construct(string $property, ?string $alias = null)
             {
                 parent::__construct($property, $alias);
@@ -232,7 +232,7 @@ class FilterTest extends TestCase
     /** @test */
     public function it_can_create_a_custom_filter_with_an_instantiated_filter(): void
     {
-        $customFilter = new class('*') extends AbstractElasticFilter {
+        $customFilter = new class ('*') extends AbstractElasticFilter {
             public function __construct(string $property, ?string $alias = null)
             {
                 parent::__construct($property, $alias);
@@ -332,7 +332,7 @@ class FilterTest extends TestCase
         ]);
         $modelsResult = $this
             ->createElasticWizardWithFilters([
-                'name' => 'Mascow'
+                'name' => 'Mascow',
             ])
             ->allowedFilters($filter)
             ->build()

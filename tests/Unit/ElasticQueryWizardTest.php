@@ -182,7 +182,7 @@ class ElasticQueryWizardTest extends UnitTestCase
     public function it_applies_tap_search_builder_callback(): void
     {
         $wizard = ElasticQueryWizard::for(TestModel::class)
-            ->tapSearchBuilder(fn ($builder) => $builder->minScore(0.75));
+            ->tapSearchBuilder(fn($builder) => $builder->minScore(0.75));
 
         $wizard->build();
 

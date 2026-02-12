@@ -15,6 +15,7 @@ final class CreateGeoModelsIndex implements MigrationInterface
             $mapping->integer('id');
             $mapping->text('name');
             $mapping->geoPoint('location');
+            $mapping->geoShape('boundary');
         });
     }
 

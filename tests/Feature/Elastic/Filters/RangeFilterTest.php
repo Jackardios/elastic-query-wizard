@@ -33,7 +33,7 @@ class RangeFilterTest extends TestCase
             ->createElasticWizardWithFilters([
                 'id' => [
                     'gt' => '2',
-                    'lte' => '4'
+                    'lte' => '4',
                 ],
             ])
             ->allowedFilters(RangeFilter::make('id'))
@@ -50,7 +50,7 @@ class RangeFilterTest extends TestCase
     {
         $modelsResult = $this
             ->createElasticWizardWithFilters([
-                'id' => ''
+                'id' => '',
             ])
             ->allowedFilters(RangeFilter::make('id'))
             ->build()
@@ -85,7 +85,7 @@ class RangeFilterTest extends TestCase
             ->createElasticWizardWithFilters([
                 'id' => [
                     'gt' => 3,
-                    'lte' => '5'
+                    'lte' => '5',
                 ],
             ])
             ->allowedFilters($filter)
@@ -107,7 +107,7 @@ class RangeFilterTest extends TestCase
                 'id' => 'some value',
             ])
             ->allowedFilters([
-                RangeFilter::make('id')
+                RangeFilter::make('id'),
             ])
             ->build();
     }
@@ -121,11 +121,11 @@ class RangeFilterTest extends TestCase
             ->createElasticWizardWithFilters([
                 'id' => [
                     'gtee' => 3,
-                    'lte' => '5'
+                    'lte' => '5',
                 ],
             ])
             ->allowedFilters([
-                RangeFilter::make('id')
+                RangeFilter::make('id'),
             ])
             ->build();
     }

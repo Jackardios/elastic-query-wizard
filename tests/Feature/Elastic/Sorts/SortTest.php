@@ -159,7 +159,7 @@ class SortTest extends TestCase
 
         $this->assertEquals([
             ["name" => "asc"],
-            ["id" => "desc"]
+            ["id" => "desc"],
         ], $this->getSorts($searchBuilder));
     }
 
@@ -195,7 +195,7 @@ class SortTest extends TestCase
 
         $this->assertEquals([
             ["name" => "asc"],
-            ["id" => "desc"]
+            ["id" => "desc"],
         ], $this->getSorts($searchBuilder));
     }
 
@@ -272,7 +272,7 @@ class SortTest extends TestCase
 
     private function createCustomSort(): AbstractSort
     {
-        return new class('custom_name') extends AbstractSort {
+        return new class ('custom_name') extends AbstractSort {
             public function __construct(string $property, ?string $alias = null)
             {
                 parent::__construct($property, $alias);

@@ -7,7 +7,7 @@ namespace Jackardios\ElasticQueryWizard\Sorts;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Sort\Sort;
 
-class GeoDistanceSort extends AbstractElasticSort
+final class GeoDistanceSort extends AbstractElasticSort
 {
     protected float $lat;
     protected float $lon;

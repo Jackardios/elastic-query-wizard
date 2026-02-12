@@ -64,7 +64,7 @@ class FieldsTest extends TestCase
     {
         $model = $this
             ->createElasticWizardWithFields(['testModel' => 'name,id'])
-            ->modifyQuery(function(Builder $query) {
+            ->modifyQuery(function (Builder $query) {
                 $query->select(['id', 'is_visible']);
             })
             ->allowedFields(['name', 'id'])

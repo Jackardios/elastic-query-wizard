@@ -9,7 +9,7 @@ use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Support\Query;
 
-class MatchPhraseFilter extends AbstractElasticFilter
+final class MatchPhraseFilter extends AbstractElasticFilter
 {
     use HasParameters;
 

@@ -12,6 +12,7 @@ use MatanYadaev\EloquentSpatial\Objects\Point;
 
 /**
  * @property Point $location
+ * @property array|null $boundary
  */
 class GeoModel extends Model
 {
@@ -27,13 +28,18 @@ class GeoModel extends Model
 
     protected $casts = [
         'location' => Point::class,
+        'boundary' => 'array',
     ];
 
-    public function toSearchableArray()
+    public function toSearchableArray(): array
     {
         $searchableArray = $this->toArray();
 
         $searchableArray['location'] = $this->location->getCoordinates();
+
+        if ($this->boundary !== null) {
+            $searchableArray['boundary'] = $this->boundary;
+        }
 
         return $searchableArray;
     }

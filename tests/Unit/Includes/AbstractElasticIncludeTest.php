@@ -49,7 +49,7 @@ class AbstractElasticIncludeTest extends TestCase
     /** @test */
     public function apply_calls_handle_eloquent_when_subject_is_builder(): void
     {
-        $include = new class('relation', 'alias') extends AbstractElasticInclude {
+        $include = new class ('relation', 'alias') extends AbstractElasticInclude {
             public bool $handleCalled = false;
 
             public function __construct(string $relation, ?string $alias = null)
@@ -91,7 +91,7 @@ class AbstractElasticIncludeTest extends TestCase
 
     private function createInclude(): AbstractElasticInclude
     {
-        return new class('relation', 'alias') extends AbstractElasticInclude {
+        return new class ('relation', 'alias') extends AbstractElasticInclude {
             public function __construct(string $relation, ?string $alias = null)
             {
                 parent::__construct($relation, $alias);

@@ -436,7 +436,7 @@ class IncludeTest extends TestCase
     /** @test */
     public function it_can_include_custom_include_class(): void
     {
-        $includeClass = new class('relatedModels') extends AbstractElasticInclude {
+        $includeClass = new class ('relatedModels') extends AbstractElasticInclude {
             public function __construct(string $relation, ?string $alias = null)
             {
                 parent::__construct($relation, $alias);
@@ -472,7 +472,7 @@ class IncludeTest extends TestCase
     /** @test */
     public function it_can_include_custom_include_class_by_alias(): void
     {
-        $includeClass = (new class('relatedModels') extends AbstractElasticInclude {
+        $includeClass = (new class ('relatedModels') extends AbstractElasticInclude {
             public function __construct(string $relation, ?string $alias = null)
             {
                 parent::__construct($relation, $alias);
@@ -509,7 +509,7 @@ class IncludeTest extends TestCase
     public function it_can_include_a_custom_base_query_with_select(): void
     {
         $modelResult = $this->createElasticWizardWithIncludes('relatedModelsCount')
-            ->modifyQuery(function(Builder $query) {
+            ->modifyQuery(function (Builder $query) {
                 return $query->select('id', 'name');
             })
             ->allowedIncludes(CountInclude::make('relatedModels')->alias('relatedModelsCount'))

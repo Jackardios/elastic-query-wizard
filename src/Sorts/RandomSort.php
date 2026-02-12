@@ -19,7 +19,7 @@ use stdClass;
  *
  * @see https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-function-score-query.html#function-random
  */
-class RandomSort extends AbstractElasticSort
+final class RandomSort extends AbstractElasticSort
 {
     protected int|string|null $seed = null;
 

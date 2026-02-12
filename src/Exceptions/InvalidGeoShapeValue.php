@@ -7,7 +7,7 @@ namespace Jackardios\ElasticQueryWizard\Exceptions;
 use Jackardios\QueryWizard\Exceptions\InvalidQuery;
 use Symfony\Component\HttpFoundation\Response;
 
-class InvalidGeoShapeValue extends InvalidQuery
+final class InvalidGeoShapeValue extends InvalidQuery
 {
     public static function unknownType(string $propertyName, ?string $type): self
     {

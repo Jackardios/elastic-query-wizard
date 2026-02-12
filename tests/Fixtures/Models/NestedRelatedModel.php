@@ -18,7 +18,7 @@ class NestedRelatedModel extends Model
      */
     public function getFormattedNameAttribute(): string
     {
-        return 'Nested: '.$this->name;
+        return 'Nested: ' . $this->name;
     }
 
     public function relatedModel(): BelongsTo

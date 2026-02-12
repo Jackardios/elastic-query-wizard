@@ -113,7 +113,7 @@ class FilterValueSanitizer
         return $prepared;
     }
 
-    public static function isBlank($value): bool
+    public static function isBlank(mixed $value): bool
     {
         if ($value === null) {
             return true;
@@ -134,7 +134,7 @@ class FilterValueSanitizer
         return empty($value);
     }
 
-    public static function isFilled($value): bool
+    public static function isFilled(mixed $value): bool
     {
         return ! static::isBlank($value);
     }

@@ -7,7 +7,7 @@ namespace Jackardios\ElasticQueryWizard\Exceptions;
 use Jackardios\QueryWizard\Exceptions\InvalidQuery;
 use Symfony\Component\HttpFoundation\Response;
 
-class InvalidGeoBoundingBoxValue extends InvalidQuery
+final class InvalidGeoBoundingBoxValue extends InvalidQuery
 {
     public static function make(string $propertyName): InvalidGeoBoundingBoxValue
     {

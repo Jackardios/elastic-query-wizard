@@ -33,8 +33,8 @@ class GeoDistanceFilterTest extends TestCase
     {
         $this->expectException(InvalidGeoDistanceValue::class);
         $this->createQueryFromFilterRequest([
-                'location_distance' => 'some invalid value'
-            ])
+            'location_distance' => 'some invalid value',
+        ])
             ->allowedFilters(GeoDistanceFilter::make('location', 'location_distance'))
             ->build();
     }
@@ -46,8 +46,8 @@ class GeoDistanceFilterTest extends TestCase
         $this->createQueryFromFilterRequest([
             'location_distance' => [
                 'lon' => '30.33701339770632',
-                'lat' => '59.934366587863444'
-            ]
+                'lat' => '59.934366587863444',
+            ],
         ])
             ->allowedFilters(GeoDistanceFilter::make('location', 'location_distance'))
             ->build();
@@ -58,7 +58,7 @@ class GeoDistanceFilterTest extends TestCase
     {
         $modelsResult = $this
             ->createQueryFromFilterRequest([
-                'location_distance' => ''
+                'location_distance' => '',
             ])
             ->allowedFilters(GeoDistanceFilter::make('location', 'location_distance'))
             ->build()
@@ -81,8 +81,8 @@ class GeoDistanceFilterTest extends TestCase
                 'location_distance' => [
                     'lon' => '30.33701339770632',
                     'lat' => '59.934366587863444',
-                    'distance' => '1km'
-                ]
+                    'distance' => '1km',
+                ],
             ])
             ->allowedFilters(GeoDistanceFilter::make('location', 'location_distance'))
             ->build()
@@ -111,7 +111,7 @@ class GeoDistanceFilterTest extends TestCase
                     ->default([
                         'lon' => '30.33701339770632',
                         'lat' => '59.934366587863444',
-                        'distance' => '1km'
+                        'distance' => '1km',
                     ])
             )
             ->build()
@@ -138,15 +138,15 @@ class GeoDistanceFilterTest extends TestCase
                 'location_distance' => [
                     'lon' => '30.33701339770632',
                     'lat' => '59.934366587863444',
-                    'distance' => '1km'
-                ]
+                    'distance' => '1km',
+                ],
             ])
             ->allowedFilters(
                 (GeoDistanceFilter::make('location', 'location_distance'))
                     ->default([
                         'lon' => '34.33701339770632',
                         'lat' => '55.934366587863444',
-                        'distance' => '2km'
+                        'distance' => '2km',
                     ])
             )
             ->build()

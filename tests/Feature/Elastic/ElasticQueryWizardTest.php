@@ -81,7 +81,7 @@ class ElasticQueryWizardTest extends TestCase
 
         $this->assertCount(2, $models);
         $this->assertSortedAscending($models, 'name');
-        $this->assertTrue($models->every(fn ($m) => $m->category === 'test-category'));
+        $this->assertTrue($models->every(fn($m) => $m->category === 'test-category'));
     }
 
     /** @test */

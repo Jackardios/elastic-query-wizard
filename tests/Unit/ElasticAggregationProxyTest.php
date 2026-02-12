@@ -36,4 +36,3 @@ class ElasticAggregationProxyTest extends TestCase
         ElasticAggregation::unknownMethod();
     }
 }
-

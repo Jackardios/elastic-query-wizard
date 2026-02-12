@@ -19,7 +19,7 @@ use Jackardios\EsScoutDriver\Support\Query;
  * @example filter[price][gte]=100&filter[price][lte]=500
  * @example filter[created_at][gte]=2024-01-01
  */
-class RangeFilter extends AbstractElasticFilter
+final class RangeFilter extends AbstractElasticFilter
 {
     use HasParameters;
 

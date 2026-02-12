@@ -6,7 +6,7 @@ namespace Jackardios\ElasticQueryWizard\Filters;
 
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 
-class TrashedFilter extends AbstractElasticFilter
+final class TrashedFilter extends AbstractElasticFilter
 {
     protected function __construct(?string $alias = null)
     {

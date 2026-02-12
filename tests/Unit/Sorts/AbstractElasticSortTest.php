@@ -28,7 +28,7 @@ class AbstractElasticSortTest extends TestCase
     /** @test */
     public function apply_calls_handle_when_subject_is_search_builder(): void
     {
-        $sort = new class('property', 'alias') extends AbstractElasticSort {
+        $sort = new class ('property', 'alias') extends AbstractElasticSort {
             public bool $handleCalled = false;
             public ?string $capturedDirection = null;
 
@@ -89,7 +89,7 @@ class AbstractElasticSortTest extends TestCase
 
     private function createSort(): AbstractElasticSort
     {
-        return new class('property', 'alias') extends AbstractElasticSort {
+        return new class ('property', 'alias') extends AbstractElasticSort {
             public function __construct(string $property, ?string $alias = null)
             {
                 parent::__construct($property, $alias);

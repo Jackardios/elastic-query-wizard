@@ -7,7 +7,7 @@ namespace Jackardios\ElasticQueryWizard\Exceptions;
 use Jackardios\QueryWizard\Exceptions\InvalidQuery;
 use Symfony\Component\HttpFoundation\Response;
 
-class InvalidRangeValue extends InvalidQuery
+final class InvalidRangeValue extends InvalidQuery
 {
     private const OPERATOR_MIGRATION = [
         'from' => 'gte',

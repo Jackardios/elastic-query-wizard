@@ -31,7 +31,7 @@ class AbstractElasticFilterTest extends TestCase
         $handleCalled = false;
         $capturedValue = null;
 
-        $filter = new class('property', 'alias') extends AbstractElasticFilter {
+        $filter = new class ('property', 'alias') extends AbstractElasticFilter {
             public bool $handleCalled = false;
             public mixed $capturedValue = null;
 
@@ -93,7 +93,7 @@ class AbstractElasticFilterTest extends TestCase
     /** @test */
     public function get_name_returns_property_when_no_alias(): void
     {
-        $filter = new class('property') extends AbstractElasticFilter {
+        $filter = new class ('property') extends AbstractElasticFilter {
             public function __construct(string $property, ?string $alias = null)
             {
                 parent::__construct($property, $alias);
@@ -120,7 +120,7 @@ class AbstractElasticFilterTest extends TestCase
 
     private function createFilter(): AbstractElasticFilter
     {
-        return new class('property', 'alias') extends AbstractElasticFilter {
+        return new class ('property', 'alias') extends AbstractElasticFilter {
             public function __construct(string $property, ?string $alias = null)
             {
                 parent::__construct($property, $alias);

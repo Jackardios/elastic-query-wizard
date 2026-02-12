@@ -110,4 +110,89 @@ class NullFilterQueryTest extends UnitTestCase
 
         $this->assertEquals('null', $filter->getType());
     }
+
+    /** @test */
+    public function it_inverts_logic_for_truthy_value(): void
+    {
+        $wizard = $this
+            ->createElasticWizardWithFilters(['has_value' => 'true'])
+            ->allowedFilters(NullFilter::make('thumbnail', 'has_value')->withInvertedLogic());
+        $wizard->build();
+
+        $filterQueries = $this->getFilterQueries($wizard->boolQuery());
+        $mustNotQueries = $this->getMustNotQueries($wizard->boolQuery());
+
+        // Inverted: truthy means NOT NULL (field exists)
+        $this->assertCount(1, $filterQueries);
+        $this->assertEquals(['exists' => ['field' => 'thumbnail']], $filterQueries[0]);
+        $this->assertEmpty($mustNotQueries);
+    }
+
+    /** @test */
+    public function it_inverts_logic_for_falsy_value(): void
+    {
+        $wizard = $this
+            ->createElasticWizardWithFilters(['has_value' => 'false'])
+            ->allowedFilters(NullFilter::make('thumbnail', 'has_value')->withInvertedLogic());
+        $wizard->build();
+
+        $filterQueries = $this->getFilterQueries($wizard->boolQuery());
+        $mustNotQueries = $this->getMustNotQueries($wizard->boolQuery());
+
+        // Inverted: falsy means NULL (field doesn't exist)
+        $this->assertEmpty($filterQueries);
+        $this->assertCount(1, $mustNotQueries);
+        $this->assertEquals(['exists' => ['field' => 'thumbnail']], $mustNotQueries[0]);
+    }
+
+    /** @test */
+    public function it_can_reset_inverted_logic(): void
+    {
+        $wizard = $this
+            ->createElasticWizardWithFilters(['is_null' => 'true'])
+            ->allowedFilters(
+                NullFilter::make('deleted_at', 'is_null')
+                    ->withInvertedLogic()
+                    ->withoutInvertedLogic()
+            );
+        $wizard->build();
+
+        $filterQueries = $this->getFilterQueries($wizard->boolQuery());
+        $mustNotQueries = $this->getMustNotQueries($wizard->boolQuery());
+
+        // Back to normal: truthy means NULL (field doesn't exist)
+        $this->assertEmpty($filterQueries);
+        $this->assertCount(1, $mustNotQueries);
+        $this->assertEquals(['exists' => ['field' => 'deleted_at']], $mustNotQueries[0]);
+    }
+
+    /** @test */
+    public function it_inverts_logic_for_integer_1(): void
+    {
+        $wizard = $this
+            ->createElasticWizardWithFilters(['has_value' => '1'])
+            ->allowedFilters(NullFilter::make('thumbnail', 'has_value')->withInvertedLogic());
+        $wizard->build();
+
+        $filterQueries = $this->getFilterQueries($wizard->boolQuery());
+
+        // Inverted: 1 means NOT NULL (field exists)
+        $this->assertCount(1, $filterQueries);
+        $this->assertEquals(['exists' => ['field' => 'thumbnail']], $filterQueries[0]);
+    }
+
+    /** @test */
+    public function it_inverts_logic_for_integer_0(): void
+    {
+        $wizard = $this
+            ->createElasticWizardWithFilters(['has_value' => '0'])
+            ->allowedFilters(NullFilter::make('thumbnail', 'has_value')->withInvertedLogic());
+        $wizard->build();
+
+        $mustNotQueries = $this->getMustNotQueries($wizard->boolQuery());
+
+        // Inverted: 0 means NULL (field doesn't exist)
+        $this->assertCount(1, $mustNotQueries);
+        $this->assertEquals(['exists' => ['field' => 'thumbnail']], $mustNotQueries[0]);
+    }
 }

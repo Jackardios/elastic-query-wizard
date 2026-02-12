@@ -18,7 +18,7 @@ use Jackardios\EsScoutDriver\Support\Query;
  *
  * @see https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-nested-query.html
  */
-class NestedFilter extends AbstractElasticFilter
+final class NestedFilter extends AbstractElasticFilter
 {
     protected string $path;
 
