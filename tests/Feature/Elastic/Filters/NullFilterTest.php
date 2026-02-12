@@ -25,7 +25,7 @@ class NullFilterTest extends TestCase
         $this->models = collect([
             TestModel::factory()->create(['name' => 'With Category', 'category' => 'electronics']),
             TestModel::factory()->create(['name' => 'With Category Too', 'category' => 'books']),
-            TestModel::factory()->create(['name' => 'No Category', 'category' => '']),
+            TestModel::factory()->create(['name' => 'No Category', 'category' => null]),
         ]);
     }
 

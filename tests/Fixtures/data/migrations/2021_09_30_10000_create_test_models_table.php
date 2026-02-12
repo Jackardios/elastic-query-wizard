@@ -15,7 +15,7 @@ return new class extends Migration {
         Schema::create('test_models', static function (Blueprint $table) {
             $table->increments('id');
             $table->string('name');
-            $table->string('category');
+            $table->string('category')->nullable();
             $table->boolean('is_visible')->default(true);
             $table->timestamps();
         });

@@ -45,9 +45,9 @@ class GeoShapeFilterQueryTest extends UnitTestCase
     /** @test */
     public function it_builds_polygon_query(): void
     {
-        $coordinates = [
-            [[0.0, 0.0], [10.0, 0.0], [10.0, 10.0], [0.0, 10.0], [0.0, 0.0]],
-        ];
+        // GeoJSON polygon format: coordinates = [outer_ring, hole1, hole2, ...]
+        $outerRing = [[0.0, 0.0], [10.0, 0.0], [10.0, 10.0], [0.0, 10.0], [0.0, 0.0]];
+        $coordinates = [$outerRing];
 
         $wizard = $this
             ->createElasticWizardWithFilters([
@@ -62,13 +62,13 @@ class GeoShapeFilterQueryTest extends UnitTestCase
         $queries = $this->getFilterQueries($wizard->boolQuery());
 
         $this->assertCount(1, $queries);
-        // Note: es-scout-driver wraps polygon coordinates in an extra array level
+        // es-scout-driver polygon() expects outer ring and wraps it in array
         $this->assertEquals([
             'geo_shape' => [
                 'boundary' => [
                     'shape' => [
                         'type' => 'polygon',
-                        'coordinates' => [$coordinates],
+                        'coordinates' => [$outerRing],
                     ],
                 ],
             ],

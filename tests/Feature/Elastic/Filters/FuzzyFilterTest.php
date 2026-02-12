@@ -24,7 +24,7 @@ class FuzzyFilterTest extends TestCase
 
         $this->models = collect([
             TestModel::factory()->create(['name' => 'John Doe', 'category' => 'electronics']),
-            TestModel::factory()->create(['name' => 'Jane Smith', 'category' => 'elektonics']),
+            TestModel::factory()->create(['name' => 'Jane Smith', 'category' => 'grocery']),
             TestModel::factory()->create(['name' => 'Bob Johnson', 'category' => 'books']),
             TestModel::factory()->create(['name' => 'Alice Williams', 'category' => 'clothing']),
         ]);

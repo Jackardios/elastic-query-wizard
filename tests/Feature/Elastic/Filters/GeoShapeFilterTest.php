@@ -62,7 +62,8 @@ class GeoShapeFilterTest extends TestCase
             ->createElasticWizardWithFilters([
                 'boundary' => [
                     'type' => 'envelope',
-                    'coordinates' => [[37.4, 55.85], [37.8, 55.65]],
+                    // lat 55.65-55.84 intersects Moscow Center (55.7-55.8) but not Moscow North (55.85-56.0)
+                    'coordinates' => [[37.4, 55.84], [37.8, 55.65]],
                 ],
             ], GeoModel::class)
             ->allowedFilters(GeoShapeFilter::make('boundary'))
@@ -70,7 +71,7 @@ class GeoShapeFilterTest extends TestCase
             ->execute()
             ->models();
 
-        // Should intersect with Moscow Center
+        // Should intersect with Moscow Center only
         $this->assertCount(1, $result);
         $this->assertEquals($this->models[0]->id, $result->first()->id);
     }
@@ -105,7 +106,8 @@ class GeoShapeFilterTest extends TestCase
             ->createElasticWizardWithFilters([
                 'boundary' => [
                     'type' => 'envelope',
-                    'coordinates' => [[37.4, 55.85], [37.8, 55.65]],
+                    // lat 55.65-55.84 intersects only Moscow Center (55.7-55.8)
+                    'coordinates' => [[37.4, 55.84], [37.8, 55.65]],
                 ],
             ], GeoModel::class)
             ->allowedFilters(GeoShapeFilter::make('boundary')->relation('disjoint'))
@@ -113,7 +115,7 @@ class GeoShapeFilterTest extends TestCase
             ->execute()
             ->models();
 
-        // Should return shapes that don't intersect
+        // Should return shapes that don't intersect (Moscow North + St Petersburg)
         $this->assertCount(2, $result);
         $this->assertEqualsCanonicalizing(
             [$this->models[1]->id, $this->models[2]->id],
@@ -219,9 +221,8 @@ class GeoShapeFilterTest extends TestCase
         $this
             ->createElasticWizardWithFilters([
                 'boundary' => [
-                    'type' => 'circle', // Not supported
-                    'coordinates' => [37.6, 55.75],
-                    'radius' => '10km',
+                    'type' => 'linestring', // Not supported
+                    'coordinates' => [[37.5, 55.7], [37.6, 55.8]],
                 ],
             ], GeoModel::class)
             ->allowedFilters(GeoShapeFilter::make('boundary'))
@@ -235,7 +236,8 @@ class GeoShapeFilterTest extends TestCase
             ->createElasticWizardWithFilters([
                 'area' => [
                     'type' => 'envelope',
-                    'coordinates' => [[37.4, 55.85], [37.8, 55.65]],
+                    // lat 55.65-55.84 intersects only Moscow Center (55.7-55.8)
+                    'coordinates' => [[37.4, 55.84], [37.8, 55.65]],
                 ],
             ], GeoModel::class)
             ->allowedFilters(GeoShapeFilter::make('boundary', 'area'))
