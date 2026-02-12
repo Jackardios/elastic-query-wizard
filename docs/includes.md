@@ -8,6 +8,7 @@ Includes allow you to load Eloquent model relations after executing an Elasticse
 - [Registering Includes](#registering-includes)
 - [Relationship Include](#relationship-include)
 - [Count Include](#count-include)
+- [Exists Include](#exists-include)
 - [Callback Include](#callback-include)
 - [Aliases](#aliases)
 - [Usage Examples](#usage-examples)
@@ -188,6 +189,73 @@ ElasticInclude::count('comments', 'total_comments')
 ```
 GET /posts?include=total_comments
 ```
+
+---
+
+## Exists Include
+
+Check if a relation exists without loading it. Uses Eloquent `withExists()`.
+
+### Usage
+
+```php
+use Jackardios\ElasticQueryWizard\ElasticInclude;
+
+->allowedIncludes([
+    ElasticInclude::exists('comments'),
+    ElasticInclude::exists('reviews'),
+])
+```
+
+### Automatic Detection
+
+By default, if an include name ends with `Exists`, an ExistsInclude is automatically created:
+
+```php
+// Equivalent declarations:
+->allowedIncludes(['commentsExists'])
+->allowedIncludes([ElasticInclude::exists('comments', 'commentsExists')])
+```
+
+### Query Parameters
+
+```
+GET /posts?include=commentsExists,reviewsExists
+```
+
+### Result
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "title": "My Post",
+      "comments_exists": true,
+      "reviews_exists": false
+    }
+  ]
+}
+```
+
+### With Alias
+
+```php
+ElasticInclude::exists('comments', 'has_comments')
+```
+
+```
+GET /posts?include=has_comments
+```
+
+### Difference from Count Include
+
+| Include | Result | Use Case |
+|---------|--------|----------|
+| `CountInclude` | Number of related records | When you need the exact count |
+| `ExistsInclude` | Boolean (true/false) | When you only need to know if any exist |
+
+`ExistsInclude` is more performant when you don't need the actual count.
 
 ---
 

@@ -26,6 +26,7 @@ Filters allow you to limit Elasticsearch query results based on query parameters
 - [Nested Filter](#nested-filter)
 - [More Like This Filter](#more-like-this-filter)
 - [Trashed Filter](#trashed-filter)
+- [Date Range Filter](#date-range-filter)
 - [Callback Filter](#callback-filter)
 - [Passthrough Filter](#passthrough-filter)
 - [Additional Parameters](#additional-parameters)
@@ -931,6 +932,85 @@ GET /posts?filter[trashed]=0
 | `with`, `true`, `1` | All records, including deleted |
 | `only` | Only deleted records |
 | `without`, `false`, `0` | Only non-deleted records |
+
+---
+
+## Date Range Filter
+
+Specialized range filter for date fields with custom from/to keys. Unlike `RangeFilter` which uses `gt/gte/lt/lte`, this filter uses configurable keys (default: `from`/`to`).
+
+### Usage
+
+```php
+ElasticFilter::dateRange('created_at')
+```
+
+### Query Parameters
+
+```
+# Date range with from/to
+GET /orders?filter[created_at][from]=2024-01-01&filter[created_at][to]=2024-12-31
+
+# Only "from" bound
+GET /orders?filter[created_at][from]=2024-01-01
+
+# Only "to" bound
+GET /orders?filter[created_at][to]=2024-12-31
+```
+
+### Elasticsearch Query
+
+```json
+{
+  "range": {
+    "created_at": {
+      "gte": "2024-01-01",
+      "lte": "2024-12-31"
+    }
+  }
+}
+```
+
+### Configuration Methods
+
+```php
+ElasticFilter::dateRange('created_at')
+    ->fromKey('start')           // Change "from" key to "start"
+    ->toKey('end')               // Change "to" key to "end"
+    ->dateFormat('yyyy-MM-dd')   // Set date format
+    ->timezone('+03:00')         // Set timezone
+```
+
+| Method | Description |
+|--------|-------------|
+| `fromKey(string)` | Change the key for the lower bound (default: `from`) |
+| `toKey(string)` | Change the key for the upper bound (default: `to`) |
+| `dateFormat(string)` | Set the date format for Elasticsearch |
+| `timezone(string)` | Set the timezone for date parsing |
+
+### With Custom Keys
+
+```php
+// Use start/end instead of from/to
+ElasticFilter::dateRange('published_at', 'period')
+    ->fromKey('start')
+    ->toKey('end')
+```
+
+```
+GET /posts?filter[period][start]=2024-01-01&filter[period][end]=2024-06-30
+```
+
+### When to Use
+
+Use `DateRangeFilter` when:
+- You want `from`/`to` style parameters instead of `gte`/`lte`
+- You need custom key names for date bounds
+- You want built-in date format and timezone support
+
+Use `RangeFilter` when:
+- You need standard Elasticsearch operators (`gt`, `gte`, `lt`, `lte`)
+- You're working with numeric values, not dates
 
 ---
 

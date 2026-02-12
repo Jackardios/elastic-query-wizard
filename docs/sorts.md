@@ -7,6 +7,7 @@ Sorts determine the order of Elasticsearch query results. All sorts are created 
 - [General Principles](#general-principles)
 - [Field Sort](#field-sort)
 - [Geo Distance Sort](#geo-distance-sort)
+- [Score Sort](#score-sort)
 - [Script Sort](#script-sort)
 - [Nested Sort](#nested-sort)
 - [Random Sort](#random-sort)
@@ -198,6 +199,55 @@ ElasticSort::geoDistance('location', 55.75, 37.62, 'distance')
     ->mode('min')           // For array of points, take minimum distance
     ->distanceType('plane') // Faster calculation
     ->ignoreUnmapped()      // Don't fail if field is missing
+```
+
+---
+
+## Score Sort
+
+Sort by Elasticsearch relevance score (`_score`).
+
+### Usage
+
+```php
+ElasticSort::score('relevance')
+```
+
+### Query Parameters
+
+```
+# Highest score first
+GET /articles?sort=-relevance
+
+# Lowest score first
+GET /articles?sort=relevance
+```
+
+### Elasticsearch Query
+
+```json
+{
+  "sort": [
+    { "_score": "desc" }
+  ]
+}
+```
+
+### When to Use
+
+Use `ScoreSort` when you want to explicitly control relevance-based sorting:
+
+```php
+ElasticQueryWizard::for(Article::class)
+    ->allowedFilters([
+        ElasticFilter::multiMatch(['title^2', 'body'], 'search'),
+    ])
+    ->allowedSorts([
+        ElasticSort::score('relevance'),
+        ElasticSort::field('created_at'),
+    ])
+    ->defaultSorts('-relevance')
+    ->build();
 ```
 
 ---
