@@ -11,11 +11,14 @@ use Jackardios\ElasticQueryWizard\Filters\ExistsFilter;
 use Jackardios\ElasticQueryWizard\Filters\FuzzyFilter;
 use Jackardios\ElasticQueryWizard\Filters\GeoBoundingBoxFilter;
 use Jackardios\ElasticQueryWizard\Filters\GeoDistanceFilter;
+use Jackardios\ElasticQueryWizard\Filters\GeoShapeFilter;
 use Jackardios\ElasticQueryWizard\Filters\IdsFilter;
 use Jackardios\ElasticQueryWizard\Filters\MatchFilter;
 use Jackardios\ElasticQueryWizard\Filters\MatchPhraseFilter;
 use Jackardios\ElasticQueryWizard\Filters\MatchPhrasePrefixFilter;
+use Jackardios\ElasticQueryWizard\Filters\MoreLikeThisFilter;
 use Jackardios\ElasticQueryWizard\Filters\MultiMatchFilter;
+use Jackardios\ElasticQueryWizard\Filters\NestedFilter;
 use Jackardios\ElasticQueryWizard\Filters\NullFilter;
 use Jackardios\ElasticQueryWizard\Filters\PrefixFilter;
 use Jackardios\ElasticQueryWizard\Filters\QueryStringFilter;
@@ -243,5 +246,35 @@ class ElasticFilterFactoryTest extends TestCase
         $this->assertInstanceOf(NullFilter::class, $filter);
         $this->assertEquals('deleted_at', $filter->getProperty());
         $this->assertEquals('deleted', $filter->getName());
+    }
+
+    /** @test */
+    public function nested_creates_nested_filter(): void
+    {
+        $filter = ElasticFilter::nested('comments', 'author', 'comment_author');
+
+        $this->assertInstanceOf(NestedFilter::class, $filter);
+        $this->assertEquals('author', $filter->getProperty());
+        $this->assertEquals('comment_author', $filter->getName());
+    }
+
+    /** @test */
+    public function geo_shape_creates_geo_shape_filter(): void
+    {
+        $filter = ElasticFilter::geoShape('boundary', 'area');
+
+        $this->assertInstanceOf(GeoShapeFilter::class, $filter);
+        $this->assertEquals('boundary', $filter->getProperty());
+        $this->assertEquals('area', $filter->getName());
+    }
+
+    /** @test */
+    public function more_like_this_creates_more_like_this_filter(): void
+    {
+        $filter = ElasticFilter::moreLikeThis(['title', 'body'], 'similar', 'related');
+
+        $this->assertInstanceOf(MoreLikeThisFilter::class, $filter);
+        $this->assertEquals('similar', $filter->getProperty());
+        $this->assertEquals('related', $filter->getName());
     }
 }

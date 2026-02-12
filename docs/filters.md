@@ -9,6 +9,7 @@ Filters allow you to limit Elasticsearch query results based on query parameters
 - [Match Filter](#match-filter)
 - [Range Filter](#range-filter)
 - [Exists Filter](#exists-filter)
+- [Null Filter](#null-filter)
 - [MultiMatch Filter](#multimatch-filter)
 - [Wildcard Filter](#wildcard-filter)
 - [Prefix Filter](#prefix-filter)
@@ -21,6 +22,9 @@ Filters allow you to limit Elasticsearch query results based on query parameters
 - [Simple Query String Filter](#simple-query-string-filter)
 - [Geo Distance Filter](#geo-distance-filter)
 - [Geo Bounding Box Filter](#geo-bounding-box-filter)
+- [Geo Shape Filter](#geo-shape-filter)
+- [Nested Filter](#nested-filter)
+- [More Like This Filter](#more-like-this-filter)
 - [Trashed Filter](#trashed-filter)
 - [Callback Filter](#callback-filter)
 - [Passthrough Filter](#passthrough-filter)
@@ -240,6 +244,73 @@ GET /posts?filter[thumbnail]=false
 // filter[thumbnail]=0
 { "bool": { "must_not": { "exists": { "field": "thumbnail" } } } }
 ```
+
+---
+
+## Null Filter
+
+Filter by NULL/NOT NULL values. Similar to Exists Filter but with configurable logic direction.
+
+### Usage
+
+```php
+ElasticFilter::null('deleted_at', 'is_deleted')
+```
+
+### Query Parameters
+
+```
+# Field IS NULL (doesn't exist)
+GET /posts?filter[is_deleted]=1
+GET /posts?filter[is_deleted]=true
+
+# Field IS NOT NULL (exists)
+GET /posts?filter[is_deleted]=0
+GET /posts?filter[is_deleted]=false
+```
+
+### Elasticsearch Query
+
+```json
+// filter[is_deleted]=true (field IS NULL)
+{ "bool": { "must_not": { "exists": { "field": "deleted_at" } } } }
+
+// filter[is_deleted]=false (field IS NOT NULL)
+{ "exists": { "field": "deleted_at" } }
+```
+
+### Inverted Logic
+
+By default, a truthy value means "field IS NULL". You can invert this behavior:
+
+```php
+// Inverted: truthy means "field exists" (NOT NULL)
+ElasticFilter::null('thumbnail', 'has_thumbnail')->withInvertedLogic()
+```
+
+```
+# With inverted logic:
+# filter[has_thumbnail]=1 → field EXISTS (NOT NULL)
+# filter[has_thumbnail]=0 → field DOES NOT EXIST (NULL)
+```
+
+### Configuration Methods
+
+| Method | Description |
+|--------|-------------|
+| `withInvertedLogic()` | Invert behavior: truthy → NOT NULL, falsy → NULL |
+| `withoutInvertedLogic()` | Reset to default behavior |
+
+### Difference from Exists Filter
+
+| Filter | Truthy value | Falsy value |
+|--------|--------------|-------------|
+| `ExistsFilter` | Field exists | Field doesn't exist |
+| `NullFilter` | Field IS NULL | Field IS NOT NULL |
+| `NullFilter` (inverted) | Field IS NOT NULL | Field IS NULL |
+
+Use `NullFilter` when the parameter name suggests "is null" semantics (e.g., `is_deleted`, `is_empty`).
+Use `ExistsFilter` when the parameter name suggests "has value" semantics (e.g., `has_thumbnail`, `has_email`).
 
 ---
 
@@ -614,6 +685,212 @@ GET /places?filter[bbox][]=36.0&filter[bbox][]=55.0&filter[bbox][]=38.0&filter[b
   }
 }
 ```
+
+---
+
+## Geo Shape Filter
+
+Filter documents by geographic shape relationships.
+
+### Usage
+
+```php
+ElasticFilter::geoShape('boundary')
+ElasticFilter::geoShape('coverage_area', 'area')
+```
+
+### Query Parameters
+
+```
+# Envelope (bounding box)
+GET /areas?filter[boundary][type]=envelope&filter[boundary][coordinates][0][0]=-10&filter[boundary][coordinates][0][1]=10&filter[boundary][coordinates][1][0]=10&filter[boundary][coordinates][1][1]=-10
+
+# Point
+GET /areas?filter[boundary][type]=point&filter[boundary][coordinates][0]=37.62&filter[boundary][coordinates][1]=55.75
+
+# Circle (requires Elasticsearch 6.6+)
+GET /areas?filter[boundary][type]=circle&filter[boundary][coordinates][0]=37.62&filter[boundary][coordinates][1]=55.75&filter[boundary][radius]=10km
+
+# Indexed shape (reference to another document)
+GET /areas?filter[boundary][type]=indexed_shape&filter[boundary][index]=shapes&filter[boundary][id]=region_123
+```
+
+### Supported Shape Types
+
+| Type | Description |
+|------|-------------|
+| `envelope` | Bounding box defined by two corner points |
+| `polygon` | Closed polygon defined by coordinate array |
+| `point` | Single geographic point |
+| `circle` | Circle defined by center point and radius (ES 6.6+) |
+| `indexed_shape` | Reference to a shape stored in another document |
+
+### Elasticsearch Query
+
+```json
+{
+  "geo_shape": {
+    "boundary": {
+      "shape": {
+        "type": "envelope",
+        "coordinates": [[-10.0, 10.0], [10.0, -10.0]]
+      }
+    }
+  }
+}
+```
+
+### With Options
+
+```php
+ElasticFilter::geoShape('boundary')
+    ->relation('intersects')  // Spatial relation: intersects, within, contains, disjoint
+    ->ignoreUnmapped()        // Ignore if field is unmapped
+```
+
+### Spatial Relations
+
+| Relation | Description |
+|----------|-------------|
+| `intersects` | Shape intersects with the document shape (default) |
+| `within` | Document shape is completely within the query shape |
+| `contains` | Document shape completely contains the query shape |
+| `disjoint` | Shapes do not touch or overlap |
+
+---
+
+## Nested Filter
+
+Filter by fields within nested documents.
+
+### Usage
+
+```php
+ElasticFilter::nested('comments', 'author')
+ElasticFilter::nested('variants', 'sku', 'variant_sku')
+```
+
+### Query Parameters
+
+```
+GET /posts?filter[author]=john
+GET /posts?filter[variant_sku]=ABC123,DEF456
+```
+
+### Elasticsearch Query
+
+```json
+{
+  "nested": {
+    "path": "comments",
+    "query": {
+      "term": { "comments.author": "john" }
+    }
+  }
+}
+```
+
+### With Options
+
+```php
+ElasticFilter::nested('comments', 'author')
+    ->scoreMode('avg')     // Score mode: avg, max, min, sum, none
+    ->ignoreUnmapped()     // Ignore if path is unmapped
+```
+
+### With Custom Inner Query
+
+```php
+use Jackardios\EsScoutDriver\Support\Query;
+
+// Custom inner query with closure (receives filter value)
+ElasticFilter::nested('offers', 'discount')
+    ->innerQuery(fn($value) => Query::bool()
+        ->must(Query::range('offers.discount')->gte($value))
+        ->must(Query::term('offers.active', true))
+    )
+
+// Static inner query (ignores filter value)
+ElasticFilter::nested('comments', 'active')
+    ->innerQuery(Query::term('comments.active', true))
+```
+
+### Score Modes
+
+| Mode | Description |
+|------|-------------|
+| `avg` | Average score of all matching nested documents |
+| `max` | Highest score of any matching nested document |
+| `min` | Lowest score of any matching nested document |
+| `sum` | Sum of all matching nested document scores |
+| `none` | Do not use scores |
+
+---
+
+## More Like This Filter
+
+Find documents similar to provided text or documents.
+
+### Usage
+
+```php
+// Search across title and body fields for similar content
+ElasticFilter::moreLikeThis(['title', 'body'], 'similar')
+```
+
+### Query Parameters
+
+```
+# Text-based similarity
+GET /articles?filter[similar]=elasticsearch distributed search
+
+# Document reference
+GET /articles?filter[similar][_index]=articles&filter[similar][_id]=123
+```
+
+### Elasticsearch Query
+
+```json
+{
+  "more_like_this": {
+    "fields": ["title", "body"],
+    "like": "elasticsearch distributed search"
+  }
+}
+```
+
+### With Options
+
+```php
+ElasticFilter::moreLikeThis(['title', 'body'], 'similar')
+    ->minTermFreq(2)           // Min term frequency in source doc
+    ->maxQueryTerms(25)        // Max query terms to select
+    ->minDocFreq(5)            // Min document frequency for terms
+    ->maxDocFreq(1000)         // Max document frequency for terms
+    ->minWordLength(3)         // Min word length for terms
+    ->maxWordLength(20)        // Max word length for terms
+    ->analyzer('english')       // Analyzer for query text
+    ->minimumShouldMatch('30%') // Min terms that should match
+    ->boost(1.5)               // Query boost factor
+    ->include(false)           // Include input docs in results
+    ->boostTerms(2.0)          // Boost factor for significant terms
+```
+
+### Configuration Parameters
+
+| Parameter | Description |
+|-----------|-------------|
+| `minTermFreq` | Minimum frequency of a term in the source document to be considered |
+| `maxQueryTerms` | Maximum number of query terms selected |
+| `minDocFreq` | Minimum document frequency for a term to be considered |
+| `maxDocFreq` | Maximum document frequency for a term (excludes common words) |
+| `minWordLength` | Minimum length of a word to be considered |
+| `maxWordLength` | Maximum length of a word to be considered |
+| `analyzer` | Analyzer to use for the query text |
+| `minimumShouldMatch` | Minimum number of terms that should match (number or percentage) |
+| `boost` | Boost factor for the query |
+| `include` | Whether to include the input documents in the results |
+| `boostTerms` | Boost factor for terms considered significant |
 
 ---
 

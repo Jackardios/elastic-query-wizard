@@ -6,6 +6,8 @@ namespace Jackardios\ElasticQueryWizard;
 
 use Jackardios\ElasticQueryWizard\Sorts\FieldSort;
 use Jackardios\ElasticQueryWizard\Sorts\GeoDistanceSort;
+use Jackardios\ElasticQueryWizard\Sorts\NestedSort;
+use Jackardios\ElasticQueryWizard\Sorts\RandomSort;
 use Jackardios\ElasticQueryWizard\Sorts\ScoreSort;
 use Jackardios\ElasticQueryWizard\Sorts\ScriptSort;
 use Jackardios\QueryWizard\Sorts\CallbackSort;
@@ -42,5 +44,31 @@ final class ElasticSort
     public static function score(?string $alias = null): ScoreSort
     {
         return ScoreSort::make($alias);
+    }
+
+    /**
+     * Sort by a field within nested documents.
+     *
+     * @param string $path The nested document path (e.g., 'variants', 'offers')
+     * @param string $nestedField The field within the nested document
+     * @param string $property The sort property name
+     */
+    public static function nested(
+        string $path,
+        string $nestedField,
+        string $property,
+        ?string $alias = null
+    ): NestedSort {
+        return NestedSort::make($path, $nestedField, $property, $alias);
+    }
+
+    /**
+     * Random/shuffle sorting.
+     *
+     * @param string $property The sort property name (default: '_random')
+     */
+    public static function random(string $property = '_random', ?string $alias = null): RandomSort
+    {
+        return RandomSort::make($property, $alias);
     }
 }

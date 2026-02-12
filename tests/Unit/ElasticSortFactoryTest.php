@@ -7,6 +7,8 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit;
 use Jackardios\ElasticQueryWizard\ElasticSort;
 use Jackardios\ElasticQueryWizard\Sorts\FieldSort;
 use Jackardios\ElasticQueryWizard\Sorts\GeoDistanceSort;
+use Jackardios\ElasticQueryWizard\Sorts\NestedSort;
+use Jackardios\ElasticQueryWizard\Sorts\RandomSort;
 use Jackardios\ElasticQueryWizard\Sorts\ScoreSort;
 use Jackardios\ElasticQueryWizard\Sorts\ScriptSort;
 use Jackardios\QueryWizard\Sorts\CallbackSort;
@@ -77,5 +79,35 @@ class ElasticSortFactoryTest extends TestCase
         $this->assertInstanceOf(ScoreSort::class, $sort);
         $this->assertEquals('_score', $sort->getProperty());
         $this->assertEquals('_score', $sort->getName());
+    }
+
+    /** @test */
+    public function nested_creates_nested_sort(): void
+    {
+        $sort = ElasticSort::nested('variants', 'price', 'lowest_price', 'price');
+
+        $this->assertInstanceOf(NestedSort::class, $sort);
+        $this->assertEquals('lowest_price', $sort->getProperty());
+        $this->assertEquals('price', $sort->getName());
+    }
+
+    /** @test */
+    public function random_creates_random_sort(): void
+    {
+        $sort = ElasticSort::random('shuffle', 'random');
+
+        $this->assertInstanceOf(RandomSort::class, $sort);
+        $this->assertEquals('shuffle', $sort->getProperty());
+        $this->assertEquals('random', $sort->getName());
+    }
+
+    /** @test */
+    public function random_without_arguments_uses_defaults(): void
+    {
+        $sort = ElasticSort::random();
+
+        $this->assertInstanceOf(RandomSort::class, $sort);
+        $this->assertEquals('_random', $sort->getProperty());
+        $this->assertEquals('_random', $sort->getName());
     }
 }

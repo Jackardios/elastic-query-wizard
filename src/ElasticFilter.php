@@ -10,11 +10,14 @@ use Jackardios\ElasticQueryWizard\Filters\ExistsFilter;
 use Jackardios\ElasticQueryWizard\Filters\FuzzyFilter;
 use Jackardios\ElasticQueryWizard\Filters\GeoBoundingBoxFilter;
 use Jackardios\ElasticQueryWizard\Filters\GeoDistanceFilter;
+use Jackardios\ElasticQueryWizard\Filters\GeoShapeFilter;
 use Jackardios\ElasticQueryWizard\Filters\IdsFilter;
 use Jackardios\ElasticQueryWizard\Filters\MatchFilter;
 use Jackardios\ElasticQueryWizard\Filters\MatchPhraseFilter;
 use Jackardios\ElasticQueryWizard\Filters\MatchPhrasePrefixFilter;
+use Jackardios\ElasticQueryWizard\Filters\MoreLikeThisFilter;
 use Jackardios\ElasticQueryWizard\Filters\MultiMatchFilter;
+use Jackardios\ElasticQueryWizard\Filters\NestedFilter;
 use Jackardios\ElasticQueryWizard\Filters\NullFilter;
 use Jackardios\ElasticQueryWizard\Filters\PrefixFilter;
 use Jackardios\ElasticQueryWizard\Filters\QueryStringFilter;
@@ -65,6 +68,11 @@ final class ElasticFilter
     public static function geoDistance(string $property, ?string $alias = null): GeoDistanceFilter
     {
         return GeoDistanceFilter::make($property, $alias);
+    }
+
+    public static function geoShape(string $property, ?string $alias = null): GeoShapeFilter
+    {
+        return GeoShapeFilter::make($property, $alias);
     }
 
     public static function wildcard(string $property, ?string $alias = null): WildcardFilter
@@ -125,6 +133,25 @@ final class ElasticFilter
     public static function null(string $property, ?string $alias = null): NullFilter
     {
         return NullFilter::make($property, $alias);
+    }
+
+    /**
+     * @param string $path The nested document path (e.g., 'comments', 'variants')
+     * @param string $property The field within the nested document to filter on
+     */
+    public static function nested(string $path, string $property, ?string $alias = null): NestedFilter
+    {
+        return NestedFilter::make($path, $property, $alias);
+    }
+
+    /**
+     * Find similar documents based on text analysis.
+     *
+     * @param string[] $fields Fields to analyze for similarity
+     */
+    public static function moreLikeThis(array $fields, string $property, ?string $alias = null): MoreLikeThisFilter
+    {
+        return MoreLikeThisFilter::make($fields, $property, $alias);
     }
 
     /**

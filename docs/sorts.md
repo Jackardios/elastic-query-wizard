@@ -8,6 +8,8 @@ Sorts determine the order of Elasticsearch query results. All sorts are created 
 - [Field Sort](#field-sort)
 - [Geo Distance Sort](#geo-distance-sort)
 - [Script Sort](#script-sort)
+- [Nested Sort](#nested-sort)
+- [Random Sort](#random-sort)
 - [Callback Sort](#callback-sort)
 - [Default Sorting](#default-sorting)
 - [Aliases](#aliases)
@@ -288,6 +290,184 @@ ElasticSort::script(
 )
     ->type('number')
 ```
+
+---
+
+## Nested Sort
+
+Sort by a field within nested documents.
+
+### Usage
+
+```php
+ElasticSort::nested(
+    path: 'variants',      // Nested document path
+    nestedField: 'price',  // Field within nested document
+    property: 'lowest_price',
+    alias: 'price'         // Optional alias
+)
+```
+
+### Query Parameters
+
+```
+GET /products?sort=price
+GET /products?sort=-price
+```
+
+### Elasticsearch Query
+
+```json
+{
+  "sort": [
+    {
+      "variants.price": {
+        "order": "asc",
+        "nested": {
+          "path": "variants"
+        }
+      }
+    }
+  ]
+}
+```
+
+### With Options
+
+```php
+ElasticSort::nested('variants', 'price', 'lowest_price')
+    ->mode('min')          // Mode for multi-valued: min, max, avg, sum, median
+    ->missingLast()        // Place docs without field at end
+    ->unmappedType('long') // Fallback type for unmapped field
+```
+
+### With Nested Filter
+
+Only consider specific nested documents for sorting:
+
+```php
+use Jackardios\EsScoutDriver\Support\Query;
+
+ElasticSort::nested('offers', 'discount', 'best_offer')
+    ->mode('max')
+    ->nestedFilter(Query::term('offers.active', true))
+    ->maxChildren(10)
+```
+
+### Configuration Methods
+
+| Method | Description |
+|--------|-------------|
+| `mode(string)` | Mode for multi-valued fields: `min`, `max`, `avg`, `sum`, `median` |
+| `missing(string\|int\|float\|bool)` | Value for docs missing the field: `_first`, `_last`, or specific value |
+| `missingFirst()` | Shortcut for `missing('_first')` |
+| `missingLast()` | Shortcut for `missing('_last')` |
+| `unmappedType(string)` | Fallback type when field is unmapped |
+| `nestedFilter(QueryInterface\|Closure\|array)` | Filter to select nested documents |
+| `maxChildren(int)` | Maximum number of nested documents to consider |
+
+### Examples
+
+#### Sort by Minimum Variant Price
+
+```php
+ElasticSort::nested('variants', 'price', 'lowest_price')
+    ->mode('min')
+    ->missingLast()
+```
+
+#### Sort by Best Active Offer
+
+```php
+ElasticSort::nested('offers', 'discount', 'best_offer')
+    ->mode('max')
+    ->nestedFilter(fn() => Query::bool()
+        ->must(Query::term('offers.active', true))
+        ->must(Query::range('offers.expires_at')->gte('now'))
+    )
+```
+
+---
+
+## Random Sort
+
+Shuffle results with optional seed for reproducibility.
+
+### Usage
+
+```php
+ElasticSort::random('shuffle')
+```
+
+### Query Parameters
+
+```
+GET /products?sort=shuffle
+GET /products?sort=-shuffle  // Descending affects score ordering
+```
+
+### Elasticsearch Query
+
+```json
+{
+  "query": {
+    "function_score": {
+      "functions": [
+        { "random_score": {} }
+      ],
+      "boost_mode": "replace"
+    }
+  },
+  "sort": [
+    { "_score": "asc" }
+  ]
+}
+```
+
+### With Seed for Reproducibility
+
+```php
+// Same seed = same order (useful for pagination)
+ElasticSort::random('shuffle')
+    ->seed($request->session()->getId())
+
+// With custom field (required in ES 7.0+)
+ElasticSort::random('shuffle')
+    ->seed(12345)
+    ->field('_id')
+```
+
+### Configuration Methods
+
+| Method | Description |
+|--------|-------------|
+| `seed(int\|string)` | Seed for reproducible random order (session ID, user ID, etc.) |
+| `field(string)` | Field for per-document randomization (default: `_seq_no` when seed is set) |
+
+### Examples
+
+#### Random Shuffle for Each Request
+
+```php
+ElasticSort::random('shuffle')
+```
+
+#### Consistent Shuffle per User Session
+
+```php
+ElasticSort::random('shuffle')
+    ->seed($request->session()->getId())
+```
+
+#### Consistent Shuffle per User
+
+```php
+ElasticSort::random('shuffle')
+    ->seed(auth()->id())
+    ->field('_id')
+```
+
+> **Note:** Seeded random requires the `field` parameter in Elasticsearch 7.0+. The default field is `_seq_no` when a seed is provided.
 
 ---
 
