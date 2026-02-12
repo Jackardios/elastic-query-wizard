@@ -14,7 +14,7 @@ final class InvalidGeoShapeValue extends InvalidQuery
         $typeStr = $type ?? 'null';
         return new static(
             Response::HTTP_UNPROCESSABLE_ENTITY,
-            "`$propertyName` has unknown shape type `$typeStr`. Supported: envelope, polygon, point, circle, indexed_shape"
+            "`$propertyName` has unknown shape type `$typeStr`. Supported: envelope, polygon, point, indexed_shape"
         );
     }
 
@@ -39,14 +39,6 @@ final class InvalidGeoShapeValue extends InvalidQuery
         return new static(
             Response::HTTP_UNPROCESSABLE_ENTITY,
             "`$propertyName` point requires coordinates as [lon, lat]"
-        );
-    }
-
-    public static function invalidCircle(string $propertyName): self
-    {
-        return new static(
-            Response::HTTP_UNPROCESSABLE_ENTITY,
-            "`$propertyName` circle requires coordinates as [lon, lat] and radius as string (e.g., '10km')"
         );
     }
 

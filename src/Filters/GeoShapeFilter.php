@@ -12,9 +12,10 @@ use Jackardios\EsScoutDriver\Support\Query;
 /**
  * Filter documents by geographic shape relationships.
  *
- * Supports envelope, polygon, point, circle, and indexed_shape types.
+ * Supports envelope, polygon, point, and indexed_shape types.
  *
- * Note: Circle type requires Elasticsearch 6.6+.
+ * Note: Circle type is not supported as an inline shape in ES 8.x/9.x.
+ * For radius-based filtering, use GeoDistanceFilter instead.
  *
  * @see https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html
  */
@@ -86,7 +87,6 @@ final class GeoShapeFilter extends AbstractElasticFilter
             'envelope' => $this->applyEnvelope($query, $value),
             'polygon' => $this->applyPolygon($query, $value),
             'point' => $this->applyPoint($query, $value),
-            'circle' => $this->applyCircle($query, $value),
             'indexed_shape' => $this->applyIndexedShape($query, $value),
             default => throw InvalidGeoShapeValue::unknownType($this->property, $type),
         };
@@ -141,23 +141,6 @@ final class GeoShapeFilter extends AbstractElasticFilter
         }
 
         $query->point($coordinates);
-    }
-
-    /**
-     * Apply circle shape (requires Elasticsearch 6.6+).
-     *
-     * @param array<string, mixed> $value
-     */
-    protected function applyCircle(GeoShapeQuery $query, array $value): void
-    {
-        $coordinates = $value['coordinates'] ?? null;
-        $radius = $value['radius'] ?? null;
-
-        if (!is_array($coordinates) || count($coordinates) !== 2 || !is_string($radius)) {
-            throw InvalidGeoShapeValue::invalidCircle($this->property);
-        }
-
-        $query->circle((float) $coordinates[0], (float) $coordinates[1], $radius);
     }
 
     /**
