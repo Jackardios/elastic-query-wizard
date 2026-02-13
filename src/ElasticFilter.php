@@ -155,7 +155,7 @@ final class ElasticFilter
     }
 
     /**
-     * @param callable(SearchBuilder, mixed, string): void $callback
+     * @param callable(SearchBuilder, mixed, string): mixed $callback
      */
     public static function callback(string $name, callable $callback, ?string $alias = null): CallbackFilter
     {

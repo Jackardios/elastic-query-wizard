@@ -59,16 +59,16 @@ class ElasticQueryWizard extends BaseQueryWizard
     /** @var SearchBuilder */
     protected mixed $subject;
 
-    /** @var array<int, Closure(Builder, array): void> */
+    /** @var array<int, Closure(Builder, array): mixed> */
     protected array $queryModifiers = [];
 
     /** @var array<int, Closure(Collection): Collection> */
     protected array $modelModifiers = [];
 
-    /** @var array<int, Closure(Builder, SearchResult): void> */
+    /** @var array<int, Closure(Builder, SearchResult): mixed> */
     protected array $buildQueryModifiers = [];
 
-    /** @var array<int, Closure(SearchBuilder): void> */
+    /** @var array<int, Closure(SearchBuilder): mixed> */
     protected array $searchBuilderModifiers = [];
 
     protected string $modelClass;
@@ -152,7 +152,7 @@ class ElasticQueryWizard extends BaseQueryWizard
     /**
      * Apply custom SearchBuilder mutations declaratively (before/after build).
      *
-     * @param Closure(SearchBuilder): void $callback
+     * @param Closure(SearchBuilder): mixed $callback Return value is ignored.
      */
     public function tapSearchBuilder(Closure $callback): static
     {
@@ -162,7 +162,7 @@ class ElasticQueryWizard extends BaseQueryWizard
     /**
      * Add a callback to modify the Eloquent query before loading models.
      *
-     * @param Closure(Builder, array): void $callback
+     * @param Closure(Builder, array): mixed $callback Return value is ignored.
      */
     public function modifyQuery(Closure $callback): static
     {
@@ -600,7 +600,7 @@ class ElasticQueryWizard extends BaseQueryWizard
     }
 
     /**
-     * @param Closure(Builder, SearchResult): void $callback
+     * @param Closure(Builder, SearchResult): mixed $callback
      */
     protected function addBuildQueryModifier(Closure $callback): void
     {
@@ -608,7 +608,7 @@ class ElasticQueryWizard extends BaseQueryWizard
     }
 
     /**
-     * @param Closure(SearchBuilder): void $callback
+     * @param Closure(SearchBuilder): mixed $callback
      */
     protected function queueSearchBuilderMutation(Closure $callback): static
     {
