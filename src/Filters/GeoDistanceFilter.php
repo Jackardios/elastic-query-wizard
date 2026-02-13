@@ -23,7 +23,7 @@ final class GeoDistanceFilter extends AbstractElasticFilter
         return 'geo_distance';
     }
 
-    public function buildQuery(mixed $value): QueryInterface|array|null
+    public function buildQuery(mixed $value): ?QueryInterface
     {
         if (empty($value)) {
             return null;

@@ -77,7 +77,7 @@ final class NestedFilter extends AbstractElasticFilter
         return 'nested';
     }
 
-    public function buildQuery(mixed $value): QueryInterface|array|null
+    public function buildQuery(mixed $value): ?QueryInterface
     {
         if (FilterValueSanitizer::isBlank($value)) {
             return null;

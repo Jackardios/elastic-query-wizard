@@ -22,6 +22,7 @@ interface GroupInterface extends FilterInterface
      * @param array<string, mixed> $childValues Map of child filter names to their values
      */
     public function buildGroupQuery(array $childValues): ?QueryInterface;
+
     /**
      * Set the child filters for this group.
      *

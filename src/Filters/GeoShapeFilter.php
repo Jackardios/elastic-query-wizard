@@ -55,7 +55,7 @@ final class GeoShapeFilter extends AbstractElasticFilter
         return 'geo_shape';
     }
 
-    public function buildQuery(mixed $value): QueryInterface|array|null
+    public function buildQuery(mixed $value): ?QueryInterface
     {
         if (empty($value) || !is_array($value)) {
             return null;

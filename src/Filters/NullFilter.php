@@ -61,7 +61,7 @@ final class NullFilter extends AbstractElasticFilter
      * implement buildQuery to return null, and override handle() for
      * the conditional clause logic.
      */
-    public function buildQuery(mixed $value): QueryInterface|array|null
+    public function buildQuery(mixed $value): ?QueryInterface
     {
         // buildQuery returns null because this filter has conditional clause logic
         // that requires handle() to decide between filter and must_not

@@ -23,7 +23,7 @@ final class PrefixFilter extends AbstractElasticFilter
         return 'prefix';
     }
 
-    public function buildQuery(mixed $value): QueryInterface|array|null
+    public function buildQuery(mixed $value): ?QueryInterface
     {
         if (is_array($value)) {
             $extracted = reset($value);

@@ -162,7 +162,7 @@ final class MoreLikeThisFilter extends AbstractElasticFilter
         return BoolClause::MUST;
     }
 
-    public function buildQuery(mixed $value): QueryInterface|array|null
+    public function buildQuery(mixed $value): ?QueryInterface
     {
         $like = $this->prepareLikeValue($value);
 

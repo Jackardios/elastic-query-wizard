@@ -50,7 +50,7 @@ final class ElasticGroup
     /**
      * Create a bool group for logical groupings of filters.
      *
-     * @param string $scope The scope name for the group (used in URL as filter name)
+     * @param string $scope Internal group scope name (NOT used as a URL filter key)
      * @param string|null $alias Optional alias for the group
      */
     public static function bool(string $scope, ?string $alias = null): BoolGroup

@@ -15,7 +15,3 @@ parameters:
     -
       message: '#Call to an undefined method Illuminate\\Database\\Eloquent\\Model::getScoutKeyName\(\)#'
       identifier: method.notFound
-
-    # buildQuery() declares array<string, mixed> in union for raw ES queries compatibility,
-    # but filter implementations always return QueryInterface|null
-    - identifier: return.unusedType

@@ -33,7 +33,7 @@ final class RangeFilter extends AbstractElasticFilter
         return 'range';
     }
 
-    public function buildQuery(mixed $value): QueryInterface|array|null
+    public function buildQuery(mixed $value): ?QueryInterface
     {
         if (empty($value)) {
             return null;

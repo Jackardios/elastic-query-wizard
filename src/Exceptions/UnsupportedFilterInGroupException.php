@@ -9,8 +9,8 @@ use Jackardios\QueryWizard\Contracts\FilterInterface;
 /**
  * Thrown when a filter that cannot be used inside a group is added to a group.
  *
- * Filters like CallbackFilter and PassthroughFilter have no buildQuery() method
- * and cannot be applied inside a group context.
+ * Non-elastic filters (CallbackFilter, PassthroughFilter) and filters with
+ * root-level side effects (TrashedFilter) cannot be applied inside groups.
  */
 class UnsupportedFilterInGroupException extends \RuntimeException
 {

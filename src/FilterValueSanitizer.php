@@ -17,14 +17,13 @@ class FilterValueSanitizer
     /**
      * @param mixed $value raw filter value
      * @param string $propertyName will be used to throw exception
-     * @param float $epsilon tolerance for comparing coordinates
      * @return array{0: float, 1: float, 2: float, 3: float}
      * @throws InvalidGeoBoundingBoxValue
      */
-    public static function geoBoundingBoxValue(mixed $value, string $propertyName, float $epsilon = 0.00001): array
+    public static function geoBoundingBoxValue(mixed $value, string $propertyName): array
     {
         $bbox = [];
-        $arrayValue = is_array($value) ? $value : [];
+        $arrayValue = self::normalizeGeoBoundingBoxInput($value);
 
         foreach ($arrayValue as $item) {
             if (! is_numeric($item)) {
@@ -40,21 +39,61 @@ class FilterValueSanitizer
 
         [$left, $bottom, $right, $top] = $bbox;
 
-        if ($left > $right) {
-            [$left, $right] = [$right, $left];
-        } elseif (abs($left - $right) < $epsilon) {
-            $left -= $epsilon;
-            $right += $epsilon;
-        }
+        self::assertLongitude($left, $propertyName);
+        self::assertLongitude($right, $propertyName);
+        self::assertLatitude($bottom, $propertyName);
+        self::assertLatitude($top, $propertyName);
 
+        // Normalize latitude axis only. Longitude order must be preserved to support
+        // antimeridian-crossing boxes where left > right is intentional.
         if ($bottom > $top) {
             [$top, $bottom] = [$bottom, $top];
-        } elseif (abs($bottom - $top) < $epsilon) {
-            $bottom -= $epsilon;
-            $top += $epsilon;
         }
 
         return [$left, $bottom, $right, $top];
+    }
+
+    /**
+     * @return array<int, mixed>
+     */
+    private static function normalizeGeoBoundingBoxInput(mixed $value): array
+    {
+        if (is_array($value)) {
+            return array_values($value);
+        }
+
+        if (is_string($value)) {
+            $trimmed = trim($value);
+            if ($trimmed === '') {
+                return [];
+            }
+
+            return str_contains($trimmed, ',')
+                ? array_map('trim', explode(',', $trimmed))
+                : [$trimmed];
+        }
+
+        return [];
+    }
+
+    /**
+     * @throws InvalidGeoBoundingBoxValue
+     */
+    private static function assertLongitude(float $value, string $propertyName): void
+    {
+        if ($value < -180.0 || $value > 180.0) {
+            throw InvalidGeoBoundingBoxValue::make($propertyName);
+        }
+    }
+
+    /**
+     * @throws InvalidGeoBoundingBoxValue
+     */
+    private static function assertLatitude(float $value, string $propertyName): void
+    {
+        if ($value < -90.0 || $value > 90.0) {
+            throw InvalidGeoBoundingBoxValue::make($propertyName);
+        }
     }
 
     /**

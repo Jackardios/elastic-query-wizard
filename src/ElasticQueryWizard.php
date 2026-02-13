@@ -129,7 +129,7 @@ class ElasticQueryWizard extends BaseQueryWizard
 
         return new static(
             $modelClass,
-            app(QueryParametersManager::class),
+            null,
             app(QueryWizardConfig::class),
             $schema
         );
@@ -166,6 +166,7 @@ class ElasticQueryWizard extends BaseQueryWizard
      */
     public function modifyQuery(Closure $callback): static
     {
+        $this->assertBuildCallbackCanBeAdded('modifyQuery');
         $this->queryModifiers[] = $callback;
 
         return $this;
@@ -178,6 +179,7 @@ class ElasticQueryWizard extends BaseQueryWizard
      */
     public function modifyModels(Closure $callback): static
     {
+        $this->assertBuildCallbackCanBeAdded('modifyModels');
         $this->modelModifiers[] = $callback;
 
         return $this;
@@ -697,6 +699,20 @@ class ElasticQueryWizard extends BaseQueryWizard
         }
 
         return is_a($typeName, SearchBuilder::class, true);
+    }
+
+    private function assertBuildCallbackCanBeAdded(string $methodName): void
+    {
+        if (! $this->built) {
+            return;
+        }
+
+        throw new \LogicException(
+            sprintf(
+                'Cannot call %s() after build(). Register query/model callbacks before build().',
+                $methodName
+            )
+        );
     }
 
     public function __clone(): void

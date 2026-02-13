@@ -65,7 +65,7 @@ final class DateRangeFilter extends AbstractElasticFilter
         return 'date_range';
     }
 
-    public function buildQuery(mixed $value): QueryInterface|array|null
+    public function buildQuery(mixed $value): ?QueryInterface
     {
         if (!is_array($value)) {
             return null;

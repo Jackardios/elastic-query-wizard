@@ -23,7 +23,7 @@ final class TermFilter extends AbstractElasticFilter
         return 'term';
     }
 
-    public function buildQuery(mixed $value): QueryInterface|array|null
+    public function buildQuery(mixed $value): ?QueryInterface
     {
         $prepared = FilterValueSanitizer::toArray($value);
 

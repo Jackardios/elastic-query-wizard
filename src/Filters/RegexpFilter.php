@@ -23,7 +23,7 @@ final class RegexpFilter extends AbstractElasticFilter
         return 'regexp';
     }
 
-    public function buildQuery(mixed $value): QueryInterface|array|null
+    public function buildQuery(mixed $value): ?QueryInterface
     {
         if (is_array($value)) {
             $extracted = reset($value);

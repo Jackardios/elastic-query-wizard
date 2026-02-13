@@ -18,6 +18,9 @@ abstract class AbstractElasticFilter extends AbstractFilter
     /**
      * Build the Elasticsearch query for the given value.
      *
+     * Return QueryInterface for typed DSL queries, or raw array for custom
+     * low-level Elasticsearch query fragments.
+     *
      * @return QueryInterface|array<string, mixed>|null Return null to skip the filter
      */
     abstract public function buildQuery(mixed $value): QueryInterface|array|null;
@@ -41,7 +44,7 @@ abstract class AbstractElasticFilter extends AbstractFilter
      *
      * This method is called by AbstractElasticGroup::applyChildrenToQuery() instead of
      * buildQuery() to properly handle filters with conditional clause logic (ExistsFilter,
-     * NullFilter, TrashedFilter).
+     * NullFilter).
      *
      * Override this method in filters that need special logic when used in groups.
      */

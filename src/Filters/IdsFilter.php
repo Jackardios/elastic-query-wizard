@@ -23,7 +23,7 @@ final class IdsFilter extends AbstractElasticFilter
         return 'ids';
     }
 
-    public function buildQuery(mixed $value): QueryInterface|array|null
+    public function buildQuery(mixed $value): ?QueryInterface
     {
         $prepared = FilterValueSanitizer::toArray($value);
 

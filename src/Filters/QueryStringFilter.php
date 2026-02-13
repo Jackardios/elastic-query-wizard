@@ -29,7 +29,7 @@ final class QueryStringFilter extends AbstractElasticFilter
         return BoolClause::MUST;
     }
 
-    public function buildQuery(mixed $value): QueryInterface|array|null
+    public function buildQuery(mixed $value): ?QueryInterface
     {
         if (is_array($value)) {
             $value = FilterValueSanitizer::arrayToCommaSeparatedString($value);

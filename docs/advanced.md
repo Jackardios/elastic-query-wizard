@@ -170,6 +170,7 @@ $boolQuery->addMustNot(ElasticQuery::term('is_hidden', true));
 Add callbacks that modify the Eloquent query before loading models.
 This API is consistent with `SearchBuilder::modifyQuery()` from `es-scout-driver`:
 the second callback argument receives raw Elasticsearch response array.
+Register callbacks before calling `build()`.
 
 ```php
 $wizard = ElasticQueryWizard::for(Post::class)
@@ -213,6 +214,7 @@ $wizard = ElasticQueryWizard::for(Post::class)
 
 Add callbacks that transform the collection of models after they're loaded.
 This API is consistent with `SearchBuilder::modifyModels()` from `es-scout-driver`:
+Register callbacks before calling `build()`.
 
 ```php
 $wizard = ElasticQueryWizard::for(Post::class)
@@ -398,6 +400,7 @@ class CustomFilter extends AbstractElasticFilter
     /**
      * Build the Elasticsearch query.
      * Return null to skip the filter.
+     * You can also return raw array query fragments for low-level DSL cases.
      */
     public function buildQuery(mixed $value): QueryInterface|array|null
     {
@@ -605,4 +608,5 @@ $results = ElasticQueryWizard::for(Post::class)
     ->models();
 ```
 
+> **Note:** After `build()`, `modifyQuery()` and `modifyModels()` are locked and will throw a `LogicException`. Register these callbacks before build.
 > **Note:** Once you call SearchBuilder methods after `build()`, you cannot modify wizard configuration (allowedFilters, allowedSorts, etc.) anymore.

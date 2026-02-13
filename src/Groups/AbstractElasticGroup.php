@@ -8,6 +8,7 @@ use Jackardios\ElasticQueryWizard\Concerns\HasBoolClause;
 use Jackardios\ElasticQueryWizard\Enums\BoolClause;
 use Jackardios\ElasticQueryWizard\Exceptions\UnsupportedFilterInGroupException;
 use Jackardios\ElasticQueryWizard\Filters\AbstractElasticFilter;
+use Jackardios\ElasticQueryWizard\Filters\TrashedFilter;
 use Jackardios\EsScoutDriver\Query\Compound\BoolQuery;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
@@ -72,7 +73,7 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
      *
      * @param array<string, mixed> $childValues Map of child filter names to their values
      *
-     * @throws UnsupportedFilterInGroupException When a non-elastic filter (e.g., CallbackFilter) is used
+     * @throws UnsupportedFilterInGroupException When an unsupported filter is used in group context
      */
     protected function applyChildrenToQuery(BoolQuery $innerBoolQuery, array $childValues): void
     {
@@ -94,8 +95,12 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
                     $this->addQueryToBoolQuery($innerBoolQuery, $child, $groupQuery);
                 }
             } elseif ($child instanceof AbstractElasticFilter) {
+                if ($child instanceof TrashedFilter) {
+                    throw UnsupportedFilterInGroupException::forFilter($child, $this->getName());
+                }
+
                 // Use handleInGroup() to properly handle filters with conditional clause logic
-                // (ExistsFilter, NullFilter, TrashedFilter)
+                // (ExistsFilter, NullFilter)
                 $child->handleInGroup($innerBoolQuery, $value);
             } else {
                 // Non-elastic filters (CallbackFilter, PassthroughFilter) cannot be used in groups
@@ -127,9 +132,9 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
     /**
      * Add a query to the inner BoolQuery using the filter's effective clause.
      *
-     * @param QueryInterface|array<string, mixed> $query
+     * @param QueryInterface $query
      */
-    protected function addQueryToBoolQuery(BoolQuery $boolQuery, FilterInterface $filter, QueryInterface|array $query): void
+    protected function addQueryToBoolQuery(BoolQuery $boolQuery, FilterInterface $filter, QueryInterface $query): void
     {
         $clause = BoolClause::FILTER;
 
@@ -148,9 +153,9 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
     /**
      * Add the group query to the parent BoolQuery using this group's clause.
      *
-     * @param QueryInterface|array<string, mixed> $query
+     * @param QueryInterface $query
      */
-    protected function addQueryToBuilder(BoolQuery $parentBoolQuery, QueryInterface|array $query): void
+    protected function addQueryToBuilder(BoolQuery $parentBoolQuery, QueryInterface $query): void
     {
         $clause = $this->getEffectiveClause();
 

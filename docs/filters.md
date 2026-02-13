@@ -670,6 +670,9 @@ Format: `[left, bottom, right, top]` (minLon, minLat, maxLon, maxLat)
 GET /places?filter[bbox][]=36.0&filter[bbox][]=55.0&filter[bbox][]=38.0&filter[bbox][]=56.0
 ```
 
+Antimeridian is officially supported: keep longitude order as-is.
+For dateline-crossing boxes, pass `left > right` (for example `170,-10,-170,10`).
+
 ### Elasticsearch Query
 
 ```json
@@ -934,6 +937,10 @@ GET /posts?filter[trashed]=0
 | `with`, `true`, `1` | All records, including deleted |
 | `only` | Only deleted records |
 | `without`, `false`, `0` | Only non-deleted records |
+
+### Important Limitation
+
+`TrashedFilter` is a root-level filter and cannot be used inside filter groups.
 
 ---
 
@@ -1334,3 +1341,5 @@ ElasticGroup::bool('complex')
    ```
 
 3. **Deduplication**: If the same filter name appears both at root level and inside a group, only the group version is applied
+
+4. **Unsupported in Groups**: `ElasticFilter::trashed()`, `ElasticFilter::callback()`, and `ElasticFilter::passthrough()` cannot be used inside groups

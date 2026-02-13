@@ -28,7 +28,7 @@ final class TrashedFilter extends AbstractElasticFilter
     /**
      * This filter doesn't add a query, it modifies the soft delete mode.
      */
-    public function buildQuery(mixed $value): QueryInterface|array|null
+    public function buildQuery(mixed $value): ?QueryInterface
     {
         return null;
     }

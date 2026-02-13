@@ -31,7 +31,7 @@ final class ExistsFilter extends AbstractElasticFilter
      * implement buildQuery to return the query, and override handle() for
      * the conditional clause logic.
      */
-    public function buildQuery(mixed $value): QueryInterface|array|null
+    public function buildQuery(mixed $value): ?QueryInterface
     {
         if (FilterValueSanitizer::isBlank($value)) {
             return null;

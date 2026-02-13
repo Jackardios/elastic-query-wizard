@@ -23,9 +23,9 @@ final class GeoBoundingBoxFilter extends AbstractElasticFilter
         return 'geo_bounding_box';
     }
 
-    public function buildQuery(mixed $value): QueryInterface|array|null
+    public function buildQuery(mixed $value): ?QueryInterface
     {
-        if (empty($value)) {
+        if (FilterValueSanitizer::isBlank($value)) {
             return null;
         }
 
