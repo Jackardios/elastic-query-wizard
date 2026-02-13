@@ -74,11 +74,11 @@ class GeoBoundingBoxFilterQueryTest extends UnitTestCase
     }
 
     /** @test */
-    public function it_normalizes_swapped_coordinates(): void
+    public function it_preserves_longitude_order_for_antimeridian_crossing_boxes(): void
     {
         $wizard = $this
             ->createElasticWizardWithFilters([
-                'location' => ['37.0', '56.0', '36.0', '55.0'],
+                'location' => ['170.0', '-10.0', '-170.0', '10.0'],
             ], GeoModel::class)
             ->allowedFilters(GeoBoundingBoxFilter::make('location'));
         $wizard->build();
@@ -90,7 +90,9 @@ class GeoBoundingBoxFilterQueryTest extends UnitTestCase
         $topLeft = $queries[0]['geo_bounding_box']['location']['top_left'];
         $bottomRight = $queries[0]['geo_bounding_box']['location']['bottom_right'];
 
-        $this->assertLessThanOrEqual($bottomRight['lon'], $topLeft['lon']);
-        $this->assertGreaterThanOrEqual($bottomRight['lat'], $topLeft['lat']);
+        $this->assertSame(170.0, $topLeft['lon']);
+        $this->assertSame(-170.0, $bottomRight['lon']);
+        $this->assertSame(10.0, $topLeft['lat']);
+        $this->assertSame(-10.0, $bottomRight['lat']);
     }
 }

@@ -55,13 +55,8 @@ class RequestScopeTest extends UnitTestCase
     }
 
     /** @test */
-    public function forSchema_wizard_uses_container_manager_at_creation_time(): void
+    public function forSchema_wizard_resolves_manager_from_container_on_access(): void
     {
-        // forSchema passes explicit manager from container at creation time,
-        // so it doesn't resolve from container on subsequent calls.
-        // This is intentional - forSchema is a convenience method that
-        // captures the manager at creation time.
-
         // First manager
         $firstManager = new QueryParametersManager();
         $this->app->instance(QueryParametersManager::class, $firstManager);
@@ -83,9 +78,14 @@ class RequestScopeTest extends UnitTestCase
 
         $wizard = ElasticQueryWizard::forSchema($schema);
 
-        // getParametersManager should return the manager that was in container at creation time
+        // Replace manager in container after wizard creation
+        $secondManager = new QueryParametersManager();
+        $this->app->instance(QueryParametersManager::class, $secondManager);
+
+        // getParametersManager should return the fresh container manager
         $resolvedManager = $wizard->getParametersManager();
 
-        $this->assertSame($firstManager, $resolvedManager);
+        $this->assertSame($secondManager, $resolvedManager);
+        $this->assertNotSame($firstManager, $resolvedManager);
     }
 }

@@ -134,6 +134,29 @@ class GeoBoundingBoxFilterTest extends TestCase
         );
     }
 
+    /** @test */
+    public function it_can_filter_results_with_antimeridian_crossing_bbox(): void
+    {
+        $insideLeft = GeoModel::factory()->create(['location' => new Point(179.5, 0.0)]);
+        $insideRight = GeoModel::factory()->create(['location' => new Point(-179.5, 0.0)]);
+        GeoModel::factory()->create(['location' => new Point(-160.0, 0.0)]);
+
+        $modelsResult = $this
+            ->createQueryFromFilterRequest([
+                'bbox' => '170,-10,-170,10',
+            ])
+            ->allowedFilters(GeoBoundingBoxFilter::make('location', 'bbox'))
+            ->build()
+            ->execute()
+            ->models();
+
+        $this->assertCount(2, $modelsResult);
+        $this->assertEqualsCanonicalizing(
+            [$insideLeft->id, $insideRight->id],
+            $modelsResult->pluck('id')->toArray()
+        );
+    }
+
     protected function createQueryFromFilterRequest(array $filters): ElasticQueryWizard
     {
         return $this->createElasticWizardWithFilters($filters, GeoModel::class);

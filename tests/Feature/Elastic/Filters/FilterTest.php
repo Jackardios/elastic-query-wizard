@@ -147,7 +147,7 @@ class FilterTest extends TestCase
                 return \Jackardios\ElasticQueryWizard\Enums\BoolClause::MUST;
             }
 
-            public function buildQuery(mixed $value): \Jackardios\EsScoutDriver\Query\QueryInterface|array|null
+            public function buildQuery(mixed $value): ?\Jackardios\EsScoutDriver\Query\QueryInterface
             {
                 return Query::match('name', $value);
             }
@@ -251,7 +251,7 @@ class FilterTest extends TestCase
                 return 'custom';
             }
 
-            public function buildQuery(mixed $value): \Jackardios\EsScoutDriver\Query\QueryInterface|array|null
+            public function buildQuery(mixed $value): ?\Jackardios\EsScoutDriver\Query\QueryInterface
             {
                 return null;
             }

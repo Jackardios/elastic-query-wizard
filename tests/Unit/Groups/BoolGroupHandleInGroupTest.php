@@ -103,28 +103,18 @@ class BoolGroupHandleInGroupTest extends UnitTestCase
     }
 
     /** @test */
-    public function trashed_filter_works_inside_group(): void
+    public function trashed_filter_throws_exception_inside_group(): void
     {
-        // TrashedFilter modifies soft delete mode directly on BoolQuery,
-        // it doesn't add a filter query. When used alone in a group,
-        // it applies the soft delete mode but returns an empty bool query.
-        // Combined with another filter, it works correctly.
         $group = ElasticGroup::bool('advanced')->children([
-            ElasticFilter::term('status'),
             ElasticFilter::trashed(),
         ]);
 
-        $query = $group->buildGroupQuery([
-            'status' => 'active',
+        $this->expectException(UnsupportedFilterInGroupException::class);
+        $this->expectExceptionMessage('cannot be used inside group');
+
+        $group->buildGroupQuery([
             'trashed' => 'with',
         ]);
-
-        $this->assertNotNull($query);
-        $array = $query->toArray();
-
-        // The term filter should be present
-        $this->assertArrayHasKey('bool', $array);
-        $this->assertArrayHasKey('filter', $array['bool']);
     }
 
     /** @test */

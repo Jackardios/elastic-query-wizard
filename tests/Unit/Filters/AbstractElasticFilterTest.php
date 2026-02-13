@@ -51,7 +51,7 @@ class AbstractElasticFilterTest extends TestCase
                 return 'test';
             }
 
-            public function buildQuery(mixed $value): QueryInterface|array|null
+            public function buildQuery(mixed $value): ?QueryInterface
             {
                 return null;
             }
@@ -115,7 +115,7 @@ class AbstractElasticFilterTest extends TestCase
                 return 'test';
             }
 
-            public function buildQuery(mixed $value): QueryInterface|array|null
+            public function buildQuery(mixed $value): ?QueryInterface
             {
                 return null;
             }
@@ -147,7 +147,7 @@ class AbstractElasticFilterTest extends TestCase
                 return 'test';
             }
 
-            public function buildQuery(mixed $value): QueryInterface|array|null
+            public function buildQuery(mixed $value): ?QueryInterface
             {
                 return null;
             }

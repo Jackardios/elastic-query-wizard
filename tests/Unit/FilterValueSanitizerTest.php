@@ -86,21 +86,17 @@ class FilterValueSanitizerTest extends TestCase
     }
 
     /** @test */
-    public function geo_bounding_box_value_swaps_inverted_coordinates(): void
+    public function geo_bounding_box_value_normalizes_inverted_latitudes(): void
     {
-        $result = FilterValueSanitizer::geoBoundingBoxValue([38.0, 56.0, 36.0, 55.0], 'location');
+        $result = FilterValueSanitizer::geoBoundingBoxValue([36.0, 56.0, 38.0, 55.0], 'location');
         $this->assertEquals([36.0, 55.0, 38.0, 56.0], $result);
     }
 
     /** @test */
-    public function geo_bounding_box_value_expands_identical_coordinates(): void
+    public function geo_bounding_box_value_preserves_longitude_order_for_antimeridian(): void
     {
-        $result = FilterValueSanitizer::geoBoundingBoxValue([37.0, 55.0, 37.0, 55.0], 'location');
-
-        $this->assertLessThan(37.0, $result[0]);
-        $this->assertLessThan(55.0, $result[1]);
-        $this->assertGreaterThan(37.0, $result[2]);
-        $this->assertGreaterThan(55.0, $result[3]);
+        $result = FilterValueSanitizer::geoBoundingBoxValue([170.0, -10.0, -170.0, 10.0], 'location');
+        $this->assertEquals([170.0, -10.0, -170.0, 10.0], $result);
     }
 
     /** @test */
@@ -118,15 +114,24 @@ class FilterValueSanitizerTest extends TestCase
     }
 
     /** @test */
-    public function geo_bounding_box_value_uses_custom_epsilon(): void
+    public function geo_bounding_box_value_throws_for_longitude_out_of_range(): void
     {
-        $customEpsilon = 0.1;
-        $result = FilterValueSanitizer::geoBoundingBoxValue([37.0, 55.0, 37.0, 55.0], 'location', $customEpsilon);
+        $this->expectException(InvalidGeoBoundingBoxValue::class);
+        FilterValueSanitizer::geoBoundingBoxValue([181.0, 55.0, 37.0, 56.0], 'location');
+    }
 
-        $this->assertEqualsWithDelta(36.9, $result[0], 0.001);
-        $this->assertEqualsWithDelta(54.9, $result[1], 0.001);
-        $this->assertEqualsWithDelta(37.1, $result[2], 0.001);
-        $this->assertEqualsWithDelta(55.1, $result[3], 0.001);
+    /** @test */
+    public function geo_bounding_box_value_throws_for_latitude_out_of_range(): void
+    {
+        $this->expectException(InvalidGeoBoundingBoxValue::class);
+        FilterValueSanitizer::geoBoundingBoxValue([37.0, -91.0, 38.0, 56.0], 'location');
+    }
+
+    /** @test */
+    public function geo_bounding_box_value_accepts_comma_separated_string(): void
+    {
+        $result = FilterValueSanitizer::geoBoundingBoxValue('170.0,-10.0,-170.0,10.0', 'location');
+        $this->assertEquals([170.0, -10.0, -170.0, 10.0], $result);
     }
 
     /** @test */

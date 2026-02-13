@@ -10,6 +10,8 @@ use Jackardios\ElasticQueryWizard\Filters\TermFilter;
 use Jackardios\ElasticQueryWizard\Sorts\FieldSort;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Jackardios\QueryWizard\Enums\SortDirection;
 use Jackardios\QueryWizard\Values\Sort;
 
@@ -202,5 +204,31 @@ class ElasticQueryWizardTest extends UnitTestCase
         $this->expectExceptionMessage('Cannot modify query wizard configuration after calling query builder methods.');
 
         $wizard->allowedFilters(TermFilter::make('name'));
+    }
+
+    /** @test */
+    public function modify_query_after_build_throws_logic_exception(): void
+    {
+        $wizard = ElasticQueryWizard::for(TestModel::class);
+        $wizard->build();
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Cannot call modifyQuery() after build().');
+
+        $wizard->modifyQuery(static function (Builder $builder, array $rawResult): void {});
+    }
+
+    /** @test */
+    public function modify_models_after_build_throws_logic_exception(): void
+    {
+        $wizard = ElasticQueryWizard::for(TestModel::class);
+        $wizard->build();
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Cannot call modifyModels() after build().');
+
+        $wizard->modifyModels(static function (Collection $collection): Collection {
+            return $collection;
+        });
     }
 }
