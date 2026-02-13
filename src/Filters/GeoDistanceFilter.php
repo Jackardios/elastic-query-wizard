@@ -25,7 +25,7 @@ final class GeoDistanceFilter extends AbstractElasticFilter
 
     public function buildQuery(mixed $value): ?QueryInterface
     {
-        if (empty($value)) {
+        if (FilterValueSanitizer::isBlank($value)) {
             return null;
         }
 

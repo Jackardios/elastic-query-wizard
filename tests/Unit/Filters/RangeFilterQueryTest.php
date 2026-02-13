@@ -54,6 +54,17 @@ class RangeFilterQueryTest extends UnitTestCase
     }
 
     /** @test */
+    public function it_throws_for_zero_string_scalar_value(): void
+    {
+        $this->expectException(InvalidRangeValue::class);
+
+        $this
+            ->createElasticWizardWithFilters(['age' => '0'])
+            ->allowedFilters(RangeFilter::make('age'))
+            ->build();
+    }
+
+    /** @test */
     public function it_supports_single_bound(): void
     {
         $wizard = $this

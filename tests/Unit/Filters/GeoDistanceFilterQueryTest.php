@@ -85,4 +85,17 @@ class GeoDistanceFilterQueryTest extends UnitTestCase
             ->allowedFilters(GeoDistanceFilter::make('location'))
             ->build();
     }
+
+    /** @test */
+    public function it_throws_for_zero_string_scalar_value(): void
+    {
+        $this->expectException(InvalidGeoDistanceValue::class);
+
+        $this
+            ->createElasticWizardWithFilters([
+                'location' => '0',
+            ], GeoModel::class)
+            ->allowedFilters(GeoDistanceFilter::make('location'))
+            ->build();
+    }
 }
