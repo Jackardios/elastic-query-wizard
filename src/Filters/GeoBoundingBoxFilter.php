@@ -6,7 +6,7 @@ namespace Jackardios\ElasticQueryWizard\Filters;
 
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
-use Jackardios\EsScoutDriver\Search\SearchBuilder;
+use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Support\Query;
 
 final class GeoBoundingBoxFilter extends AbstractElasticFilter
@@ -23,19 +23,16 @@ final class GeoBoundingBoxFilter extends AbstractElasticFilter
         return 'geo_bounding_box';
     }
 
-    public function handle(SearchBuilder $builder, mixed $value): void
+    public function buildQuery(mixed $value): QueryInterface|array|null
     {
         if (empty($value)) {
-            return;
+            return null;
         }
 
-        $propertyName = $this->property;
+        [$left, $bottom, $right, $top] = FilterValueSanitizer::geoBoundingBoxValue($value, $this->property);
 
-        [$left, $bottom, $right, $top] = FilterValueSanitizer::geoBoundingBoxValue($value, $propertyName);
+        $query = Query::geoBoundingBox($this->property, $top, $left, $bottom, $right);
 
-        $query = Query::geoBoundingBox($propertyName, $top, $left, $bottom, $right);
-        $query = $this->applyParametersOnQuery($query);
-
-        $builder->filter($query);
+        return $this->applyParametersOnQuery($query);
     }
 }

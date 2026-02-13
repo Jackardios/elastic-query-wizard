@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Filters;
 
+use Jackardios\ElasticQueryWizard\Enums\BoolClause;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
+use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Query\Specialized\MoreLikeThisQuery;
-use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Support\Query;
 
 /**
@@ -156,19 +157,24 @@ final class MoreLikeThisFilter extends AbstractElasticFilter
         return 'more_like_this';
     }
 
-    public function handle(SearchBuilder $builder, mixed $value): void
+    protected function getDefaultClause(): BoolClause
+    {
+        return BoolClause::MUST;
+    }
+
+    public function buildQuery(mixed $value): QueryInterface|array|null
     {
         $like = $this->prepareLikeValue($value);
 
         if ($like === null) {
-            return;
+            return null;
         }
 
         $query = Query::moreLikeThis($this->fields, $like);
 
         $this->applyParameters($query);
 
-        $builder->must($query);
+        return $query;
     }
 
     /**

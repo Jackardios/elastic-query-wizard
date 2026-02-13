@@ -6,7 +6,7 @@ namespace Jackardios\ElasticQueryWizard\Filters;
 
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
-use Jackardios\EsScoutDriver\Search\SearchBuilder;
+use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Support\Query;
 
 final class GeoDistanceFilter extends AbstractElasticFilter
@@ -23,19 +23,16 @@ final class GeoDistanceFilter extends AbstractElasticFilter
         return 'geo_distance';
     }
 
-    public function handle(SearchBuilder $builder, mixed $value): void
+    public function buildQuery(mixed $value): QueryInterface|array|null
     {
         if (empty($value)) {
-            return;
+            return null;
         }
 
-        $propertyName = $this->property;
+        ['lon' => $lon, 'lat' => $lat, 'distance' => $distance] = FilterValueSanitizer::geoDistanceValue($value, $this->property);
 
-        ['lon' => $lon, 'lat' => $lat, 'distance' => $distance] = FilterValueSanitizer::geoDistanceValue($value, $propertyName);
+        $query = Query::geoDistance($this->property, $lat, $lon, $distance);
 
-        $query = Query::geoDistance($propertyName, $lat, $lon, $distance);
-        $query = $this->applyParametersOnQuery($query);
-
-        $builder->filter($query);
+        return $this->applyParametersOnQuery($query);
     }
 }

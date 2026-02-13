@@ -6,7 +6,7 @@ namespace Jackardios\ElasticQueryWizard\Filters;
 
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
-use Jackardios\EsScoutDriver\Search\SearchBuilder;
+use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Support\Query;
 
 final class TermFilter extends AbstractElasticFilter
@@ -23,22 +23,18 @@ final class TermFilter extends AbstractElasticFilter
         return 'term';
     }
 
-    public function handle(SearchBuilder $builder, mixed $value): void
+    public function buildQuery(mixed $value): QueryInterface|array|null
     {
         $prepared = FilterValueSanitizer::toArray($value);
 
         if (empty($prepared)) {
-            return;
+            return null;
         }
 
-        $propertyName = $this->property;
-
         $query = count($prepared) === 1
-            ? Query::term($propertyName, $prepared[0])
-            : Query::terms($propertyName, $prepared);
+            ? Query::term($this->property, $prepared[0])
+            : Query::terms($this->property, $prepared);
 
-        $query = $this->applyParametersOnQuery($query);
-
-        $builder->filter($query);
+        return $this->applyParametersOnQuery($query);
     }
 }

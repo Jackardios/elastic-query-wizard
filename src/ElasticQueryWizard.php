@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Jackardios\ElasticQueryWizard\Filters\TermFilter;
+use Jackardios\ElasticQueryWizard\Groups\GroupInterface;
 use Jackardios\ElasticQueryWizard\Includes\AbstractElasticInclude;
 use Jackardios\ElasticQueryWizard\Sorts\FieldSort;
 use Jackardios\EsScoutDriver\Query\Compound\BoolQuery;
@@ -20,6 +21,7 @@ use Jackardios\QueryWizard\Concerns\HandlesRelationPostProcessing;
 use Jackardios\QueryWizard\Concerns\HandlesSafeRelationSelect;
 use Jackardios\QueryWizard\Config\QueryWizardConfig;
 use Jackardios\QueryWizard\Contracts\FilterInterface;
+use Jackardios\QueryWizard\Exceptions\InvalidFilterQuery;
 use Jackardios\QueryWizard\Contracts\IncludeInterface;
 use Jackardios\QueryWizard\Contracts\SortInterface;
 use Jackardios\QueryWizard\Eloquent\Includes\RelationshipInclude;
@@ -105,6 +107,7 @@ class ElasticQueryWizard extends BaseQueryWizard
         $this->modelClass = is_string($subject) ? $subject : $subject::class;
         $this->subject = $this->modelClass::searchQuery();
         $this->originalSubject = clone $this->subject;
+        $this->resolveParametersFromContainer = $parameters === null;
         $this->parameters = $parameters ?? app(QueryParametersManager::class);
         $this->config = $config ?? app(QueryWizardConfig::class);
         $this->schema = $schema;
@@ -287,6 +290,131 @@ class ElasticQueryWizard extends BaseQueryWizard
     protected function applyFilter(FilterInterface $filter, mixed $preparedValue): void
     {
         $this->subject = $filter->apply($this->subject, $preparedValue);
+    }
+
+    /**
+     * Override to handle filter groups.
+     *
+     * Groups contain child filters and need special handling:
+     * - Child filter names are registered as allowed filters
+     * - Child filter values are collected and passed to the group as an array
+     */
+    protected function applyFiltersToSubject(): void
+    {
+        $filters = $this->getEffectiveFilters();
+        $requestedFilterNames = $this->extractRequestedFilterNames();
+
+        $this->validateFiltersLimit(count($requestedFilterNames));
+
+        // Build allowed filter names including child filter names from groups
+        // Group names are excluded - they are not valid filter keys in URL
+        $allowedFilterNames = [];
+        $groupChildNames = [];
+
+        foreach ($filters as $filter) {
+            if ($filter instanceof GroupInterface) {
+                $groupChildNames = array_merge($groupChildNames, $filter->getChildFilterNames());
+            } else {
+                $allowedFilterNames[] = $filter->getName();
+            }
+        }
+
+        // Deduplicate: a filter name may appear both at root level and inside a group
+        $expandedAllowedNames = array_values(array_unique(
+            array_merge($allowedFilterNames, $groupChildNames)
+        ));
+        $allowedFilterNamesIndex = array_flip($expandedAllowedNames);
+        $prefixIndex = $this->buildPrefixIndex($expandedAllowedNames);
+
+        // Validate requested filter names
+        foreach ($requestedFilterNames as $filterName) {
+            if (! $this->isValidFilterName($filterName, $allowedFilterNamesIndex, $prefixIndex)) {
+                if (! $this->config->isInvalidFilterQueryExceptionDisabled()) {
+                    throw InvalidFilterQuery::filtersNotAllowed(
+                        collect([$filterName]),
+                        collect($expandedAllowedNames)
+                    );
+                }
+            }
+        }
+
+        // Collect all child names from groups upfront to skip duplicates at root level
+        $allGroupChildNames = array_flip($groupChildNames);
+
+        // Apply filters
+        foreach ($filters as $filter) {
+            if ($filter instanceof GroupInterface) {
+                // Collect child filter values for this group
+                $childValues = $this->collectGroupChildValuesForGroup($filter);
+
+                if (empty($childValues)) {
+                    continue;
+                }
+
+                // Apply the group with collected child values
+                $this->applyFilter($filter, $childValues);
+            } else {
+                // Skip if this filter name is handled by a group
+                if (isset($allGroupChildNames[$filter->getName()])) {
+                    continue;
+                }
+
+                $value = $this->resolveFilterValue($filter);
+
+                if ($value === null) {
+                    continue;
+                }
+
+                $preparedValue = $filter->prepareValue($value);
+
+                if ($preparedValue === null) {
+                    continue;
+                }
+
+                $this->applyFilter($filter, $preparedValue);
+            }
+        }
+    }
+
+    /**
+     * Collect filter values for all children of a group.
+     *
+     * @param GroupInterface $group The group to collect values for
+     * @return array<string, mixed> Map of child filter names to their prepared values
+     */
+    protected function collectGroupChildValuesForGroup(GroupInterface $group): array
+    {
+        $childValues = [];
+
+        foreach ($group->getChildren() as $child) {
+            $childName = $child->getName();
+
+            if ($child instanceof GroupInterface) {
+                // Recursively collect values for nested groups
+                $nestedValues = $this->collectGroupChildValuesForGroup($child);
+                if (! empty($nestedValues)) {
+                    $childValues[$childName] = $nestedValues;
+                    // Also merge nested child values for the group to use
+                    $childValues = array_merge($childValues, $nestedValues);
+                }
+            } else {
+                $value = $this->resolveFilterValue($child);
+
+                if ($value === null) {
+                    continue;
+                }
+
+                $preparedValue = $child->prepareValue($value);
+
+                if ($preparedValue === null) {
+                    continue;
+                }
+
+                $childValues[$childName] = $preparedValue;
+            }
+        }
+
+        return $childValues;
     }
 
     /**

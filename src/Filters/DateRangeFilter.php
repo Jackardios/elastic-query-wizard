@@ -6,7 +6,7 @@ namespace Jackardios\ElasticQueryWizard\Filters;
 
 use DateTimeInterface;
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
-use Jackardios\EsScoutDriver\Search\SearchBuilder;
+use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Support\Query;
 
 /**
@@ -65,17 +65,17 @@ final class DateRangeFilter extends AbstractElasticFilter
         return 'date_range';
     }
 
-    public function handle(SearchBuilder $builder, mixed $value): void
+    public function buildQuery(mixed $value): QueryInterface|array|null
     {
         if (!is_array($value)) {
-            return;
+            return null;
         }
 
         $from = $this->normalizeDate($value[$this->fromKey] ?? null);
         $to = $this->normalizeDate($value[$this->toKey] ?? null);
 
         if ($from === null && $to === null) {
-            return;
+            return null;
         }
 
         $query = Query::range($this->property);
@@ -93,8 +93,7 @@ final class DateRangeFilter extends AbstractElasticFilter
             $query->timeZone($this->timezone);
         }
 
-        $query = $this->applyParametersOnQuery($query);
-        $builder->filter($query);
+        return $this->applyParametersOnQuery($query);
     }
 
     protected function normalizeDate(mixed $value): string|int|float|null

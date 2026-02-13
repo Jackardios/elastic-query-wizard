@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Filters;
 
+use Jackardios\EsScoutDriver\Query\Compound\BoolQuery;
+use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 
 final class TrashedFilter extends AbstractElasticFilter
@@ -23,7 +25,25 @@ final class TrashedFilter extends AbstractElasticFilter
         return 'trashed';
     }
 
+    /**
+     * This filter doesn't add a query, it modifies the soft delete mode.
+     */
+    public function buildQuery(mixed $value): QueryInterface|array|null
+    {
+        return null;
+    }
+
     public function handle(SearchBuilder $builder, mixed $value): void
+    {
+        $this->applyTrashedLogic($builder->boolQuery(), $value);
+    }
+
+    public function handleInGroup(BoolQuery $innerBoolQuery, mixed $value): void
+    {
+        $this->applyTrashedLogic($innerBoolQuery, $value);
+    }
+
+    protected function applyTrashedLogic(BoolQuery $boolQuery, mixed $value): void
     {
         if ($value === true) {
             $value = 'with';
@@ -40,19 +60,19 @@ final class TrashedFilter extends AbstractElasticFilter
         }
 
         if ($normalized === 'with') {
-            $builder->boolQuery()->withTrashed();
+            $boolQuery->withTrashed();
 
             return;
         }
 
         if ($normalized === 'only') {
-            $builder->boolQuery()->onlyTrashed();
+            $boolQuery->onlyTrashed();
 
             return;
         }
 
         if ($normalized === 'without') {
-            $builder->boolQuery()->excludeTrashed();
+            $boolQuery->excludeTrashed();
         }
     }
 }

@@ -6,7 +6,7 @@ namespace Jackardios\ElasticQueryWizard\Filters;
 
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
-use Jackardios\EsScoutDriver\Search\SearchBuilder;
+use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Support\Query;
 
 /**
@@ -33,27 +33,24 @@ final class RangeFilter extends AbstractElasticFilter
         return 'range';
     }
 
-    public function handle(SearchBuilder $builder, mixed $value): void
+    public function buildQuery(mixed $value): QueryInterface|array|null
     {
         if (empty($value)) {
-            return;
+            return null;
         }
 
-        $propertyName = $this->property;
-        $rangeFilters = FilterValueSanitizer::rangeFilterValue($value, $propertyName);
+        $rangeFilters = FilterValueSanitizer::rangeFilterValue($value, $this->property);
 
         if (empty($rangeFilters)) {
-            return;
+            return null;
         }
 
-        $query = Query::range($propertyName);
+        $query = Query::range($this->property);
 
         foreach ($rangeFilters as $filterName => $filterValue) {
             $query->{$filterName}($filterValue);
         }
 
-        $query = $this->applyParametersOnQuery($query);
-
-        $builder->filter($query);
+        return $this->applyParametersOnQuery($query);
     }
 }

@@ -11,7 +11,6 @@ use Jackardios\ElasticQueryWizard\Filters\MatchFilter;
 use Jackardios\ElasticQueryWizard\Filters\TermFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
-use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Support\Query;
 use Jackardios\QueryWizard\Exceptions\InvalidFilterQuery;
 
@@ -83,9 +82,8 @@ class FilterTest extends TestCase
     /** @test */
     public function it_can_filter_a_custom_base_query_with_select(): void
     {
-        $expectedModel = TestModel::query()
-            ->select(['id', 'category'])
-            ->find($this->models->random()->id);
+        $model = TestModel::factory()->create(['category' => 'unique-test-category-xyz']);
+        $expectedModel = TestModel::query()->select(['id', 'category'])->find($model->id);
 
         $modelResult = $this->createElasticWizardWithFilters(['category' => $expectedModel->category])
             ->modifyQuery(function (Builder $query) {
@@ -103,7 +101,7 @@ class FilterTest extends TestCase
     /** @test */
     public function it_can_filter_results_based_on_the_existence_of_a_property_in_an_array(): void
     {
-        $expectedModels = $this->models->random(2);
+        $expectedModels = collect([$this->models[0], $this->models[1]]);
         $modelsResult = $this
             ->createElasticWizardWithFilters([
                 'id' => "{$expectedModels[0]->id},{$expectedModels[1]->id}",
@@ -144,9 +142,14 @@ class FilterTest extends TestCase
                 return 'custom';
             }
 
-            public function handle(SearchBuilder $builder, mixed $value): void
+            protected function getDefaultClause(): \Jackardios\ElasticQueryWizard\Enums\BoolClause
             {
-                $builder->must(Query::match('name', $value));
+                return \Jackardios\ElasticQueryWizard\Enums\BoolClause::MUST;
+            }
+
+            public function buildQuery(mixed $value): \Jackardios\EsScoutDriver\Query\QueryInterface|array|null
+            {
+                return Query::match('name', $value);
             }
         };
 
@@ -248,9 +251,9 @@ class FilterTest extends TestCase
                 return 'custom';
             }
 
-            public function handle(SearchBuilder $builder, mixed $value): void
+            public function buildQuery(mixed $value): \Jackardios\EsScoutDriver\Query\QueryInterface|array|null
             {
-                //
+                return null;
             }
         };
 

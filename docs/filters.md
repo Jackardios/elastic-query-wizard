@@ -31,6 +31,8 @@ Filters allow you to limit Elasticsearch query results based on query parameters
 - [Passthrough Filter](#passthrough-filter)
 - [Additional Parameters](#additional-parameters)
 - [Aliases](#aliases)
+- [Bool Clause Methods](#bool-clause-methods)
+- [Filter Groups](#filter-groups)
 
 ## General Principles
 
@@ -1123,3 +1125,212 @@ This is useful for:
 - Hiding internal data structure
 - Creating more convenient parameter names
 - Stable external API naming across schema changes
+
+---
+
+## Bool Clause Methods
+
+By default, each filter is added to a specific bool clause (e.g., `filter` for term queries, `must` for match queries). You can override this behavior using clause methods.
+
+### Available Methods
+
+| Method | Description |
+|--------|-------------|
+| `inFilter()` | Add to `filter` clause (no scoring, cached) |
+| `inMust()` | Add to `must` clause (affects scoring) |
+| `inShould()` | Add to `should` clause (optional matching) |
+| `inMustNot()` | Add to `must_not` clause (exclusion) |
+
+### Default Clauses by Filter Type
+
+| Filter Type | Default Clause |
+|-------------|----------------|
+| TermFilter, RangeFilter, ExistsFilter, etc. | `filter` |
+| MatchFilter, MultiMatchFilter, FuzzyFilter, etc. | `must` |
+
+### Usage
+
+```php
+// Override default clause
+ElasticFilter::term('status')->inMust()    // Now affects scoring
+ElasticFilter::match('title')->inFilter()  // Now cached, no scoring
+
+// Exclusion
+ElasticFilter::term('status')->inMustNot() // Exclude documents
+
+// Optional matching (OR logic with minimum_should_match)
+ElasticFilter::term('tag')->inShould()
+```
+
+### Elasticsearch Query
+
+```php
+ElasticFilter::term('status')->inShould()
+```
+
+```json
+{
+  "bool": {
+    "should": [
+      { "term": { "status": "active" } }
+    ]
+  }
+}
+```
+
+---
+
+## Filter Groups
+
+Filter groups allow you to create complex nested query structures. Groups contain child filters and wrap them in a bool or nested query.
+
+### Available Group Types
+
+| Type | Description |
+|------|-------------|
+| `ElasticGroup::bool()` | Groups filters into a bool query |
+| `ElasticGroup::nested()` | Groups filters into a nested query for nested documents |
+
+### Bool Group
+
+Groups filters into a bool query with optional `minimum_should_match`.
+
+```php
+use Jackardios\ElasticQueryWizard\ElasticGroup;
+use Jackardios\ElasticQueryWizard\ElasticFilter;
+
+ElasticQueryWizard::for(Post::class)
+    ->allowedFilters([
+        ElasticFilter::term('category'),
+
+        // OR condition: match at least one of status OR priority
+        ElasticGroup::bool('advanced')
+            ->minimumShouldMatch(1)
+            ->inFilter()
+            ->children([
+                ElasticFilter::term('status', 'status')->inShould(),
+                ElasticFilter::term('priority', 'priority')->inShould(),
+            ]),
+    ])
+    ->build();
+```
+
+#### Query Parameters
+
+```
+GET /posts?filter[category]=tech&filter[status]=active&filter[priority]=high
+```
+
+#### Elasticsearch Query
+
+```json
+{
+  "bool": {
+    "filter": [
+      { "term": { "category": "tech" } },
+      {
+        "bool": {
+          "should": [
+            { "term": { "status": "active" } },
+            { "term": { "priority": "high" } }
+          ],
+          "minimum_should_match": 1
+        }
+      }
+    ]
+  }
+}
+```
+
+### Nested Group
+
+Groups filters into a nested query for filtering on nested document fields.
+
+```php
+ElasticGroup::nested('comments')
+    ->inFilter()
+    ->children([
+        ElasticFilter::term('comments.author', 'author'),
+        ElasticFilter::match('comments.body', 'comment_search')->inMust(),
+    ])
+```
+
+#### Query Parameters
+
+Child filter names are used directly in URL (not the nested path):
+
+```
+GET /posts?filter[author]=john&filter[comment_search]=great
+```
+
+#### Elasticsearch Query
+
+```json
+{
+  "bool": {
+    "filter": [
+      {
+        "nested": {
+          "path": "comments",
+          "query": {
+            "bool": {
+              "filter": [
+                { "term": { "comments.author": "john" } }
+              ],
+              "must": [
+                { "match": { "comments.body": "great" } }
+              ]
+            }
+          }
+        }
+      }
+    ]
+  }
+}
+```
+
+### Nested Group Options
+
+```php
+ElasticGroup::nested('offers')
+    ->scoreMode('avg')      // Score mode: avg, max, min, sum, none
+    ->ignoreUnmapped()      // Ignore if path is unmapped
+    ->inFilter()
+    ->children([...])
+```
+
+### Nested Groups (Groups inside Groups)
+
+Groups can be nested within each other:
+
+```php
+ElasticGroup::bool('complex')
+    ->inFilter()
+    ->children([
+        ElasticGroup::nested('variants')
+            ->inFilter()
+            ->children([
+                ElasticFilter::term('variants.sku', 'sku'),
+                ElasticFilter::range('variants.price', 'price'),
+            ]),
+        ElasticFilter::term('status', 'status'),
+    ])
+```
+
+### Important Notes
+
+1. **URL Syntax**: Group names are NOT used in URL. Use child filter aliases directly:
+   ```
+   // Correct
+   GET /posts?filter[status]=active&filter[priority]=high
+
+   // Wrong - group name 'advanced' is not a valid filter key
+   GET /posts?filter[advanced]=something
+   ```
+
+2. **Dot Notation Fields**: For nested fields, use dot notation in field name and simple alias:
+   ```php
+   ElasticFilter::term('comments.author_id', 'author')  // Field: comments.author_id, Alias: author
+   ```
+
+3. **Deduplication**: If the same filter name appears both at root level and inside a group, only the group version is applied

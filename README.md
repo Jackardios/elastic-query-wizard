@@ -299,14 +299,22 @@ If you're using or upgrading to Elasticsearch 9.x, be aware of the following:
 // Range filter - uses correct ES 9.x compatible operators
 ElasticFilter::range('price')  // Accepts: gt, gte, lt, lte
 
-// For random scoring, specify field explicitly
+// For random scoring, use ElasticSort::random() or tapSearchBuilder with Query::functionScore()
+// Option 1: Use ElasticSort::random()
+->allowedSorts(ElasticSort::random('random')->seed(12345)->field('_seq_no'))
+
+// Option 2: Use tapSearchBuilder with Query::functionScore()
 ->tapSearchBuilder(function ($builder) {
-    $builder->functionScore([
-        'random_score' => [
-            '_seed' => 12345,
-            'field' => '_id',  // Explicit field for consistent behavior across ES versions
-        ],
-    ]);
+    $builder->must(
+        Query::functionScore()
+            ->addFunction([
+                'random_score' => [
+                    'seed' => 12345,
+                    'field' => '_seq_no',  // Explicit field for consistent behavior across ES versions
+                ],
+            ])
+            ->boostMode('replace')
+    );
 })
 
 // For boolean aggregations, use terms instead of histogram

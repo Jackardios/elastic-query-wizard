@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Jackardios\ElasticQueryWizard\Filters;
 
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
+use Jackardios\ElasticQueryWizard\Enums\BoolClause;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
-use Jackardios\EsScoutDriver\Search\SearchBuilder;
+use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Support\Query;
 
 final class MultiMatchFilter extends AbstractElasticFilter
@@ -36,19 +37,23 @@ final class MultiMatchFilter extends AbstractElasticFilter
         return 'multi_match';
     }
 
-    public function handle(SearchBuilder $builder, mixed $value): void
+    protected function getDefaultClause(): BoolClause
+    {
+        return BoolClause::MUST;
+    }
+
+    public function buildQuery(mixed $value): QueryInterface|array|null
     {
         if (is_array($value)) {
             $value = FilterValueSanitizer::arrayToCommaSeparatedString($value);
         }
 
         if (FilterValueSanitizer::isBlank($value)) {
-            return;
+            return null;
         }
 
         $query = Query::multiMatch($this->fields, $value);
-        $query = $this->applyParametersOnQuery($query);
 
-        $builder->must($query);
+        return $this->applyParametersOnQuery($query);
     }
 }

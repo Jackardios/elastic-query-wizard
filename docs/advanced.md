@@ -364,10 +364,13 @@ GET /posts?append=excerpt,reading_time
 
 ### Extending AbstractElasticFilter
 
+Custom filters should implement the `buildQuery()` method which returns the Elasticsearch query. The query is automatically added to the appropriate bool clause based on the filter's effective clause (configurable via `inFilter()`, `inMust()`, etc.).
+
 ```php
 use Jackardios\ElasticQueryWizard\Filters\AbstractElasticFilter;
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
-use Jackardios\EsScoutDriver\Search\SearchBuilder;
+use Jackardios\ElasticQueryWizard\Enums\BoolClause;
+use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Support\Query;
 
 class CustomFilter extends AbstractElasticFilter
@@ -384,10 +387,22 @@ class CustomFilter extends AbstractElasticFilter
         return 'custom';
     }
 
-    public function handle(SearchBuilder $builder, mixed $value): void
+    /**
+     * Override default clause if needed (default is FILTER).
+     */
+    protected function getDefaultClause(): BoolClause
+    {
+        return BoolClause::MUST;
+    }
+
+    /**
+     * Build the Elasticsearch query.
+     * Return null to skip the filter.
+     */
+    public function buildQuery(mixed $value): QueryInterface|array|null
     {
         if (empty($value)) {
-            return;
+            return null;
         }
 
         // Your custom filter logic
@@ -396,9 +411,7 @@ class CustomFilter extends AbstractElasticFilter
             ->should(Query::match($this->property . '_text', $value))
             ->minimumShouldMatch(1);
 
-        $query = $this->applyParametersOnQuery($query);
-
-        $builder->filter($query);
+        return $this->applyParametersOnQuery($query);
     }
 }
 ```

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jackardios\ElasticQueryWizard\Tests\Unit\Filters;
 
 use Jackardios\ElasticQueryWizard\Filters\AbstractElasticFilter;
+use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use PHPUnit\Framework\TestCase;
 
@@ -48,6 +49,11 @@ class AbstractElasticFilterTest extends TestCase
             public function getType(): string
             {
                 return 'test';
+            }
+
+            public function buildQuery(mixed $value): QueryInterface|array|null
+            {
+                return null;
             }
 
             public function handle(SearchBuilder $builder, mixed $value): void
@@ -109,6 +115,11 @@ class AbstractElasticFilterTest extends TestCase
                 return 'test';
             }
 
+            public function buildQuery(mixed $value): QueryInterface|array|null
+            {
+                return null;
+            }
+
             public function handle(SearchBuilder $builder, mixed $value): void
             {
                 // no-op for test
@@ -134,6 +145,11 @@ class AbstractElasticFilterTest extends TestCase
             public function getType(): string
             {
                 return 'test';
+            }
+
+            public function buildQuery(mixed $value): QueryInterface|array|null
+            {
+                return null;
             }
 
             public function handle(SearchBuilder $builder, mixed $value): void

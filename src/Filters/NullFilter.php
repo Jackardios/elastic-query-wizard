@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Filters;
 
+use Jackardios\ElasticQueryWizard\Enums\BoolClause;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
+use Jackardios\EsScoutDriver\Query\Compound\BoolQuery;
+use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Support\Query;
 
@@ -53,7 +56,29 @@ final class NullFilter extends AbstractElasticFilter
         return 'null';
     }
 
+    /**
+     * This filter has conditional clause logic (filter vs must_not) so we
+     * implement buildQuery to return null, and override handle() for
+     * the conditional clause logic.
+     */
+    public function buildQuery(mixed $value): QueryInterface|array|null
+    {
+        // buildQuery returns null because this filter has conditional clause logic
+        // that requires handle() to decide between filter and must_not
+        return null;
+    }
+
     public function handle(SearchBuilder $builder, mixed $value): void
+    {
+        $this->applyNullLogic($builder->boolQuery(), $value);
+    }
+
+    public function handleInGroup(BoolQuery $innerBoolQuery, mixed $value): void
+    {
+        $this->applyNullLogic($innerBoolQuery, $value);
+    }
+
+    protected function applyNullLogic(BoolQuery $boolQuery, mixed $value): void
     {
         if (FilterValueSanitizer::isBlank($value)) {
             return;
@@ -69,9 +94,11 @@ final class NullFilter extends AbstractElasticFilter
         $shouldBeNull = $this->invertLogic ? ! $isTruthy : $isTruthy;
 
         if ($shouldBeNull) {
-            $builder->mustNot($query);
+            // Field should be NULL (not exist) -> use must_not with exists query
+            $boolQuery->addMustNot($query);
         } else {
-            $builder->filter($query);
+            // Field should NOT be NULL (must exist) -> use effective clause with exists query
+            $this->addQueryToBuilder($boolQuery, $query);
         }
     }
 }

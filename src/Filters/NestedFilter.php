@@ -7,7 +7,6 @@ namespace Jackardios\ElasticQueryWizard\Filters;
 use Closure;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
-use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Support\Query;
 
 /**
@@ -78,16 +77,16 @@ final class NestedFilter extends AbstractElasticFilter
         return 'nested';
     }
 
-    public function handle(SearchBuilder $builder, mixed $value): void
+    public function buildQuery(mixed $value): QueryInterface|array|null
     {
         if (FilterValueSanitizer::isBlank($value)) {
-            return;
+            return null;
         }
 
         $innerQuery = $this->buildInnerQuery($value);
 
         if ($innerQuery === null) {
-            return;
+            return null;
         }
 
         $query = Query::nested($this->path, $innerQuery);
@@ -100,7 +99,7 @@ final class NestedFilter extends AbstractElasticFilter
             $query->ignoreUnmapped($this->ignoreUnmapped);
         }
 
-        $builder->filter($query);
+        return $query;
     }
 
     /**

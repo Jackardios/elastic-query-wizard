@@ -6,7 +6,7 @@ namespace Jackardios\ElasticQueryWizard\Filters;
 
 use Jackardios\ElasticQueryWizard\Exceptions\InvalidGeoShapeValue;
 use Jackardios\EsScoutDriver\Query\Geo\GeoShapeQuery;
-use Jackardios\EsScoutDriver\Search\SearchBuilder;
+use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Support\Query;
 
 /**
@@ -55,10 +55,10 @@ final class GeoShapeFilter extends AbstractElasticFilter
         return 'geo_shape';
     }
 
-    public function handle(SearchBuilder $builder, mixed $value): void
+    public function buildQuery(mixed $value): QueryInterface|array|null
     {
         if (empty($value) || !is_array($value)) {
-            return;
+            return null;
         }
 
         $query = Query::geoShape($this->property);
@@ -73,7 +73,7 @@ final class GeoShapeFilter extends AbstractElasticFilter
             $query->ignoreUnmapped($this->ignoreUnmapped);
         }
 
-        $builder->filter($query);
+        return $query;
     }
 
     /**
