@@ -45,9 +45,11 @@ use Jackardios\QueryWizard\Schema\ResourceSchemaInterface;
  * @method int count() Get total count without loading models
  * @method array raw() Get raw Elasticsearch response array
  *
+ * @phpstan-consistent-constructor
+ *
  * @mixin SearchBuilder
  */
-final class ElasticQueryWizard extends BaseQueryWizard
+class ElasticQueryWizard extends BaseQueryWizard
 {
     use HandlesSafeRelationSelect;
     use HandlesRelationPostProcessing;
