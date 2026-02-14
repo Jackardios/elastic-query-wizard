@@ -161,4 +161,102 @@ class BoolGroupTest extends UnitTestCase
 
         $this->assertNull($query);
     }
+
+    /** @test */
+    public function it_accepts_boost(): void
+    {
+        $group = ElasticGroup::bool('advanced')
+            ->boost(1.5)
+            ->children([
+                ElasticFilter::term('status', 'status'),
+            ]);
+
+        $this->assertEquals(1.5, $group->getBoost());
+
+        $query = $group->buildGroupQuery(['status' => 'active']);
+
+        $this->assertNotNull($query);
+        $array = $query->toArray();
+
+        $this->assertArrayHasKey('bool', $array);
+        $this->assertArrayHasKey('boost', $array['bool']);
+        $this->assertEquals(1.5, $array['bool']['boost']);
+    }
+
+    /** @test */
+    public function it_returns_minimum_should_match_via_getter(): void
+    {
+        $group = ElasticGroup::bool('advanced')->minimumShouldMatch(2);
+
+        $this->assertEquals(2, $group->getMinimumShouldMatch());
+    }
+
+    /** @test */
+    public function it_accepts_percentage_minimum_should_match(): void
+    {
+        $group = ElasticGroup::bool('advanced')
+            ->minimumShouldMatch('75%')
+            ->children([
+                ElasticFilter::term('a', 'a')->inShould(),
+                ElasticFilter::term('b', 'b')->inShould(),
+                ElasticFilter::term('c', 'c')->inShould(),
+                ElasticFilter::term('d', 'd')->inShould(),
+            ]);
+
+        $query = $group->buildGroupQuery([
+            'a' => '1',
+            'b' => '2',
+            'c' => '3',
+            'd' => '4',
+        ]);
+
+        $this->assertNotNull($query);
+        $array = $query->toArray();
+
+        $this->assertEquals('75%', $array['bool']['minimum_should_match']);
+    }
+
+    /** @test */
+    public function it_returns_null_defaults_for_getters(): void
+    {
+        $group = ElasticGroup::bool('advanced');
+
+        $this->assertNull($group->getMinimumShouldMatch());
+        $this->assertNull($group->getBoost());
+    }
+
+    /** @test */
+    public function it_accepts_zero_boost(): void
+    {
+        $group = ElasticGroup::bool('advanced')
+            ->boost(0.0)
+            ->children([
+                ElasticFilter::term('status', 'status'),
+            ]);
+
+        $this->assertEquals(0.0, $group->getBoost());
+
+        $query = $group->buildGroupQuery(['status' => 'active']);
+        $array = $query->toArray();
+
+        $this->assertEquals(0.0, $array['bool']['boost']);
+    }
+
+    /** @test */
+    public function it_combines_boost_and_minimum_should_match(): void
+    {
+        $group = ElasticGroup::bool('advanced')
+            ->minimumShouldMatch(1)
+            ->boost(2.0)
+            ->children([
+                ElasticFilter::term('a', 'a')->inShould(),
+                ElasticFilter::term('b', 'b')->inShould(),
+            ]);
+
+        $query = $group->buildGroupQuery(['a' => '1', 'b' => '2']);
+        $array = $query->toArray();
+
+        $this->assertEquals(1, $array['bool']['minimum_should_match']);
+        $this->assertEquals(2.0, $array['bool']['boost']);
+    }
 }

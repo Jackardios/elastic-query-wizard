@@ -32,6 +32,8 @@ final class NestedGroup extends AbstractElasticGroup
 
     protected ?bool $ignoreUnmapped = null;
 
+    protected ?array $innerHits = null;
+
     protected function __construct(string $path, ?string $alias = null)
     {
         parent::__construct($path, $alias);
@@ -55,6 +57,11 @@ final class NestedGroup extends AbstractElasticGroup
         return $this;
     }
 
+    public function getScoreMode(): ?string
+    {
+        return $this->scoreMode;
+    }
+
     /**
      * Ignore the query if the nested path is unmapped.
      */
@@ -63,6 +70,32 @@ final class NestedGroup extends AbstractElasticGroup
         $this->ignoreUnmapped = $ignore;
 
         return $this;
+    }
+
+    public function getIgnoreUnmapped(): ?bool
+    {
+        return $this->ignoreUnmapped;
+    }
+
+    /**
+     * Enable inner_hits to retrieve matching nested documents.
+     *
+     * @param array $options Options: name, size, from, sort, highlight, _source
+     *
+     * @example innerHits() // Enable with defaults
+     * @example innerHits(['size' => 5, 'sort' => [['date' => 'desc']]])
+     * @example innerHits(['name' => 'matched_comments', 'size' => 3])
+     */
+    public function innerHits(array $options = []): static
+    {
+        $this->innerHits = $options;
+
+        return $this;
+    }
+
+    public function getInnerHits(): ?array
+    {
+        return $this->innerHits;
     }
 
     /**
@@ -100,6 +133,10 @@ final class NestedGroup extends AbstractElasticGroup
 
         if ($this->ignoreUnmapped !== null) {
             $nestedQuery->ignoreUnmapped($this->ignoreUnmapped);
+        }
+
+        if ($this->innerHits !== null) {
+            $nestedQuery->innerHits($this->innerHits);
         }
 
         return $nestedQuery;

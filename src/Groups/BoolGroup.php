@@ -26,6 +26,8 @@ final class BoolGroup extends AbstractElasticGroup
 {
     protected int|string|null $minimumShouldMatch = null;
 
+    protected ?float $boost = null;
+
     protected function __construct(string $scope, ?string $alias = null)
     {
         parent::__construct($scope, $alias);
@@ -46,6 +48,26 @@ final class BoolGroup extends AbstractElasticGroup
         $this->minimumShouldMatch = $value;
 
         return $this;
+    }
+
+    public function getMinimumShouldMatch(): int|string|null
+    {
+        return $this->minimumShouldMatch;
+    }
+
+    /**
+     * Set boost for the bool query to influence relevance scoring.
+     */
+    public function boost(float $value): static
+    {
+        $this->boost = $value;
+
+        return $this;
+    }
+
+    public function getBoost(): ?float
+    {
+        return $this->boost;
     }
 
     public function getType(): string
@@ -69,6 +91,10 @@ final class BoolGroup extends AbstractElasticGroup
 
         if ($this->minimumShouldMatch !== null) {
             $innerBoolQuery->minimumShouldMatch($this->minimumShouldMatch);
+        }
+
+        if ($this->boost !== null) {
+            $innerBoolQuery->boost($this->boost);
         }
 
         return $innerBoolQuery;

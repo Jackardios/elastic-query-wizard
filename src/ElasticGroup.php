@@ -15,23 +15,26 @@ use Jackardios\ElasticQueryWizard\Groups\NestedGroup;
  *
  * - OR conditions with minimum_should_match
  * - Nested document queries with multiple conditions
- * - Logical groupings of filters
+ * - Logical groupings of filters with boost
  *
- * @example
- * ElasticGroup::nested('sides')
- *     ->inFilter()
- *     ->children([
- *         ElasticFilter::term(field: 'sides.id', key: 'side_id'),
- *         ElasticFilter::multiMatch(fields: ['sides.address'], key: 'search')->inMust(),
- *     ])
- *
- * @example
+ * @example BoolGroup with OR conditions and boost
  * ElasticGroup::bool('advanced')
  *     ->minimumShouldMatch(1)
+ *     ->boost(1.5)
  *     ->inFilter()
  *     ->children([
  *         ElasticFilter::term(field: 'status', key: 'status')->inShould(),
  *         ElasticFilter::term(field: 'priority', key: 'priority')->inShould(),
+ *     ])
+ *
+ * @example NestedGroup with inner_hits
+ * ElasticGroup::nested('comments')
+ *     ->scoreMode('avg')
+ *     ->innerHits(['size' => 3, 'sort' => [['date' => 'desc']]])
+ *     ->inFilter()
+ *     ->children([
+ *         ElasticFilter::term(field: 'comments.status', key: 'status'),
+ *         ElasticFilter::match(field: 'comments.text', key: 'search')->inMust(),
  *     ])
  */
 final class ElasticGroup
