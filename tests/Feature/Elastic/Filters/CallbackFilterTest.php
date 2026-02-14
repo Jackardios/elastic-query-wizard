@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Filters;
 
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Jackardios\QueryWizard\Filters\CallbackFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
@@ -30,14 +31,15 @@ class CallbackFilterTest extends TestCase
     /** @test */
     public function it_should_filter_by_closure(): void
     {
-        $expectedModel = TestModel::factory()->create(['name' => 'Some New Testing Name']);
+        $expectedName = 'Some New Testing Name ' . Str::uuid()->toString();
+        $expectedModel = TestModel::factory()->create(['name' => $expectedName]);
         $modelsResult = $this
             ->createElasticWizardWithFilters([
                 'callback' => $expectedModel->name,
             ])
             ->allowedFilters(
                 CallbackFilter::make('callback', function (SearchBuilder $builder, mixed $value, string $property) {
-                    $builder->must(Query::match('name', $value));
+                    $builder->must(Query::term('name.keyword', $value));
                 })
             )
             ->build()
@@ -51,7 +53,8 @@ class CallbackFilterTest extends TestCase
     /** @test */
     public function it_should_filter_by_array_callback(): void
     {
-        $expectedModel = TestModel::factory()->create(['name' => 'Some New Testing Name']);
+        $expectedName = 'Some New Testing Name ' . Str::uuid()->toString();
+        $expectedModel = TestModel::factory()->create(['name' => $expectedName]);
         $modelsResult = $this
             ->createElasticWizardWithFilters([
                 'callback' => $expectedModel->name,
@@ -67,6 +70,6 @@ class CallbackFilterTest extends TestCase
 
     public function filterCallback(SearchBuilder $builder, mixed $value, string $property): void
     {
-        $builder->must(Query::match('name', $value));
+        $builder->must(Query::term('name.keyword', $value));
     }
 }
