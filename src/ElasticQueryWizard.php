@@ -382,24 +382,21 @@ class ElasticQueryWizard extends BaseQueryWizard
      * Collect filter values for all children of a group.
      *
      * @param GroupInterface $group The group to collect values for
-     * @return array<string, mixed> Map of child filter names to their prepared values
+     * @return array<string, mixed> Map of leaf child filter names to their prepared values
      */
     protected function collectGroupChildValuesForGroup(GroupInterface $group): array
     {
         $childValues = [];
 
         foreach ($group->getChildren() as $child) {
-            $childName = $child->getName();
-
             if ($child instanceof GroupInterface) {
                 // Recursively collect values for nested groups
                 $nestedValues = $this->collectGroupChildValuesForGroup($child);
                 if (! empty($nestedValues)) {
-                    $childValues[$childName] = $nestedValues;
-                    // Also merge nested child values for the group to use
                     $childValues = array_merge($childValues, $nestedValues);
                 }
             } else {
+                $childName = $child->getName();
                 $value = $this->resolveFilterValue($child);
 
                 if ($value === null) {

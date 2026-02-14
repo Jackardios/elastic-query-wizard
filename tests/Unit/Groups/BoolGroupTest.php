@@ -7,6 +7,7 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Groups;
 use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\ElasticGroup;
 use Jackardios\ElasticQueryWizard\Enums\BoolClause;
+use Jackardios\ElasticQueryWizard\Exceptions\DuplicateGroupChildFilterNameException;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 
 /**
@@ -88,6 +89,19 @@ class BoolGroupTest extends UnitTestCase
         $this->assertContains('b', $names);
         $this->assertNotContains('inner', $names);
         $this->assertCount(3, $names);
+    }
+
+    /** @test */
+    public function it_throws_exception_when_leaf_filter_names_are_duplicated(): void
+    {
+        $this->expectException(DuplicateGroupChildFilterNameException::class);
+
+        ElasticGroup::bool('advanced')->children([
+            ElasticFilter::term('status', 'status'),
+            ElasticGroup::bool('inner')->children([
+                ElasticFilter::term('another_status_field', 'status'),
+            ]),
+        ]);
     }
 
     /** @test */

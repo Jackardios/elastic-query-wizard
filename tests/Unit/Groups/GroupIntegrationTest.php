@@ -220,6 +220,43 @@ class GroupIntegrationTest extends UnitTestCase
     }
 
     /** @test */
+    public function it_applies_three_level_nested_groups(): void
+    {
+        $wizard = $this
+            ->createElasticWizardWithFilters([
+                'status' => 'active',
+            ])
+            ->allowedFilters([
+                ElasticGroup::bool('level_1')
+                    ->inFilter()
+                    ->children([
+                        ElasticGroup::bool('level_2')
+                            ->inFilter()
+                            ->children([
+                                ElasticGroup::bool('level_3')
+                                    ->inFilter()
+                                    ->children([
+                                        ElasticFilter::term('status', 'status'),
+                                    ]),
+                            ]),
+                    ]),
+            ]);
+
+        $wizard->build();
+
+        $filterQueries = $this->getFilterQueries($wizard->boolQuery());
+
+        $this->assertCount(1, $filterQueries);
+        $this->assertArrayHasKey('bool', $filterQueries[0]);
+
+        $level2 = $filterQueries[0]['bool']['filter'][0];
+        $level3 = $level2['bool']['filter'][0];
+        $status = $level3['bool']['filter'][0]['term']['status']['value'] ?? null;
+
+        $this->assertEquals('active', $status);
+    }
+
+    /** @test */
     public function it_rejects_group_name_as_filter_key(): void
     {
         $this->expectException(InvalidFilterQuery::class);
@@ -261,6 +298,38 @@ class GroupIntegrationTest extends UnitTestCase
 
         $this->assertCount(1, $filterQueries);
         $this->assertArrayHasKey('bool', $filterQueries[0]);
+    }
+
+    /** @test */
+    public function it_does_not_apply_sibling_filter_when_group_name_matches_filter_name(): void
+    {
+        $wizard = $this
+            ->createElasticWizardWithFilters([
+                'priority' => 'high',
+            ])
+            ->allowedFilters([
+                ElasticGroup::bool('outer')
+                    ->children([
+                        ElasticFilter::term('status', 'status'),
+                        ElasticGroup::bool('status')
+                            ->children([
+                                ElasticFilter::term('priority', 'priority'),
+                            ]),
+                    ]),
+            ]);
+
+        $wizard->build();
+
+        $filterQueries = $this->getFilterQueries($wizard->boolQuery());
+
+        $this->assertCount(1, $filterQueries);
+        $this->assertArrayHasKey('bool', $filterQueries[0]);
+        $this->assertArrayHasKey('filter', $filterQueries[0]['bool']);
+        $this->assertCount(1, $filterQueries[0]['bool']['filter']);
+        $this->assertArrayHasKey('bool', $filterQueries[0]['bool']['filter'][0]);
+
+        $innerFilter = $filterQueries[0]['bool']['filter'][0]['bool']['filter'][0] ?? [];
+        $this->assertEquals('high', $innerFilter['term']['priority']['value'] ?? null);
     }
 
     /** @test */

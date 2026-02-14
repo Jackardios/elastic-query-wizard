@@ -6,6 +6,7 @@ namespace Jackardios\ElasticQueryWizard\Groups;
 
 use Jackardios\ElasticQueryWizard\Concerns\HasBoolClause;
 use Jackardios\ElasticQueryWizard\Enums\BoolClause;
+use Jackardios\ElasticQueryWizard\Exceptions\DuplicateGroupChildFilterNameException;
 use Jackardios\ElasticQueryWizard\Exceptions\UnsupportedFilterInGroupException;
 use Jackardios\ElasticQueryWizard\Filters\AbstractElasticFilter;
 use Jackardios\ElasticQueryWizard\Filters\TrashedFilter;
@@ -30,6 +31,7 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
 
     public function children(array $children): static
     {
+        $this->assertUniqueLeafFilterNames($children);
         $this->children = $children;
 
         return $this;
@@ -78,23 +80,28 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
     protected function applyChildrenToQuery(BoolQuery $innerBoolQuery, array $childValues): void
     {
         foreach ($this->children as $child) {
-            $childName = $child->getName();
-
-            if (! array_key_exists($childName, $childValues)) {
-                continue;
-            }
-
-            $value = $childValues[$childName];
-
             if ($child instanceof GroupInterface) {
                 // Nested group - collect its child values and apply recursively
                 $groupChildValues = $this->collectGroupChildValues($child, $childValues);
+
+                if (empty($groupChildValues)) {
+                    continue;
+                }
+
                 $groupQuery = $child->buildGroupQuery($groupChildValues);
 
                 if ($groupQuery !== null) {
                     $this->addQueryToBoolQuery($innerBoolQuery, $child, $groupQuery);
                 }
             } elseif ($child instanceof AbstractElasticFilter) {
+                $childName = $child->getName();
+
+                if (! array_key_exists($childName, $childValues)) {
+                    continue;
+                }
+
+                $value = $childValues[$childName];
+
                 if ($child instanceof TrashedFilter) {
                     throw UnsupportedFilterInGroupException::forFilter($child, $this->getName());
                 }
@@ -119,8 +126,7 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
     {
         $groupChildValues = [];
 
-        foreach ($group->getChildren() as $child) {
-            $childName = $child->getName();
+        foreach ($group->getChildFilterNames() as $childName) {
             if (array_key_exists($childName, $parentValues)) {
                 $groupChildValues[$childName] = $parentValues[$childName];
             }
@@ -188,5 +194,35 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
         }
 
         return $subject;
+    }
+
+    /**
+     * Ensure leaf filter names are unique in this group's children tree.
+     *
+     * Group names are intentionally excluded. Group values are resolved by leaf
+     * filter aliases only, so duplicate leaf names are ambiguous and forbidden.
+     *
+     * @param array<FilterInterface> $children
+     */
+    protected function assertUniqueLeafFilterNames(array $children): void
+    {
+        $leafNames = [];
+
+        foreach ($children as $child) {
+            if ($child instanceof GroupInterface) {
+                $leafNames = array_merge($leafNames, $child->getChildFilterNames());
+
+                continue;
+            }
+
+            $leafNames[] = $child->getName();
+        }
+
+        $nameCounts = array_count_values($leafNames);
+        $duplicates = array_keys(array_filter($nameCounts, static fn(int $count): bool => $count > 1));
+
+        if ($duplicates !== []) {
+            throw DuplicateGroupChildFilterNameException::forGroup($this->getName(), $duplicates);
+        }
     }
 }

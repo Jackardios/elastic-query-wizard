@@ -1324,6 +1324,8 @@ ElasticGroup::bool('complex')
     ])
 ```
 
+Nested groups are resolved recursively and support arbitrary depth.
+
 ### Important Notes
 
 1. **URL Syntax**: Group names are NOT used in URL. Use child filter aliases directly:
@@ -1340,6 +1342,10 @@ ElasticGroup::bool('complex')
    ElasticFilter::term('comments.author_id', 'author')  // Field: comments.author_id, Alias: author
    ```
 
-3. **Deduplication**: If the same filter name appears both at root level and inside a group, only the group version is applied
+3. **Group Names Are Routing-Only**: Group names are never used as filter value keys. Values are routed only by leaf filter aliases.
 
-4. **Unsupported in Groups**: `ElasticFilter::trashed()`, `ElasticFilter::callback()`, and `ElasticFilter::passthrough()` cannot be used inside groups
+4. **Unique Leaf Aliases Required**: Leaf filter aliases inside one group tree must be unique. Duplicate aliases now throw `DuplicateGroupChildFilterNameException`.
+
+5. **Root vs Group Deduplication**: If the same filter name appears both at root level and inside a group, only the group version is applied.
+
+6. **Unsupported in Groups**: `ElasticFilter::trashed()`, `ElasticFilter::callback()`, and `ElasticFilter::passthrough()` cannot be used inside groups.
