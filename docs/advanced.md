@@ -257,62 +257,104 @@ $wizard = ElasticQueryWizard::for(Post::class)
 
 ## Resource Schemas
 
-Use resource schemas for reusable query configurations:
+Resource schemas centralize query configuration in a reusable class. This is especially useful when the same model is queried from multiple endpoints or when you want to share configuration between different wizard types.
+
+### Creating a Schema
+
+Extend `ResourceSchema` and implement the required `model()` method. All other methods are optional.
 
 ```php
-use Jackardios\QueryWizard\Schema\ResourceSchemaInterface;
+use Jackardios\QueryWizard\Schema\ResourceSchema;
+use Jackardios\QueryWizard\Contracts\QueryWizardInterface;
 
-class PostSchema implements ResourceSchemaInterface
+class PostSchema extends ResourceSchema
 {
     public function model(): string
     {
         return Post::class;
     }
 
+    /**
+     * Resource type for sparse fieldsets (?fields[post]=id,title).
+     * Defaults to camelCase of model basename.
+     */
     public function type(): string
     {
-        return 'posts';
+        return 'post';
     }
 
-    public function filters(): array
+    public function filters(QueryWizardInterface $wizard): array
     {
         return [
-            ElasticFilter::term('status'),
+            'status',
             ElasticFilter::match('title'),
             ElasticFilter::range('created_at'),
+            ElasticFilter::multiMatch(['title^2', 'body'], 'search'),
+            ElasticFilter::trashed(),
         ];
     }
 
-    public function sorts(): array
+    public function sorts(QueryWizardInterface $wizard): array
     {
         return [
-            ElasticSort::field('created_at'),
-            ElasticSort::field('title'),
+            'created_at',
+            'title',
+            ElasticSort::field('views_count', 'views'),
+            ElasticSort::score('relevance'),
         ];
     }
 
-    public function includes(): array
+    public function includes(QueryWizardInterface $wizard): array
     {
         return [
             'author',
             'comments',
-            ElasticInclude::count('comments'),
+            'commentsCount',
+            ElasticInclude::callback('recentComments', function ($builder) {
+                $builder->with(['comments' => fn($q) => $q->latest()->limit(5)]);
+            }),
         ];
     }
 
-    public function fields(): array
+    public function fields(QueryWizardInterface $wizard): array
     {
-        return ['id', 'title', 'status', 'body', 'created_at'];
+        return ['id', 'title', 'status', 'body', 'created_at', 'author.id', 'author.name'];
     }
 
-    public function appends(): array
+    public function appends(QueryWizardInterface $wizard): array
     {
         return ['excerpt', 'reading_time'];
     }
 
-    public function defaultSorts(): array
+    public function defaultSorts(QueryWizardInterface $wizard): array
     {
         return ['-created_at'];
+    }
+
+    public function defaultIncludes(QueryWizardInterface $wizard): array
+    {
+        return ['author'];
+    }
+
+    public function defaultFields(QueryWizardInterface $wizard): array
+    {
+        return ['id', 'title', 'status', 'created_at'];
+    }
+
+    public function defaultAppends(QueryWizardInterface $wizard): array
+    {
+        return ['excerpt'];
+    }
+
+    /**
+     * Default filter values applied when not present in request.
+     * Keys are filter names (or aliases), values are default values.
+     */
+    public function defaultFilters(QueryWizardInterface $wizard): array
+    {
+        return [
+            'status' => 'published',
+        ];
     }
 }
 ```
@@ -320,13 +362,137 @@ class PostSchema implements ResourceSchemaInterface
 ### Using Schemas
 
 ```php
-// Create wizard from schema
-$wizard = ElasticQueryWizard::forSchema(PostSchema::class)->build();
+// Create wizard from schema class
+$posts = ElasticQueryWizard::forSchema(PostSchema::class)
+    ->build()
+    ->execute()
+    ->models();
 
 // Or with schema instance
 $schema = new PostSchema();
-$wizard = ElasticQueryWizard::forSchema($schema)->build();
+$posts = ElasticQueryWizard::forSchema($schema)
+    ->build()
+    ->execute()
+    ->models();
 ```
+
+### Combining Schemas with Overrides
+
+Use a schema as a base and override specific settings with `disallowed*()` methods:
+
+```php
+// Admin endpoint: full access
+ElasticQueryWizard::forSchema(PostSchema::class)
+    ->build()
+    ->execute();
+
+// Public endpoint: restricted access
+ElasticQueryWizard::forSchema(PostSchema::class)
+    ->disallowedFilters('status', 'trashed')     // Remove sensitive filters
+    ->disallowedIncludes('comments')             // Remove heavy includes
+    ->disallowedFields('body')                   // Hide full content
+    ->build()
+    ->execute();
+
+// Add extra filters not in schema (rare case - usually use disallowed* instead)
+$schema = app(PostSchema::class);
+$wizard = ElasticQueryWizard::forSchema($schema);
+$wizard->allowedFilters(
+    ...$schema->filters($wizard),
+    ElasticFilter::term('featured'),             // Additional filter
+)
+    ->build()
+    ->execute();
+```
+
+### Wildcard Support in disallowed*() Methods
+
+All `disallowed*()` methods support wildcards:
+
+| Pattern | Meaning | Example |
+|---------|---------|---------|
+| `'*'` | Block everything | `disallowedFields('*')` |
+| `'relation.*'` | Block direct children only | `disallowedFields('author.*')` blocks `author.email` but not `author.posts.id` |
+| `'relation'` | Block relation and all descendants | `disallowedFields('author')` blocks `author`, `author.id`, `author.posts.id` |
+
+```php
+ElasticQueryWizard::forSchema(PostSchema::class)
+    ->disallowedFields('author.*')      // Block author fields, keep author relation
+    ->disallowedIncludes('comments')    // Block comments and all nested
+    ->build();
+```
+
+### Context-Aware Schemas
+
+Schema methods receive the wizard instance, enabling conditional logic based on wizard type or runtime context:
+
+```php
+use Jackardios\QueryWizard\ModelQueryWizard;
+
+class PostSchema extends ResourceSchema
+{
+    public function filters(QueryWizardInterface $wizard): array
+    {
+        // No filters for ModelQueryWizard (already-loaded models)
+        if ($wizard instanceof ModelQueryWizard) {
+            return [];
+        }
+
+        $filters = [
+            'status',
+            ElasticFilter::match('title'),
+        ];
+
+        // Add admin-only filters
+        if (auth()->user()?->isAdmin()) {
+            $filters[] = ElasticFilter::trashed();
+            $filters[] = ElasticFilter::term('author_id');
+        }
+
+        return $filters;
+    }
+
+    public function includes(QueryWizardInterface $wizard): array
+    {
+        $includes = ['author'];
+
+        // Heavy includes only for authenticated users
+        if (auth()->check()) {
+            $includes[] = 'comments';
+            $includes[] = 'commentsCount';
+        }
+
+        return $includes;
+    }
+
+    public function defaultFilters(QueryWizardInterface $wizard): array
+    {
+        // Admins see all posts, others see only published
+        if (auth()->user()?->isAdmin()) {
+            return [];
+        }
+
+        return ['status' => 'published'];
+    }
+}
+```
+
+### Schema Methods Reference
+
+| Method | Description |
+|--------|-------------|
+| `model()` | **Required.** Model class name |
+| `type()` | Resource type for `?fields[type]=...` (default: camelCase of model) |
+| `filters($wizard)` | Allowed filters |
+| `sorts($wizard)` | Allowed sorts |
+| `includes($wizard)` | Allowed includes |
+| `fields($wizard)` | Allowed fields for sparse fieldsets |
+| `appends($wizard)` | Allowed computed attributes |
+| `defaultSorts($wizard)` | Default sorts when none requested |
+| `defaultIncludes($wizard)` | Default includes when `?include` absent |
+| `defaultFields($wizard)` | Default fields when `?fields` absent |
+| `defaultAppends($wizard)` | Default appends |
+| `defaultFilters($wizard)` | Default filter values (associative array) |
 
 ---
 

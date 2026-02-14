@@ -13,6 +13,7 @@ A powerful Laravel package for building Elasticsearch queries with JSON:API styl
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Documentation](#documentation)
+- [Resource Schemas](#resource-schemas)
 - [Usage Examples](#usage-examples)
 - [Elasticsearch Version Compatibility](#elasticsearch-version-compatibility)
 - [License](#license)
@@ -20,6 +21,7 @@ A powerful Laravel package for building Elasticsearch queries with JSON:API styl
 ## Features
 
 - **Declarative API** — define allowed filters, sorts, and includes in one place
+- **Resource Schemas** — centralize query configuration in reusable, context-aware schema classes
 - **Security** — only explicitly allowed parameters are applied to queries
 - **Full-text Search** — match, multi_match, fuzzy and other Elasticsearch query types
 - **Geo Queries** — filter and sort by geographic coordinates
@@ -151,7 +153,67 @@ Detailed documentation for each section:
 | [Filters](docs/filters.md) | All filter types: term, match, range, geo, fuzzy, and more |
 | [Sorts](docs/sorts.md) | Sorting by fields, geography, and scripts |
 | [Includes](docs/includes.md) | Loading Eloquent relations after Elasticsearch query |
-| [Advanced Usage](docs/advanced.md) | Custom filters, aggregations, working with SearchBuilder |
+| [Advanced Usage](docs/advanced.md) | Resource schemas, custom filters, aggregations, working with SearchBuilder |
+
+## Resource Schemas
+
+For larger applications, use Resource Schemas to centralize query configuration in reusable classes:
+
+```php
+use Jackardios\QueryWizard\Schema\ResourceSchema;
+use Jackardios\QueryWizard\Contracts\QueryWizardInterface;
+
+class PostSchema extends ResourceSchema
+{
+    public function model(): string
+    {
+        return Post::class;
+    }
+
+    public function filters(QueryWizardInterface $wizard): array
+    {
+        return [
+            'status',
+            ElasticFilter::match('title'),
+            ElasticFilter::multiMatch(['title^2', 'body'], 'search'),
+        ];
+    }
+
+    public function sorts(QueryWizardInterface $wizard): array
+    {
+        return ['created_at', 'title'];
+    }
+
+    public function includes(QueryWizardInterface $wizard): array
+    {
+        return ['author', 'comments', 'commentsCount'];
+    }
+
+    public function defaultSorts(QueryWizardInterface $wizard): array
+    {
+        return ['-created_at'];
+    }
+}
+```
+
+### Using Schemas
+
+```php
+// Create wizard from schema
+$posts = ElasticQueryWizard::forSchema(PostSchema::class)
+    ->build()
+    ->execute()
+    ->models();
+
+// Override schema settings for specific endpoints
+ElasticQueryWizard::forSchema(PostSchema::class)
+    ->disallowedFilters('status')        // Remove filter
+    ->disallowedIncludes('comments')     // Remove include
+    ->build()
+    ->execute();
+```
+
+See [Advanced Usage](docs/advanced.md#resource-schemas) for full schema documentation including context-aware schemas, wildcard support, and all available methods.
 
 ## Usage Examples
 
