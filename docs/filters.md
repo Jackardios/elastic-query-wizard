@@ -1200,7 +1200,7 @@ Filter groups allow you to create complex nested query structures. Groups contai
 
 ### Bool Group
 
-Groups filters into a bool query with optional `minimum_should_match`.
+Groups filters into a bool query with optional `minimum_should_match` and `boost`.
 
 ```php
 use Jackardios\ElasticQueryWizard\ElasticGroup;
@@ -1213,6 +1213,7 @@ ElasticQueryWizard::for(Post::class)
         // OR condition: match at least one of status OR priority
         ElasticGroup::bool('advanced')
             ->minimumShouldMatch(1)
+            ->boost(1.5)  // Influence relevance scoring
             ->inFilter()
             ->children([
                 ElasticFilter::term('status', 'status')->inShould(),
@@ -1221,6 +1222,15 @@ ElasticQueryWizard::for(Post::class)
     ])
     ->build();
 ```
+
+#### Bool Group Options
+
+| Method | Description |
+|--------|-------------|
+| `minimumShouldMatch(int\|string)` | Minimum should clauses to match (e.g., `1`, `'75%'`) |
+| `boost(float)` | Boost factor for relevance scoring |
+| `inFilter()` / `inMust()` / `inShould()` / `inMustNot()` | Bool clause for the group |
+| `children(array)` | Set child filters |
 
 #### Query Parameters
 
@@ -1299,12 +1309,38 @@ GET /posts?filter[author]=john&filter[comment_search]=great
 ### Nested Group Options
 
 ```php
-ElasticGroup::nested('offers')
-    ->scoreMode('avg')      // Score mode: avg, max, min, sum, none
-    ->ignoreUnmapped()      // Ignore if path is unmapped
+ElasticGroup::nested('comments')
+    ->scoreMode('avg')       // Score mode: avg, max, min, sum, none
+    ->ignoreUnmapped()       // Ignore if path is unmapped
+    ->innerHits([            // Retrieve matching nested documents
+        'name' => 'matched_comments',
+        'size' => 3,
+        'sort' => [['date' => ['order' => 'desc']]],
+    ])
     ->inFilter()
     ->children([...])
 ```
+
+#### Nested Group Methods
+
+| Method | Description |
+|--------|-------------|
+| `scoreMode(string)` | How nested doc scores affect parent: `avg`, `max`, `min`, `sum`, `none` |
+| `ignoreUnmapped(bool)` | Ignore query if nested path is unmapped |
+| `innerHits(array)` | Retrieve matching nested documents in the response |
+| `inFilter()` / `inMust()` / `inShould()` / `inMustNot()` | Bool clause for the group |
+| `children(array)` | Set child filters |
+
+#### inner_hits Options
+
+| Option | Description |
+|--------|-------------|
+| `name` | Name for the inner_hits result set |
+| `size` | Maximum number of nested docs to return (default: 3) |
+| `from` | Offset for pagination |
+| `sort` | Sort order for nested documents |
+| `highlight` | Highlight matching fields |
+| `_source` | Fields to include in the response |
 
 ### Nested Groups (Groups inside Groups)
 
