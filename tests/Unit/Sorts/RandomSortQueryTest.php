@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jackardios\ElasticQueryWizard\Tests\Unit\Sorts;
 
 use Jackardios\ElasticQueryWizard\Sorts\RandomSort;
+use Jackardios\ElasticQueryWizard\Sorts\ScoreSort;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use stdClass;
 
@@ -226,5 +227,27 @@ class RandomSortQueryTest extends UnitTestCase
         $this->assertEquals([
             ['_score' => 'asc'],
         ], $sorts);
+    }
+
+    /** @test */
+    public function it_creates_separate_score_sorts_when_used_with_score_sort(): void
+    {
+        // Edge case: RandomSort adds _score sort, ScoreSort also adds _score sort
+        // This tests the behavior when both are used together
+        $wizard = $this
+            ->createElasticWizardWithSorts('shuffle,-relevance')
+            ->allowedSorts(
+                RandomSort::make('shuffle'),
+                ScoreSort::make('relevance')
+            );
+        $wizard->build();
+
+        $sorts = $this->getSorts($wizard->getSubject());
+
+        // Both sorts are added - this documents current behavior
+        // RandomSort adds _score asc, ScoreSort adds _score desc
+        $this->assertCount(2, $sorts);
+        $this->assertEquals(['_score' => 'asc'], $sorts[0]);
+        $this->assertEquals(['_score' => 'desc'], $sorts[1]);
     }
 }
