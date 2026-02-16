@@ -35,11 +35,13 @@ final class MatchFilter extends AbstractElasticFilter
             $value = FilterValueSanitizer::arrayToCommaSeparatedString($value);
         }
 
-        if (FilterValueSanitizer::isBlank($value)) {
+        $prepared = FilterValueSanitizer::toString($value);
+
+        if ($prepared === null || $prepared === '') {
             return null;
         }
 
-        $query = Query::match($this->property, $value);
+        $query = Query::match($this->property, $prepared);
 
         return $this->applyParametersOnQuery($query);
     }

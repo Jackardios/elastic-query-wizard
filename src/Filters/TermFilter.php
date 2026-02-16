@@ -25,9 +25,9 @@ final class TermFilter extends AbstractElasticFilter
 
     public function buildQuery(mixed $value): ?QueryInterface
     {
-        $prepared = FilterValueSanitizer::toArray($value);
+        $prepared = FilterValueSanitizer::toScalarArray($value);
 
-        if (empty($prepared)) {
+        if ($prepared === []) {
             return null;
         }
 

@@ -9,9 +9,9 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class InvalidGeoBoundingBoxValue extends InvalidQuery
 {
-    public static function make(string $propertyName): InvalidGeoBoundingBoxValue
+    public static function make(string $propertyName): self
     {
-        return new static(
+        return new self(
             Response::HTTP_UNPROCESSABLE_ENTITY,
             "`$propertyName` must be valid geo bounding box array in `left,bottom,right,top` format"
         );

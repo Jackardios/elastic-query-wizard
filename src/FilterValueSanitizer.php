@@ -125,7 +125,7 @@ class FilterValueSanitizer
      *
      * @param mixed $value raw filter value
      * @param string $propertyName will be used to throw exception
-     * @return array{gt?: string|number, gte?: string|number, lt?: string|number, lte?: string|number}
+     * @return array{gt?: string|int|float, gte?: string|int|float, lt?: string|int|float, lte?: string|int|float}
      * @throws InvalidRangeValue
      */
     public static function rangeFilterValue(mixed $value, string $propertyName): array
@@ -204,5 +204,63 @@ class FilterValueSanitizer
         }
 
         return static::isFilled($value) ? [$value] : [];
+    }
+
+    /**
+     * Converts a value to a scalar array, filtering out non-scalar values.
+     *
+     * @return array<int, bool|float|int|string>
+     */
+    public static function toScalarArray(mixed $value): array
+    {
+        $items = self::toArray($value);
+
+        return array_values(array_filter($items, static fn($item) => is_scalar($item)));
+    }
+
+    /**
+     * Converts a value to a string, returning null for non-stringable values.
+     */
+    public static function toString(mixed $value): ?string
+    {
+        if (is_array($value)) {
+            $extracted = reset($value);
+            $value = $extracted !== false ? $extracted : '';
+        }
+
+        if (is_string($value)) {
+            return self::isBlank($value) ? null : $value;
+        }
+
+        if (is_numeric($value)) {
+            return (string) $value;
+        }
+
+        return null;
+    }
+
+    /**
+     * Validates and converts coordinates to float array format.
+     *
+     * @param array<mixed> $coordinates
+     * @return array<int, array<int, float>>|null
+     */
+    public static function toCoordinatesArray(array $coordinates): ?array
+    {
+        $result = [];
+        foreach ($coordinates as $point) {
+            if (!is_array($point)) {
+                return null;
+            }
+            $floats = [];
+            foreach ($point as $coord) {
+                if (!is_numeric($coord)) {
+                    return null;
+                }
+                $floats[] = (float) $coord;
+            }
+            $result[] = $floats;
+        }
+        return $result;
     }
 }

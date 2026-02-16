@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 
 trait HasParameters
 {
+    /** @var array<string, mixed> */
     protected array $queryParameters = [];
 
     /**

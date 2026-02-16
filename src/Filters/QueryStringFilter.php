@@ -35,11 +35,13 @@ final class QueryStringFilter extends AbstractElasticFilter
             $value = FilterValueSanitizer::arrayToCommaSeparatedString($value);
         }
 
-        if (FilterValueSanitizer::isBlank($value)) {
+        $prepared = FilterValueSanitizer::toString($value);
+
+        if ($prepared === null || $prepared === '') {
             return null;
         }
 
-        $query = Query::queryString($value);
+        $query = Query::queryString($prepared);
 
         return $this->applyParametersOnQuery($query);
     }

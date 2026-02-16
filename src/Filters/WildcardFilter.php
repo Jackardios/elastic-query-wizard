@@ -25,16 +25,13 @@ final class WildcardFilter extends AbstractElasticFilter
 
     public function buildQuery(mixed $value): ?QueryInterface
     {
-        if (is_array($value)) {
-            $extracted = reset($value);
-            $value = $extracted !== false ? $extracted : '';
-        }
+        $prepared = FilterValueSanitizer::toString($value);
 
-        if (FilterValueSanitizer::isBlank($value)) {
+        if ($prepared === null || $prepared === '') {
             return null;
         }
 
-        $query = Query::wildcard($this->property, (string) $value);
+        $query = Query::wildcard($this->property, $prepared);
 
         return $this->applyParametersOnQuery($query);
     }

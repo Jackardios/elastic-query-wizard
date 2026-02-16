@@ -27,11 +27,22 @@ final class IdsFilter extends AbstractElasticFilter
     {
         $prepared = FilterValueSanitizer::toArray($value);
 
-        if (empty($prepared)) {
+        if ($prepared === []) {
             return null;
         }
 
-        $query = Query::ids($prepared);
+        // Filter to strings only (IDs must be strings)
+        /** @var array<int, string> $stringIds */
+        $stringIds = array_values(array_filter(
+            array_map(static fn($v) => is_scalar($v) ? (string) $v : null, $prepared),
+            static fn($v) => $v !== null && $v !== ''
+        ));
+
+        if ($stringIds === []) {
+            return null;
+        }
+
+        $query = Query::ids($stringIds);
 
         return $this->applyParametersOnQuery($query);
     }

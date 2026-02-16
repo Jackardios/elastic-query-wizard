@@ -187,7 +187,10 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
             return $subject;
         }
 
-        $groupQuery = $this->buildGroupQuery($value);
+        /** @var array<string, mixed> $childValues */
+        $childValues = $value;
+
+        $groupQuery = $this->buildGroupQuery($childValues);
 
         if ($groupQuery !== null) {
             $this->addQueryToBuilder($subject->boolQuery(), $groupQuery);

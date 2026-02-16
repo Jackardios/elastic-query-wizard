@@ -190,12 +190,20 @@ final class MoreLikeThisFilter extends AbstractElasticFilter
         if (is_array($value)) {
             // Document reference: {_index, _id}
             if (isset($value['_index'], $value['_id'])) {
-                return [$value];
+                /** @var array{_index: string, _id: string} $docRef */
+                $docRef = $value;
+                return [$docRef];
             }
 
-            // Array of mixed values
-            $filtered = array_filter($value, fn($item) => !FilterValueSanitizer::isBlank($item));
-            return $filtered === [] ? null : array_values($filtered);
+            // Array of mixed values - filter to strings and document refs
+            /** @var array<int, string|array<string, mixed>> $filtered */
+            $filtered = array_values(array_filter(
+                $value,
+                static fn($item): bool
+                => is_string($item) && !FilterValueSanitizer::isBlank($item)
+                || (is_array($item) && isset($item['_index'], $item['_id']))
+            ));
+            return $filtered === [] ? null : $filtered;
         }
 
         return null;

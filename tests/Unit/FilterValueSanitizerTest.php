@@ -215,4 +215,112 @@ class FilterValueSanitizerTest extends TestCase
         $result = FilterValueSanitizer::arrayToCommaSeparatedString(['a', '', 'b', null, 'c']);
         $this->assertEquals('a,b,c', $result);
     }
+
+    /** @test */
+    public function to_string_returns_string_for_string_input(): void
+    {
+        $this->assertEquals('hello', FilterValueSanitizer::toString('hello'));
+        $this->assertEquals('test value', FilterValueSanitizer::toString('test value'));
+    }
+
+    /** @test */
+    public function to_string_returns_null_for_blank_strings(): void
+    {
+        $this->assertNull(FilterValueSanitizer::toString(''));
+        $this->assertNull(FilterValueSanitizer::toString('   '));
+    }
+
+    /** @test */
+    public function to_string_converts_numeric_to_string(): void
+    {
+        $this->assertEquals('123', FilterValueSanitizer::toString(123));
+        $this->assertEquals('45.67', FilterValueSanitizer::toString(45.67));
+        $this->assertEquals('0', FilterValueSanitizer::toString(0));
+    }
+
+    /** @test */
+    public function to_string_extracts_first_element_from_array(): void
+    {
+        $this->assertEquals('first', FilterValueSanitizer::toString(['first', 'second']));
+        $this->assertEquals('only', FilterValueSanitizer::toString(['only']));
+        $this->assertEquals('123', FilterValueSanitizer::toString([123]));
+    }
+
+    /** @test */
+    public function to_string_returns_null_for_empty_array(): void
+    {
+        $this->assertNull(FilterValueSanitizer::toString([]));
+    }
+
+    /** @test */
+    public function to_string_returns_null_for_null_and_bool(): void
+    {
+        $this->assertNull(FilterValueSanitizer::toString(null));
+        $this->assertNull(FilterValueSanitizer::toString(true));
+        $this->assertNull(FilterValueSanitizer::toString(false));
+    }
+
+    /** @test */
+    public function to_scalar_array_filters_non_scalar_values(): void
+    {
+        $result = FilterValueSanitizer::toScalarArray([1, 'a', null, 2.5, true, ['nested']]);
+        $this->assertEquals([1, 'a', 2.5, true], $result);
+    }
+
+    /** @test */
+    public function to_scalar_array_handles_comma_separated_string(): void
+    {
+        $result = FilterValueSanitizer::toScalarArray('a,b,c');
+        $this->assertEquals(['a', 'b', 'c'], $result);
+    }
+
+    /** @test */
+    public function to_scalar_array_returns_empty_for_blank(): void
+    {
+        $this->assertEquals([], FilterValueSanitizer::toScalarArray(null));
+        $this->assertEquals([], FilterValueSanitizer::toScalarArray(''));
+        $this->assertEquals([], FilterValueSanitizer::toScalarArray([]));
+    }
+
+    /** @test */
+    public function to_scalar_array_keeps_single_scalar(): void
+    {
+        $this->assertEquals(['value'], FilterValueSanitizer::toScalarArray('value'));
+        $this->assertEquals([123], FilterValueSanitizer::toScalarArray(123));
+        $this->assertEquals([false], FilterValueSanitizer::toScalarArray(false));
+    }
+
+    /** @test */
+    public function to_coordinates_array_converts_valid_coordinates(): void
+    {
+        $result = FilterValueSanitizer::toCoordinatesArray([[1, 2], [3, 4]]);
+        $this->assertEquals([[1.0, 2.0], [3.0, 4.0]], $result);
+    }
+
+    /** @test */
+    public function to_coordinates_array_converts_numeric_strings(): void
+    {
+        $result = FilterValueSanitizer::toCoordinatesArray([['1.5', '2.5'], ['3', '4']]);
+        $this->assertEquals([[1.5, 2.5], [3.0, 4.0]], $result);
+    }
+
+    /** @test */
+    public function to_coordinates_array_returns_null_for_non_array_points(): void
+    {
+        $this->assertNull(FilterValueSanitizer::toCoordinatesArray(['not_array', [1, 2]]));
+        $this->assertNull(FilterValueSanitizer::toCoordinatesArray([123]));
+    }
+
+    /** @test */
+    public function to_coordinates_array_returns_null_for_non_numeric_coords(): void
+    {
+        $this->assertNull(FilterValueSanitizer::toCoordinatesArray([[1, 'abc']]));
+        $this->assertNull(FilterValueSanitizer::toCoordinatesArray([['x', 'y']]));
+    }
+
+    /** @test */
+    public function to_coordinates_array_handles_empty_array(): void
+    {
+        $this->assertEquals([], FilterValueSanitizer::toCoordinatesArray([]));
+    }
 }

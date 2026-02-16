@@ -114,7 +114,7 @@ final class NestedFilter extends AbstractElasticFilter
         }
 
         $nestedField = $this->path . '.' . $this->property;
-        $prepared = FilterValueSanitizer::toArray($value);
+        $prepared = FilterValueSanitizer::toScalarArray($value);
 
         if ($prepared === []) {
             return null;

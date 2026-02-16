@@ -47,6 +47,7 @@ use Jackardios\QueryWizard\Schema\ResourceSchemaInterface;
  * @method int count() Get total count without loading models
  * @method array raw() Get raw Elasticsearch response array
  *
+ * @extends BaseQueryWizard<SearchBuilder>
  * @phpstan-consistent-constructor
  *
  * @mixin SearchBuilder
@@ -105,7 +106,9 @@ class ElasticQueryWizard extends BaseQueryWizard
         }
 
         $this->modelClass = is_string($subject) ? $subject : $subject::class;
-        $this->subject = $this->modelClass::searchQuery();
+        /** @var SearchBuilder $searchBuilder */
+        $searchBuilder = $this->modelClass::searchQuery();
+        $this->subject = $searchBuilder;
         $this->originalSubject = clone $this->subject;
         $this->resolveParametersFromContainer = $parameters === null;
         $this->parameters = $parameters ?? app(QueryParametersManager::class);
@@ -122,16 +125,17 @@ class ElasticQueryWizard extends BaseQueryWizard
 
     public static function forSchema(string|ResourceSchemaInterface $schema): static
     {
-        $schema = is_string($schema) ? app($schema) : $schema;
+        /** @var ResourceSchemaInterface $resolvedSchema */
+        $resolvedSchema = is_string($schema) ? app($schema) : $schema;
 
         /** @var class-string<Model> $modelClass */
-        $modelClass = $schema->model();
+        $modelClass = $resolvedSchema->model();
 
         return new static(
             $modelClass,
             null,
             app(QueryWizardConfig::class),
-            $schema
+            $resolvedSchema
         );
     }
 
@@ -291,7 +295,9 @@ class ElasticQueryWizard extends BaseQueryWizard
 
     protected function applyFilter(FilterInterface $filter, mixed $preparedValue): void
     {
-        $this->subject = $filter->apply($this->subject, $preparedValue);
+        /** @var SearchBuilder $result */
+        $result = $filter->apply($this->subject, $preparedValue);
+        $this->subject = $result;
     }
 
     /**
