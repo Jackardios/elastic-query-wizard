@@ -85,65 +85,6 @@ $posts = ElasticQueryWizard::for(Post::class)
     ->models();
 ```
 
-### Advanced SearchBuilder DSL Example
-
-```php
-use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
-use Jackardios\ElasticQueryWizard\ElasticQuery;
-use Jackardios\ElasticQueryWizard\ElasticAggregation;
-
-$results = ElasticQueryWizard::for(Article::class)
-    ->allowedFilters([
-        ElasticFilter::term('status'),
-        ElasticFilter::multiMatch(['title^3', 'body'], 'search'),
-    ])
-    ->query(ElasticQuery::match('language', 'en'))
-    ->must(ElasticQuery::range('published_at')->gte('2024-01-01'))
-    ->highlight('title')
-    ->aggregate('by_author', ElasticAggregation::terms('author')->size(10))
-    ->trackTotalHits(true)
-    ->build()
-    ->execute();
-```
-
-### Geo Filtering Example
-
-```php
-// GET /places?filter[nearby][lat]=55.75&filter[nearby][lon]=37.62&filter[nearby][distance]=10km
-
-$places = ElasticQueryWizard::for(Place::class)
-    ->allowedFilters([
-        ElasticFilter::geoDistance('location', 'nearby'),
-        ElasticFilter::term('category'),
-    ])
-    ->allowedSorts([
-        ElasticSort::geoDistance('location', 55.75, 37.62, 'distance'),
-    ])
-    ->build()
-    ->execute()
-    ->models();
-```
-
-### Full-text Search Example
-
-```php
-// GET /articles?filter[search]=elasticsearch tutorial&filter[category]=tech
-
-$articles = ElasticQueryWizard::for(Article::class)
-    ->allowedFilters([
-        ElasticFilter::multiMatch(['title^2', 'body', 'tags'], 'search')
-            ->withParameters([
-                'type' => 'best_fields',
-                'fuzziness' => 'AUTO',
-            ]),
-        ElasticFilter::term('category'),
-    ])
-    ->defaultSorts('-created_at')
-    ->build()
-    ->execute()
-    ->models();
-```
-
 ## Documentation
 
 Detailed documentation for each section:
@@ -154,6 +95,7 @@ Detailed documentation for each section:
 | [Sorts](docs/sorts.md) | Sorting by fields, geography, and scripts |
 | [Includes](docs/includes.md) | Loading Eloquent relations after Elasticsearch query |
 | [Advanced Usage](docs/advanced.md) | Resource schemas, custom filters, aggregations, working with SearchBuilder |
+| [ES Compatibility](docs/elasticsearch-compatibility.md) | Elasticsearch 8.x/9.x differences and migration guide |
 
 ## Resource Schemas
 
@@ -216,6 +158,65 @@ ElasticQueryWizard::forSchema(PostSchema::class)
 See [Advanced Usage](docs/advanced.md#resource-schemas) for full schema documentation including context-aware schemas, wildcard support, and all available methods.
 
 ## Usage Examples
+
+### Advanced SearchBuilder DSL
+
+```php
+use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
+use Jackardios\ElasticQueryWizard\ElasticQuery;
+use Jackardios\ElasticQueryWizard\ElasticAggregation;
+
+$results = ElasticQueryWizard::for(Article::class)
+    ->allowedFilters([
+        ElasticFilter::term('status'),
+        ElasticFilter::multiMatch(['title^3', 'body'], 'search'),
+    ])
+    ->query(ElasticQuery::match('language', 'en'))
+    ->must(ElasticQuery::range('published_at')->gte('2024-01-01'))
+    ->highlight('title')
+    ->aggregate('by_author', ElasticAggregation::terms('author')->size(10))
+    ->trackTotalHits(true)
+    ->build()
+    ->execute();
+```
+
+### Geo Filtering
+
+```php
+// GET /places?filter[nearby][lat]=55.75&filter[nearby][lon]=37.62&filter[nearby][distance]=10km
+
+$places = ElasticQueryWizard::for(Place::class)
+    ->allowedFilters([
+        ElasticFilter::geoDistance('location', 'nearby'),
+        ElasticFilter::term('category'),
+    ])
+    ->allowedSorts([
+        ElasticSort::geoDistance('location', 55.75, 37.62, 'distance'),
+    ])
+    ->build()
+    ->execute()
+    ->models();
+```
+
+### Full-text Search
+
+```php
+// GET /articles?filter[search]=elasticsearch tutorial&filter[category]=tech
+
+$articles = ElasticQueryWizard::for(Article::class)
+    ->allowedFilters([
+        ElasticFilter::multiMatch(['title^2', 'body', 'tags'], 'search')
+            ->withParameters([
+                'type' => 'best_fields',
+                'fuzziness' => 'AUTO',
+            ]),
+        ElasticFilter::term('category'),
+    ])
+    ->defaultSorts('-created_at')
+    ->build()
+    ->execute()
+    ->models();
+```
 
 ### Date Range Filtering
 
@@ -326,6 +327,60 @@ ElasticQueryWizard::for(Post::class)
     ->models();
 ```
 
+### Filter Groups
+
+Filter groups allow you to create complex query structures with OR/AND logic or query nested documents.
+
+#### Bool Group (OR Logic)
+
+```php
+use Jackardios\ElasticQueryWizard\ElasticGroup;
+
+// GET /posts?filter[status]=published&filter[priority]=high
+// Matches posts where status=published OR priority=high
+
+ElasticQueryWizard::for(Post::class)
+    ->allowedFilters([
+        ElasticFilter::term('category'),
+
+        // OR condition: match at least one
+        ElasticGroup::bool('status_or_priority')
+            ->minimumShouldMatch(1)
+            ->children([
+                ElasticFilter::term('status', 'status')->inShould(),
+                ElasticFilter::term('priority', 'priority')->inShould(),
+            ]),
+    ])
+    ->build()
+    ->execute()
+    ->models();
+```
+
+#### Nested Group (Nested Documents)
+
+```php
+// GET /posts?filter[comment_author]=john&filter[comment_text]=great
+// Matches posts with comments where author=john AND body contains "great"
+
+ElasticQueryWizard::for(Post::class)
+    ->allowedFilters([
+        ElasticFilter::term('status'),
+
+        // Query nested "comments" documents
+        ElasticGroup::nested('comments')
+            ->scoreMode('avg')
+            ->children([
+                ElasticFilter::term('comments.author', 'comment_author'),
+                ElasticFilter::match('comments.body', 'comment_text'),
+            ]),
+    ])
+    ->build()
+    ->execute()
+    ->models();
+```
+
+See [Filter Groups](docs/filters.md#filter-groups) for more options including `innerHits`, nested groups, and complex boolean logic.
+
 ## Query Parameter Format
 
 The package uses a standardized JSON:API style parameter format:
@@ -340,48 +395,15 @@ The package uses a standardized JSON:API style parameter format:
 
 ## Elasticsearch Version Compatibility
 
-This package supports Elasticsearch 8.x and 9.x. However, there are important differences between versions.
+This package supports both Elasticsearch 8.x and 9.x. The package handles most version differences internally, but there are some ES 9.x breaking changes to be aware of:
 
-### Elasticsearch 9.x Breaking Changes
+| Feature | ES 9.x Status |
+|---------|---------------|
+| `force_source` highlighting | Removed |
+| Boolean histogram aggregation | Removed (use `terms`) |
+| `random_score` default field | Changed to `_seq_no` |
 
-If you're using or upgrading to Elasticsearch 9.x, be aware of the following:
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Range query `from`/`to` params | Removed | Use `gt`/`gte`/`lt`/`lte` instead (this package already uses correct params) |
-| `_knn_search` endpoint | Removed | Use `knn` within `_search` endpoint |
-| `force_source` highlighting | Removed | Don't pass this parameter via `tapSearchBuilder()` |
-| Boolean histogram aggregation | Removed | Use `terms` aggregation for boolean fields |
-| `random_score` default field | Changed | Default changed from `_id` to `_seq_no`; specify field explicitly for consistent behavior |
-| Frozen indices | Removed | Unfreeze indices before upgrading to ES 9.x |
-
-### Safe Usage Examples
-
-```php
-// Range filter - uses correct ES 9.x compatible operators
-ElasticFilter::range('price')  // Accepts: gt, gte, lt, lte
-
-// For random scoring, use ElasticSort::random() or tapSearchBuilder with Query::functionScore()
-// Option 1: Use ElasticSort::random()
-->allowedSorts(ElasticSort::random('random')->seed(12345)->field('_seq_no'))
-
-// Option 2: Use tapSearchBuilder with Query::functionScore()
-->tapSearchBuilder(function ($builder) {
-    $builder->must(
-        Query::functionScore()
-            ->addFunction([
-                'random_score' => [
-                    'seed' => 12345,
-                    'field' => '_seq_no',  // Explicit field for consistent behavior across ES versions
-                ],
-            ])
-            ->boostMode('replace')
-    );
-})
-
-// For boolean aggregations, use terms instead of histogram
-->aggregate('by_status', ElasticAggregation::terms('is_active'))
-```
+For full details, migration guide, and safe usage examples, see [Elasticsearch Compatibility](docs/elasticsearch-compatibility.md).
 
 ## Testing
 

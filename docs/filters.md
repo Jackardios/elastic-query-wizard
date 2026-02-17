@@ -4,7 +4,9 @@ Filters allow you to limit Elasticsearch query results based on query parameters
 
 ## Table of Contents
 
+- [Quick Reference](#quick-reference)
 - [General Principles](#general-principles)
+- [Key Concepts](#key-concepts)
 - [Term Filter](#term-filter)
 - [Match Filter](#match-filter)
 - [Range Filter](#range-filter)
@@ -33,6 +35,37 @@ Filters allow you to limit Elasticsearch query results based on query parameters
 - [Aliases](#aliases)
 - [Bool Clause Methods](#bool-clause-methods)
 - [Filter Groups](#filter-groups)
+
+## Quick Reference
+
+| Filter | Use Case | Example |
+|--------|----------|---------|
+| `term` | Exact match (keywords, IDs, statuses) | `ElasticFilter::term('status')` |
+| `match` | Full-text search with analysis | `ElasticFilter::match('title')` |
+| `range` | Numeric/date ranges | `ElasticFilter::range('price')` |
+| `exists` | Field presence check | `ElasticFilter::exists('thumbnail')` |
+| `null` | NULL/NOT NULL check | `ElasticFilter::null('deleted_at')` |
+| `multiMatch` | Search across multiple fields | `ElasticFilter::multiMatch(['title', 'body'], 'q')` |
+| `wildcard` | Pattern matching (`*`, `?`) | `ElasticFilter::wildcard('sku')` |
+| `prefix` | Prefix-based search (autocomplete) | `ElasticFilter::prefix('username')` |
+| `fuzzy` | Typo-tolerant search | `ElasticFilter::fuzzy('name')` |
+| `ids` | Filter by document IDs | `ElasticFilter::ids('_id')` |
+| `regexp` | Regular expression matching | `ElasticFilter::regexp('slug')` |
+| `matchPhrase` | Exact phrase match | `ElasticFilter::matchPhrase('title')` |
+| `matchPhrasePrefix` | Phrase prefix (autocomplete) | `ElasticFilter::matchPhrasePrefix('title')` |
+| `queryString` | Raw query string syntax | `ElasticFilter::queryString('search')` |
+| `simpleQueryString` | Safe query string syntax | `ElasticFilter::simpleQueryString('search')` |
+| `geoDistance` | Distance from point | `ElasticFilter::geoDistance('location')` |
+| `geoBoundingBox` | Rectangle on map | `ElasticFilter::geoBoundingBox('location')` |
+| `geoShape` | Geographic shape queries | `ElasticFilter::geoShape('boundary')` |
+| `nested` | Nested document fields | `ElasticFilter::nested('comments', 'author')` |
+| `moreLikeThis` | Similar documents | `ElasticFilter::moreLikeThis(['title'], 'similar')` |
+| `trashed` | Soft delete handling | `ElasticFilter::trashed()` |
+| `dateRange` | Date range with from/to keys | `ElasticFilter::dateRange('created_at')` |
+| `callback` | Custom filter logic | `ElasticFilter::callback('custom', fn(...) => ...)` |
+| `passthrough` | No-op placeholder | `ElasticFilter::passthrough('param')` |
+
+---
 
 ## General Principles
 
@@ -67,6 +100,61 @@ If you disable this exception in config, unknown filters are ignored:
 // By default: throws InvalidFilterQuery
 // With disable_invalid_filter_query_exception=true: ignored
 ```
+
+---
+
+## Key Concepts
+
+Before diving into specific filters, it's helpful to understand these core Elasticsearch concepts.
+
+### Term vs Match
+
+| Query Type | Description | Use For |
+|------------|-------------|---------|
+| **Term** | Exact match, no text analysis | Keywords, IDs, statuses, enums, tags |
+| **Match** | Full-text search with analysis | Text content, titles, descriptions |
+
+```php
+// Term: finds only exact "published" (case-sensitive by default)
+ElasticFilter::term('status')  // ?filter[status]=published
+
+// Match: finds "Laravel", "laravel", "LARAVEL" + related words
+ElasticFilter::match('title')  // ?filter[title]=laravel
+```
+
+**Rule of thumb:** Use `term` for structured data (e.g., `status`, `category_id`), `match` for free-text fields (e.g., `title`, `body`).
+
+### Bool Clauses (inFilter / inMust / inShould / inMustNot)
+
+Elasticsearch bool queries have four clause types. Each filter is placed into one of these:
+
+| Clause | Method | Scoring | Caching | Use Case |
+|--------|--------|---------|---------|----------|
+| **filter** | `inFilter()` | No | Yes | Exact filters (term, range, exists) |
+| **must** | `inMust()` | Yes | No | Full-text search (match, fuzzy) |
+| **should** | `inShould()` | Yes | No | Optional/OR conditions |
+| **must_not** | `inMustNot()` | No | Yes | Exclusions |
+
+```php
+// Default: term goes to filter (no scoring, cached)
+ElasticFilter::term('status')
+
+// Override: put term in must (affects relevance score)
+ElasticFilter::term('status')->inMust()
+
+// Exclusion: documents without this value
+ElasticFilter::term('status')->inMustNot()
+
+// Optional: OR logic with minimum_should_match
+ElasticFilter::term('tag1')->inShould()
+ElasticFilter::term('tag2')->inShould()
+```
+
+**When to change clause:**
+- Use `inMust()` when you want the filter to affect relevance scoring
+- Use `inShould()` for optional conditions (OR logic)
+- Use `inMustNot()` to exclude documents
+- Keep `inFilter()` (default for exact filters) for best performance
 
 ---
 
