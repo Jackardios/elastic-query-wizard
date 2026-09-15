@@ -24,6 +24,11 @@ final class FuzzyFilter extends AbstractElasticFilter
         return 'fuzzy';
     }
 
+    public function validateValueShape(mixed $value): ?string
+    {
+        return $this->validateScalarOrBlankValueShape($value);
+    }
+
     protected function getDefaultClause(): BoolClause
     {
         return BoolClause::MUST;

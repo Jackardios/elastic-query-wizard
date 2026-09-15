@@ -7,14 +7,14 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Sorts;
 use Jackardios\ElasticQueryWizard\ElasticSort;
 use Jackardios\ElasticQueryWizard\Sorts\ScoreSort;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group sort
- */
+#[Group('unit')]
+#[Group('sort')]
 class ScoreSortQueryTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function it_builds_a_score_sort_ascending(): void
     {
         $wizard = $this
@@ -28,7 +28,7 @@ class ScoreSortQueryTest extends UnitTestCase
         $this->assertEquals(['_score' => 'asc'], $sorts[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_builds_a_score_sort_descending(): void
     {
         $wizard = $this
@@ -42,7 +42,7 @@ class ScoreSortQueryTest extends UnitTestCase
         $this->assertEquals(['_score' => 'desc'], $sorts[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_works_with_factory_method(): void
     {
         $wizard = $this
@@ -56,7 +56,7 @@ class ScoreSortQueryTest extends UnitTestCase
         $this->assertEquals(['_score' => 'desc'], $sorts[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_defaults_to_score_as_property_name(): void
     {
         $sort = ScoreSort::make();

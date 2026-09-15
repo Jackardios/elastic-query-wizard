@@ -13,12 +13,12 @@ use Illuminate\Support\Collection;
 use Jackardios\QueryWizard\Exceptions\InvalidAppendQuery;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\AppendModel;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group append
- * @group elastic-append
- */
+#[Group('elastic')]
+#[Group('append')]
+#[Group('elastic-append')]
 class AppendTest extends TestCase
 {
     protected function setUp(): void
@@ -28,7 +28,7 @@ class AppendTest extends TestCase
         AppendModel::factory()->count(5)->create();
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_require_appends(): void
     {
         $result = $this->createElasticWizardFromQuery([], AppendModel::class)
@@ -39,7 +39,7 @@ class AppendTest extends TestCase
         $this->assertEquals(AppendModel::count(), $result->total);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_append_attributes(): void
     {
         $model = $this
@@ -54,7 +54,7 @@ class AppendTest extends TestCase
         $this->assertAttributeLoaded($model, 'fullname');
     }
 
-    /** @test */
+    #[Test]
     public function it_cannot_append_case_insensitive(): void
     {
         $this->expectException(InvalidAppendQuery::class);
@@ -69,7 +69,7 @@ class AppendTest extends TestCase
             ->first();
     }
 
-    /** @test */
+    #[Test]
     public function it_can_append_collections(): void
     {
         $models = $this
@@ -82,7 +82,7 @@ class AppendTest extends TestCase
         $this->assertCollectionAttributeLoaded($models, 'FullName');
     }
 
-    /** @test */
+    #[Test]
     public function it_can_append_paginates(): void
     {
         $models = $this
@@ -95,7 +95,7 @@ class AppendTest extends TestCase
         $this->assertPaginateAttributeLoaded($models, 'FullName');
     }
 
-    /** @test */
+    #[Test]
     public function it_guards_against_invalid_appends(): void
     {
         $this->expectException(InvalidAppendQuery::class);
@@ -106,7 +106,7 @@ class AppendTest extends TestCase
             ->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_can_allow_multiple_appends(): void
     {
         $model = $this
@@ -121,7 +121,7 @@ class AppendTest extends TestCase
         $this->assertAttributeLoaded($model, 'fullname');
     }
 
-    /** @test */
+    #[Test]
     public function it_can_allow_multiple_appends_as_an_array(): void
     {
         $model = $this
@@ -136,7 +136,7 @@ class AppendTest extends TestCase
         $this->assertAttributeLoaded($model, 'fullname');
     }
 
-    /** @test */
+    #[Test]
     public function it_can_append_multiple_attributes(): void
     {
         $model = $this
@@ -152,7 +152,7 @@ class AppendTest extends TestCase
         $this->assertAttributeLoaded($model, 'reversename');
     }
 
-    /** @test */
+    #[Test]
     public function an_invalid_append_query_exception_contains_the_not_allowed_and_allowed_appends(): void
     {
         $exception = new InvalidAppendQuery(collect(['not allowed append']), collect(['allowed append']));
@@ -192,7 +192,7 @@ class AppendTest extends TestCase
 
     // ========== Relation Appends Tests ==========
 
-    /** @test */
+    #[Test]
     public function it_can_append_to_relation_models(): void
     {
         $testModel = TestModel::factory()->create();
@@ -216,7 +216,7 @@ class AppendTest extends TestCase
         $this->assertEquals('Formatted: Related', $array['related_models'][0]['formattedName']);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_append_multiple_attributes_to_relation(): void
     {
         $testModel = TestModel::factory()->create();
@@ -239,7 +239,7 @@ class AppendTest extends TestCase
         $this->assertArrayHasKey('upperName', $array['related_models'][0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_combine_root_and_relation_appends(): void
     {
         // TestModel needs a computed attribute for root-level append
@@ -265,7 +265,7 @@ class AppendTest extends TestCase
         $this->assertArrayHasKey('upperName', $array['related_models'][0]);
     }
 
-    /** @test */
+    #[Test]
     public function wildcard_allows_all_relation_appends(): void
     {
         $testModel = TestModel::factory()->create();
@@ -288,7 +288,7 @@ class AppendTest extends TestCase
         $this->assertArrayHasKey('upperName', $array['related_models'][0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_ignores_relation_append_when_relation_not_loaded(): void
     {
         $testModel = TestModel::factory()->create();
@@ -309,7 +309,7 @@ class AppendTest extends TestCase
         $this->assertArrayNotHasKey('related_models', $array);
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_nested_appends_correctly(): void
     {
         $testModel = TestModel::factory()->create();
@@ -327,7 +327,7 @@ class AppendTest extends TestCase
             ->build();
     }
 
-    /** @test */
+    #[Test]
     public function nested_append_applies_to_all_models_in_collection(): void
     {
         $testModels = TestModel::factory()->count(3)->create();
@@ -358,7 +358,7 @@ class AppendTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_can_append_to_deeply_nested_relation(): void
     {
         $testModel = TestModel::factory()->create();

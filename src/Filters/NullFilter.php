@@ -56,6 +56,11 @@ final class NullFilter extends AbstractElasticFilter
         return 'null';
     }
 
+    public function validateValueShape(mixed $value): ?string
+    {
+        return $this->validateScalarOrBlankValueShape($value);
+    }
+
     /**
      * This filter has conditional clause logic (filter vs must_not) so we
      * implement buildQuery to return null, and override handle() for

@@ -10,12 +10,12 @@ use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\QueryWizard\Sorts\CallbackSort;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group sort
- * @group elastic-sort
- */
+#[Group('elastic')]
+#[Group('sort')]
+#[Group('elastic-sort')]
 class CallbackSortTest extends TestCase
 {
     use AssertsCollectionSorting;
@@ -29,7 +29,7 @@ class CallbackSortTest extends TestCase
         $this->models = TestModel::factory()->count(5)->create();
     }
 
-    /** @test */
+    #[Test]
     public function it_should_sort_by_closure(): void
     {
         $sortedModels = $this
@@ -46,7 +46,7 @@ class CallbackSortTest extends TestCase
         $this->assertSortedDescending($sortedModels, 'category');
     }
 
-    /** @test */
+    #[Test]
     public function it_should_sort_by_array_callback(): void
     {
         $sortedModels = $this

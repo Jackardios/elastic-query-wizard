@@ -9,16 +9,17 @@ use Jackardios\ElasticQueryWizard\ElasticGroup;
 use Jackardios\ElasticQueryWizard\Exceptions\UnsupportedFilterInGroupException;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use Jackardios\QueryWizard\Eloquent\EloquentFilter;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Tests for handleInGroup() functionality in groups.
- *
- * @group unit
- * @group group
  */
+#[Group('unit')]
+#[Group('group')]
 class BoolGroupHandleInGroupTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function exists_filter_with_false_uses_must_not_inside_group(): void
     {
         $group = ElasticGroup::bool('advanced')->children([
@@ -39,7 +40,7 @@ class BoolGroupHandleInGroupTest extends UnitTestCase
         $this->assertArrayHasKey('exists', $array['bool']['must_not'][0]);
     }
 
-    /** @test */
+    #[Test]
     public function exists_filter_with_true_uses_filter_inside_group(): void
     {
         $group = ElasticGroup::bool('advanced')->children([
@@ -60,7 +61,7 @@ class BoolGroupHandleInGroupTest extends UnitTestCase
         $this->assertArrayHasKey('exists', $array['bool']['filter'][0]);
     }
 
-    /** @test */
+    #[Test]
     public function null_filter_with_true_uses_must_not_inside_group(): void
     {
         $group = ElasticGroup::bool('advanced')->children([
@@ -81,7 +82,7 @@ class BoolGroupHandleInGroupTest extends UnitTestCase
         $this->assertArrayHasKey('exists', $array['bool']['must_not'][0]);
     }
 
-    /** @test */
+    #[Test]
     public function null_filter_with_false_uses_filter_inside_group(): void
     {
         $group = ElasticGroup::bool('advanced')->children([
@@ -102,7 +103,7 @@ class BoolGroupHandleInGroupTest extends UnitTestCase
         $this->assertArrayHasKey('exists', $array['bool']['filter'][0]);
     }
 
-    /** @test */
+    #[Test]
     public function trashed_filter_throws_exception_inside_group(): void
     {
         $group = ElasticGroup::bool('advanced')->children([
@@ -117,7 +118,7 @@ class BoolGroupHandleInGroupTest extends UnitTestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function callback_filter_throws_exception_inside_group(): void
     {
         // Create an Eloquent callback filter (not supported in groups)
@@ -137,7 +138,7 @@ class BoolGroupHandleInGroupTest extends UnitTestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function passthrough_filter_throws_exception_inside_group(): void
     {
         // Create an Eloquent passthrough filter (not supported in groups)
@@ -155,7 +156,7 @@ class BoolGroupHandleInGroupTest extends UnitTestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function exists_filter_with_must_clause_uses_must_inside_group(): void
     {
         $group = ElasticGroup::bool('advanced')->children([
@@ -176,7 +177,7 @@ class BoolGroupHandleInGroupTest extends UnitTestCase
         $this->assertArrayHasKey('exists', $array['bool']['must'][0]);
     }
 
-    /** @test */
+    #[Test]
     public function mixed_filters_work_correctly_inside_group(): void
     {
         $group = ElasticGroup::bool('advanced')->children([

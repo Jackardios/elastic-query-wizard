@@ -8,12 +8,12 @@ use Illuminate\Support\Collection;
 use Jackardios\ElasticQueryWizard\Filters\MoreLikeThisFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group filter
- * @group elastic-filter
- */
+#[Group('elastic')]
+#[Group('filter')]
+#[Group('elastic-filter')]
 class MoreLikeThisFilterTest extends TestCase
 {
     protected Collection $models;
@@ -47,7 +47,7 @@ class MoreLikeThisFilterTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_find_similar_documents_by_text(): void
     {
         $result = $this
@@ -71,7 +71,7 @@ class MoreLikeThisFilterTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function it_can_find_similar_documents_with_min_term_freq(): void
     {
         $result = $this
@@ -91,7 +91,7 @@ class MoreLikeThisFilterTest extends TestCase
         $this->assertGreaterThanOrEqual(1, $result->count());
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_no_results_for_unrelated_text(): void
     {
         $result = $this
@@ -111,7 +111,7 @@ class MoreLikeThisFilterTest extends TestCase
         $this->assertCount(0, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_empty_filter_value(): void
     {
         $result = $this
@@ -128,7 +128,7 @@ class MoreLikeThisFilterTest extends TestCase
         $this->assertCount(5, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_search_multiple_fields(): void
     {
         $result = $this
@@ -148,7 +148,7 @@ class MoreLikeThisFilterTest extends TestCase
         $this->assertGreaterThanOrEqual(1, $result->count());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_use_min_doc_freq(): void
     {
         $result = $this
@@ -168,7 +168,7 @@ class MoreLikeThisFilterTest extends TestCase
         $this->assertGreaterThanOrEqual(1, $result->count());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_limit_query_terms(): void
     {
         $result = $this
@@ -188,7 +188,7 @@ class MoreLikeThisFilterTest extends TestCase
         $this->assertGreaterThanOrEqual(1, $result->count());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_use_alias(): void
     {
         $result = $this
@@ -207,7 +207,7 @@ class MoreLikeThisFilterTest extends TestCase
         $this->assertGreaterThanOrEqual(1, $result->count());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_set_minimum_should_match(): void
     {
         $result = $this
@@ -227,7 +227,7 @@ class MoreLikeThisFilterTest extends TestCase
         $this->assertGreaterThanOrEqual(1, $result->count());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_by_word_length(): void
     {
         $result = $this

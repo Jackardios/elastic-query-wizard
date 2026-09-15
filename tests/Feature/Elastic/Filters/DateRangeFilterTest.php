@@ -9,12 +9,13 @@ use Illuminate\Support\Collection;
 use Jackardios\ElasticQueryWizard\Filters\DateRangeFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
+use Jackardios\QueryWizard\Exceptions\InvalidFilterQuery;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group filter
- * @group elastic-filter
- */
+#[Group('elastic')]
+#[Group('filter')]
+#[Group('elastic-filter')]
 class DateRangeFilterTest extends TestCase
 {
     protected Collection $models;
@@ -55,7 +56,7 @@ class DateRangeFilterTest extends TestCase
         parent::tearDown();
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_by_date_range(): void
     {
         $result = $this
@@ -77,7 +78,7 @@ class DateRangeFilterTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_with_only_from_date(): void
     {
         $result = $this
@@ -98,7 +99,7 @@ class DateRangeFilterTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_with_only_to_date(): void
     {
         $result = $this
@@ -119,7 +120,7 @@ class DateRangeFilterTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function it_can_use_custom_from_and_to_keys(): void
     {
         $result = $this
@@ -145,7 +146,7 @@ class DateRangeFilterTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_no_results_for_non_overlapping_range(): void
     {
         $result = $this
@@ -163,7 +164,7 @@ class DateRangeFilterTest extends TestCase
         $this->assertCount(0, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_empty_range(): void
     {
         $result = $this
@@ -181,7 +182,7 @@ class DateRangeFilterTest extends TestCase
         $this->assertCount(5, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_with_datetime_format(): void
     {
         $result = $this
@@ -199,7 +200,7 @@ class DateRangeFilterTest extends TestCase
         $this->assertCount(2, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_use_alias(): void
     {
         $result = $this
@@ -218,7 +219,7 @@ class DateRangeFilterTest extends TestCase
         $this->assertEquals($this->models[1]->id, $result->first()->id);
     }
 
-    /** @test */
+    #[Test]
     public function it_includes_boundary_dates(): void
     {
         $result = $this
@@ -237,19 +238,18 @@ class DateRangeFilterTest extends TestCase
         $this->assertEquals($this->models[0]->id, $result->first()->id);
     }
 
-    /** @test */
-    public function it_handles_non_array_value_gracefully(): void
+    #[Test]
+    public function it_rejects_a_non_array_value(): void
     {
-        $result = $this
+        // A scalar carries neither bound, so the filter would silently match
+        // everything. Reject it instead of quietly ignoring the parameter.
+        $this->expectException(InvalidFilterQuery::class);
+
+        $this
             ->createElasticWizardWithFilters([
                 'created_at' => 'not-an-array',
             ])
             ->allowedFilters(DateRangeFilter::make('created_at'))
-            ->build()
-            ->execute()
-            ->models();
-
-        // Should return all results when value is not an array
-        $this->assertCount(5, $result);
+            ->build();
     }
 }

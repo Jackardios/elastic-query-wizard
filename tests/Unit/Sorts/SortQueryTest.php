@@ -12,14 +12,14 @@ use Jackardios\QueryWizard\Enums\SortDirection;
 use Jackardios\QueryWizard\Exceptions\InvalidSortQuery;
 use Jackardios\QueryWizard\Sorts\AbstractSort;
 use Jackardios\QueryWizard\Values\Sort;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group sort
- */
+#[Group('unit')]
+#[Group('sort')]
 class SortQueryTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function it_sorts_ascending(): void
     {
         $wizard = $this
@@ -30,7 +30,7 @@ class SortQueryTest extends UnitTestCase
         $this->assertEquals([['name' => 'asc']], $this->getSorts($wizard->getSubject()));
     }
 
-    /** @test */
+    #[Test]
     public function it_sorts_descending(): void
     {
         $wizard = $this
@@ -41,7 +41,7 @@ class SortQueryTest extends UnitTestCase
         $this->assertEquals([['name' => 'desc']], $this->getSorts($wizard->getSubject()));
     }
 
-    /** @test */
+    #[Test]
     public function it_sorts_by_alias(): void
     {
         $wizard = $this
@@ -52,7 +52,7 @@ class SortQueryTest extends UnitTestCase
         $this->assertEquals([['name' => 'asc']], $this->getSorts($wizard->getSubject()));
     }
 
-    /** @test */
+    #[Test]
     public function it_sorts_descending_with_alias(): void
     {
         $wizard = $this
@@ -63,7 +63,7 @@ class SortQueryTest extends UnitTestCase
         $this->assertEquals([['name' => 'desc']], $this->getSorts($wizard->getSubject()));
     }
 
-    /** @test */
+    #[Test]
     public function it_uses_default_sort_when_no_sort_requested(): void
     {
         $wizard = $this
@@ -75,7 +75,7 @@ class SortQueryTest extends UnitTestCase
         $this->assertEquals([['name' => 'asc']], $this->getSorts($wizard->getSubject()));
     }
 
-    /** @test */
+    #[Test]
     public function it_uses_default_descending_sort(): void
     {
         $wizard = $this
@@ -87,7 +87,7 @@ class SortQueryTest extends UnitTestCase
         $this->assertEquals([['name' => 'desc']], $this->getSorts($wizard->getSubject()));
     }
 
-    /** @test */
+    #[Test]
     public function it_ignores_default_when_sort_is_requested(): void
     {
         $wizard = $this
@@ -99,7 +99,7 @@ class SortQueryTest extends UnitTestCase
         $this->assertEquals([['id' => 'asc']], $this->getSorts($wizard->getSubject()));
     }
 
-    /** @test */
+    #[Test]
     public function it_sorts_by_multiple_columns(): void
     {
         $wizard = $this
@@ -113,7 +113,7 @@ class SortQueryTest extends UnitTestCase
         ], $this->getSorts($wizard->getSubject()));
     }
 
-    /** @test */
+    #[Test]
     public function it_supports_multiple_default_sorts(): void
     {
         $sortClass = $this->createCustomSort();
@@ -130,7 +130,7 @@ class SortQueryTest extends UnitTestCase
         ], $this->getSorts($wizard->getSubject()));
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_for_invalid_sort(): void
     {
         $this->expectException(InvalidSortQuery::class);
@@ -141,7 +141,7 @@ class SortQueryTest extends UnitTestCase
             ->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_has_no_sorts_when_none_requested(): void
     {
         $wizard = $this
@@ -152,7 +152,7 @@ class SortQueryTest extends UnitTestCase
         $this->assertEquals([], $this->getSorts($wizard->getSubject()));
     }
 
-    /** @test */
+    #[Test]
     public function it_sorts_by_custom_sort_class(): void
     {
         $sortClass = $this->createCustomSort();
@@ -165,7 +165,7 @@ class SortQueryTest extends UnitTestCase
         $this->assertEquals([['name' => 'asc']], $this->getSorts($wizard->getSubject()));
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_add_duplicate_sort_clauses(): void
     {
         $wizard = ElasticQueryWizard::for(TestModel::class)
@@ -176,7 +176,7 @@ class SortQueryTest extends UnitTestCase
         $this->assertEquals([['name' => 'asc']], $this->getSorts($wizard->getSubject()));
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_advanced_field_sort_options(): void
     {
         $wizard = $this

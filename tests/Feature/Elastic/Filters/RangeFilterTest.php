@@ -9,12 +9,12 @@ use Jackardios\ElasticQueryWizard\Exceptions\InvalidRangeValue;
 use Jackardios\ElasticQueryWizard\Filters\RangeFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group filter
- * @group elastic-filter
- */
+#[Group('elastic')]
+#[Group('filter')]
+#[Group('elastic-filter')]
 class RangeFilterTest extends TestCase
 {
     protected Collection $models;
@@ -26,7 +26,7 @@ class RangeFilterTest extends TestCase
         $this->models = TestModel::factory()->count(5)->create();
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_by_lt_and_rt(): void
     {
         $modelsResult = $this
@@ -45,7 +45,7 @@ class RangeFilterTest extends TestCase
         $this->assertEqualsCanonicalizing([3,4], $modelsResult->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_empty_filter_value(): void
     {
         $modelsResult = $this
@@ -60,7 +60,7 @@ class RangeFilterTest extends TestCase
         $this->assertCount(5, $modelsResult);
     }
 
-    /** @test */
+    #[Test]
     public function it_should_apply_a_default_filter_value_if_nothing_in_request(): void
     {
         $filter = (RangeFilter::make('id'))->default(['gte' => '2', 'lt' => 4]);
@@ -76,7 +76,7 @@ class RangeFilterTest extends TestCase
         $this->assertEqualsCanonicalizing([2,3], $modelsResult->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_apply_default_filter_when_filter_exists_and_default_is_set(): void
     {
         $filter = (RangeFilter::make('id'))->default(['gte' => '2', 'lt' => 4]);
@@ -97,7 +97,7 @@ class RangeFilterTest extends TestCase
         $this->assertEqualsCanonicalizing([4,5], $modelsResult->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_exception_when_value_as_string_passed(): void
     {
         $this->expectException(InvalidRangeValue::class);
@@ -112,7 +112,7 @@ class RangeFilterTest extends TestCase
             ->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_exception_when_value_with_wrong_key_passed(): void
     {
         $this->expectException(InvalidRangeValue::class);

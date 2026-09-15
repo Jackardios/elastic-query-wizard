@@ -6,14 +6,14 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Filters;
 
 use Jackardios\ElasticQueryWizard\Filters\IdsFilter;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group filter
- */
+#[Group('unit')]
+#[Group('filter')]
 class IdsFilterQueryTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function it_builds_an_ids_query_for_single_value(): void
     {
         $wizard = $this
@@ -27,7 +27,7 @@ class IdsFilterQueryTest extends UnitTestCase
         $this->assertEquals(['ids' => ['values' => ['123']]], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_builds_an_ids_query_for_array_values(): void
     {
         $wizard = $this
@@ -41,7 +41,7 @@ class IdsFilterQueryTest extends UnitTestCase
         $this->assertEquals(['ids' => ['values' => ['123', '456', '789']]], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_builds_an_ids_query_for_comma_separated_values(): void
     {
         $wizard = $this
@@ -55,7 +55,7 @@ class IdsFilterQueryTest extends UnitTestCase
         $this->assertEquals(['ids' => ['values' => ['123', '456', '789']]], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_add_a_query_for_blank_value(): void
     {
         $wizard = $this
@@ -68,7 +68,7 @@ class IdsFilterQueryTest extends UnitTestCase
         $this->assertEmpty($queries);
     }
 
-    /** @test */
+    #[Test]
     public function it_resolves_the_property_name_via_alias(): void
     {
         $wizard = $this
@@ -82,7 +82,7 @@ class IdsFilterQueryTest extends UnitTestCase
         $this->assertEquals(['ids' => ['values' => ['123']]], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_filters_out_blank_items_from_array_values(): void
     {
         $wizard = $this

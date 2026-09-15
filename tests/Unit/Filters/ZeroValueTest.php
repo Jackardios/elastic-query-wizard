@@ -6,16 +6,17 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Filters;
 
 use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Tests for handling 0/"0" values in filters.
- *
- * @group unit
- * @group filter
  */
+#[Group('unit')]
+#[Group('filter')]
 class ZeroValueTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function fuzzy_filter_handles_zero_integer_value(): void
     {
         $filter = ElasticFilter::fuzzy('field');
@@ -29,7 +30,7 @@ class ZeroValueTest extends UnitTestCase
         $this->assertEquals('0', $array['fuzzy']['field']['value']);
     }
 
-    /** @test */
+    #[Test]
     public function fuzzy_filter_handles_zero_string_value(): void
     {
         $filter = ElasticFilter::fuzzy('field');
@@ -43,7 +44,7 @@ class ZeroValueTest extends UnitTestCase
         $this->assertEquals('0', $array['fuzzy']['field']['value']);
     }
 
-    /** @test */
+    #[Test]
     public function prefix_filter_handles_zero_integer_value(): void
     {
         $filter = ElasticFilter::prefix('field');
@@ -57,7 +58,7 @@ class ZeroValueTest extends UnitTestCase
         $this->assertEquals('0', $array['prefix']['field']['value']);
     }
 
-    /** @test */
+    #[Test]
     public function prefix_filter_handles_zero_string_value(): void
     {
         $filter = ElasticFilter::prefix('field');
@@ -71,7 +72,7 @@ class ZeroValueTest extends UnitTestCase
         $this->assertEquals('0', $array['prefix']['field']['value']);
     }
 
-    /** @test */
+    #[Test]
     public function regexp_filter_handles_zero_integer_value(): void
     {
         $filter = ElasticFilter::regexp('field');
@@ -85,7 +86,7 @@ class ZeroValueTest extends UnitTestCase
         $this->assertEquals('0', $array['regexp']['field']['value']);
     }
 
-    /** @test */
+    #[Test]
     public function regexp_filter_handles_zero_string_value(): void
     {
         $filter = ElasticFilter::regexp('field');
@@ -99,7 +100,7 @@ class ZeroValueTest extends UnitTestCase
         $this->assertEquals('0', $array['regexp']['field']['value']);
     }
 
-    /** @test */
+    #[Test]
     public function wildcard_filter_handles_zero_integer_value(): void
     {
         $filter = ElasticFilter::wildcard('field');
@@ -113,7 +114,7 @@ class ZeroValueTest extends UnitTestCase
         $this->assertEquals('0', $array['wildcard']['field']['value']);
     }
 
-    /** @test */
+    #[Test]
     public function wildcard_filter_handles_zero_string_value(): void
     {
         $filter = ElasticFilter::wildcard('field');
@@ -127,7 +128,7 @@ class ZeroValueTest extends UnitTestCase
         $this->assertEquals('0', $array['wildcard']['field']['value']);
     }
 
-    /** @test */
+    #[Test]
     public function fuzzy_filter_handles_empty_array(): void
     {
         $filter = ElasticFilter::fuzzy('field');
@@ -136,7 +137,7 @@ class ZeroValueTest extends UnitTestCase
         $this->assertNull($query);
     }
 
-    /** @test */
+    #[Test]
     public function prefix_filter_handles_empty_array(): void
     {
         $filter = ElasticFilter::prefix('field');
@@ -145,7 +146,7 @@ class ZeroValueTest extends UnitTestCase
         $this->assertNull($query);
     }
 
-    /** @test */
+    #[Test]
     public function regexp_filter_handles_empty_array(): void
     {
         $filter = ElasticFilter::regexp('field');
@@ -154,7 +155,7 @@ class ZeroValueTest extends UnitTestCase
         $this->assertNull($query);
     }
 
-    /** @test */
+    #[Test]
     public function wildcard_filter_handles_empty_array(): void
     {
         $filter = ElasticFilter::wildcard('field');

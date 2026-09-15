@@ -9,12 +9,12 @@ use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
 use Jackardios\ElasticQueryWizard\Filters\TermFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group aggregation
- * @group elastic-aggregation
- */
+#[Group('elastic')]
+#[Group('aggregation')]
+#[Group('elastic-aggregation')]
 class AggregationTest extends TestCase
 {
     protected function setUp(): void
@@ -26,7 +26,7 @@ class AggregationTest extends TestCase
         TestModel::factory()->count(2)->create(['category' => 'clothing']);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_add_terms_aggregation(): void
     {
         $result = ElasticQueryWizard::for(TestModel::class)
@@ -43,7 +43,7 @@ class AggregationTest extends TestCase
         $this->assertArrayHasKey('categories', $aggregations);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_get_aggregation_buckets(): void
     {
         $result = ElasticQueryWizard::for(TestModel::class)
@@ -62,7 +62,7 @@ class AggregationTest extends TestCase
         $this->assertCount(3, $buckets);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_add_cardinality_aggregation(): void
     {
         $result = ElasticQueryWizard::for(TestModel::class)
@@ -77,7 +77,7 @@ class AggregationTest extends TestCase
         $this->assertEquals(3, $aggregations['unique_categories']['value']);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_combine_aggregation_with_filters(): void
     {
         $result = $this
@@ -99,7 +99,7 @@ class AggregationTest extends TestCase
         $this->assertEquals('electronics', $buckets[0]['key']);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_add_multiple_aggregations(): void
     {
         $result = ElasticQueryWizard::for(TestModel::class)
@@ -116,7 +116,7 @@ class AggregationTest extends TestCase
         $this->assertArrayHasKey('unique_count', $aggregations);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_use_date_histogram_aggregation(): void
     {
         $result = ElasticQueryWizard::for(TestModel::class)
@@ -130,7 +130,7 @@ class AggregationTest extends TestCase
         $this->assertArrayHasKey('by_date', $aggregations);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_limit_terms_aggregation_size(): void
     {
         TestModel::factory()->count(5)->create(['category' => 'category-a']);
@@ -152,7 +152,7 @@ class AggregationTest extends TestCase
         $this->assertLessThanOrEqual(3, count($buckets));
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_empty_aggregations_when_none_configured(): void
     {
         $result = ElasticQueryWizard::for(TestModel::class)
@@ -163,7 +163,7 @@ class AggregationTest extends TestCase
         $this->assertEmpty($aggregations);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_access_raw_result_with_aggregations(): void
     {
         $raw = ElasticQueryWizard::for(TestModel::class)
@@ -178,7 +178,7 @@ class AggregationTest extends TestCase
         $this->assertArrayHasKey('categories', $raw['aggregations']);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_paginate_with_aggregations(): void
     {
         $paginator = ElasticQueryWizard::for(TestModel::class)
@@ -192,7 +192,7 @@ class AggregationTest extends TestCase
         $this->assertEquals(5, $paginator->perPage());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_use_stats_aggregation(): void
     {
         $result = ElasticQueryWizard::for(TestModel::class)

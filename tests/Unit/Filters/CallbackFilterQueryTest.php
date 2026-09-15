@@ -9,14 +9,14 @@ use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Support\Query;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group filter
- */
+#[Group('unit')]
+#[Group('filter')]
 class CallbackFilterQueryTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function it_applies_the_callback_to_bool_query(): void
     {
         $wizard = $this
@@ -34,7 +34,7 @@ class CallbackFilterQueryTest extends UnitTestCase
         $this->assertEquals(['match' => ['name' => ['query' => 'test']]], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_passes_the_property_name_to_the_callback(): void
     {
         $receivedProperty = null;
@@ -51,7 +51,7 @@ class CallbackFilterQueryTest extends UnitTestCase
         $this->assertEquals('my_filter', $receivedProperty);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_add_filter_clauses_via_callback(): void
     {
         $wizard = $this

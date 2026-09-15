@@ -23,6 +23,11 @@ final class WildcardFilter extends AbstractElasticFilter
         return 'wildcard';
     }
 
+    public function validateValueShape(mixed $value): ?string
+    {
+        return $this->validateScalarOrBlankValueShape($value);
+    }
+
     public function buildQuery(mixed $value): ?QueryInterface
     {
         $prepared = FilterValueSanitizer::toString($value);

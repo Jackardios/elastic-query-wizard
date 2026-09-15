@@ -7,14 +7,14 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Concerns;
 use Jackardios\ElasticQueryWizard\Concerns\HasBoolClause;
 use Jackardios\ElasticQueryWizard\Enums\BoolClause;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group concerns
- */
+#[Group('unit')]
+#[Group('concerns')]
 class HasBoolClauseTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function it_defaults_to_filter_clause(): void
     {
         $object = $this->createObjectWithTrait();
@@ -23,7 +23,7 @@ class HasBoolClauseTest extends TestCase
         $this->assertEquals(BoolClause::FILTER, $object->getEffectiveClause());
     }
 
-    /** @test */
+    #[Test]
     public function in_filter_sets_filter_clause(): void
     {
         $object = $this->createObjectWithTrait();
@@ -35,7 +35,7 @@ class HasBoolClauseTest extends TestCase
         $this->assertEquals(BoolClause::FILTER, $object->getEffectiveClause());
     }
 
-    /** @test */
+    #[Test]
     public function in_must_sets_must_clause(): void
     {
         $object = $this->createObjectWithTrait();
@@ -47,7 +47,7 @@ class HasBoolClauseTest extends TestCase
         $this->assertEquals(BoolClause::MUST, $object->getEffectiveClause());
     }
 
-    /** @test */
+    #[Test]
     public function in_should_sets_should_clause(): void
     {
         $object = $this->createObjectWithTrait();
@@ -59,7 +59,7 @@ class HasBoolClauseTest extends TestCase
         $this->assertEquals(BoolClause::SHOULD, $object->getEffectiveClause());
     }
 
-    /** @test */
+    #[Test]
     public function in_must_not_sets_must_not_clause(): void
     {
         $object = $this->createObjectWithTrait();
@@ -71,7 +71,7 @@ class HasBoolClauseTest extends TestCase
         $this->assertEquals(BoolClause::MUST_NOT, $object->getEffectiveClause());
     }
 
-    /** @test */
+    #[Test]
     public function get_effective_clause_returns_explicit_clause_over_default(): void
     {
         $object = $this->createObjectWithCustomDefault(BoolClause::MUST);

@@ -6,14 +6,14 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Sorts;
 
 use Jackardios\ElasticQueryWizard\Sorts\ScriptSort;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group sort
- */
+#[Group('unit')]
+#[Group('sort')]
 class ScriptSortQueryTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function it_sorts_by_script_ascending(): void
     {
         $wizard = $this
@@ -35,7 +35,7 @@ class ScriptSortQueryTest extends UnitTestCase
         ], $sorts[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_sorts_by_script_descending(): void
     {
         $wizard = $this
@@ -57,7 +57,7 @@ class ScriptSortQueryTest extends UnitTestCase
         ], $sorts[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_custom_type(): void
     {
         $wizard = $this
@@ -81,7 +81,7 @@ class ScriptSortQueryTest extends UnitTestCase
         ], $sorts[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_params(): void
     {
         $wizard = $this
@@ -107,7 +107,7 @@ class ScriptSortQueryTest extends UnitTestCase
         ], $sorts[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_mode(): void
     {
         $wizard = $this
@@ -132,7 +132,7 @@ class ScriptSortQueryTest extends UnitTestCase
         ], $sorts[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_nested_sorting_context(): void
     {
         $wizard = $this
@@ -157,7 +157,7 @@ class ScriptSortQueryTest extends UnitTestCase
         ], $sorts[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_all_options(): void
     {
         $wizard = $this

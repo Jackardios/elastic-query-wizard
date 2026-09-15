@@ -10,12 +10,12 @@ use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
 use Jackardios\ElasticQueryWizard\Filters\TrashedFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\SoftDeleteModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group filter
- * @group elastic-filter
- */
+#[Group('elastic')]
+#[Group('filter')]
+#[Group('elastic-filter')]
 class TrashedFilterTest extends TestCase
 {
     protected Collection $models;
@@ -30,7 +30,7 @@ class TrashedFilterTest extends TestCase
             ->merge(SoftDeleteModel::factory()->count(1)->create(['deleted_at' => now()]));
     }
 
-    /** @test */
+    #[Test]
     public function it_should_filter_not_trashed_by_default()
     {
         $models = $this
@@ -45,7 +45,7 @@ class TrashedFilterTest extends TestCase
         $this->assertCount(2, $models);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_only_trashed()
     {
         $models = $this
@@ -60,7 +60,7 @@ class TrashedFilterTest extends TestCase
         $this->assertCount(1, $models);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_with_trashed()
     {
         $models = $this
@@ -75,7 +75,7 @@ class TrashedFilterTest extends TestCase
         $this->assertCount(3, $models);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_with_trashed_using_true_alias()
     {
         $models = $this
@@ -90,7 +90,7 @@ class TrashedFilterTest extends TestCase
         $this->assertCount(3, $models);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_explicitly_filter_without_trashed()
     {
         $models = $this

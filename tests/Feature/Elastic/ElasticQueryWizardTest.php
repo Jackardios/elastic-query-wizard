@@ -17,17 +17,17 @@ use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\SoftDeleteModel;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
 use Jackardios\QueryWizard\Eloquent\Includes\RelationshipInclude;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group wizard
- * @group elastic-wizard
- */
+#[Group('elastic')]
+#[Group('wizard')]
+#[Group('elastic-wizard')]
 class ElasticQueryWizardTest extends TestCase
 {
     use AssertsCollectionSorting;
 
-    /** @test */
+    #[Test]
     public function it_can_not_be_given_a_string_that_is_not_a_class_name(): void
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -37,7 +37,7 @@ class ElasticQueryWizardTest extends TestCase
         ElasticQueryWizard::for('not a class name');
     }
 
-    /** @test */
+    #[Test]
     public function it_can_query_soft_deletes(): void
     {
         Config::set('scout.soft_delete', true);
@@ -62,7 +62,7 @@ class ElasticQueryWizardTest extends TestCase
 
     // === Filter + Sort tests ===
 
-    /** @test */
+    #[Test]
     public function it_can_apply_filter_and_sort_together(): void
     {
         TestModel::factory()->create(['name' => 'Alice', 'category' => 'test-category']);
@@ -84,7 +84,7 @@ class ElasticQueryWizardTest extends TestCase
         $this->assertTrue($models->every(fn($m) => $m->category === 'test-category'));
     }
 
-    /** @test */
+    #[Test]
     public function it_can_apply_multiple_filters_and_sorts(): void
     {
         TestModel::factory()->create(['name' => 'Alice', 'category' => 'cat-a']);
@@ -107,7 +107,7 @@ class ElasticQueryWizardTest extends TestCase
 
     // === Filter + Sort + Include tests ===
 
-    /** @test */
+    #[Test]
     public function it_can_apply_filter_sort_and_include_together(): void
     {
         $model1 = TestModel::factory()->create(['name' => 'Alice', 'category' => 'combined-test']);
@@ -136,7 +136,7 @@ class ElasticQueryWizardTest extends TestCase
 
     // === modifyQuery callback tests ===
 
-    /** @test */
+    #[Test]
     public function it_executes_modify_query_callback(): void
     {
         TestModel::factory()->count(3)->create();
@@ -156,7 +156,7 @@ class ElasticQueryWizardTest extends TestCase
         $this->assertEqualsCanonicalizing(['id', 'name'], array_keys($models->first()->getAttributes()));
     }
 
-    /** @test */
+    #[Test]
     public function it_executes_multiple_modify_query_callbacks_in_order(): void
     {
         TestModel::factory()->count(2)->create();
@@ -179,7 +179,7 @@ class ElasticQueryWizardTest extends TestCase
         $this->assertEquals(['first', 'second', 'third'], $order);
     }
 
-    /** @test */
+    #[Test]
     public function it_passes_raw_result_to_modify_query_callback_when_array_is_expected(): void
     {
         TestModel::factory()->count(2)->create();
@@ -199,7 +199,7 @@ class ElasticQueryWizardTest extends TestCase
 
     // === modifyModels callback tests ===
 
-    /** @test */
+    #[Test]
     public function it_executes_modify_models_callback(): void
     {
         TestModel::factory()->count(3)->create();
@@ -218,7 +218,7 @@ class ElasticQueryWizardTest extends TestCase
         $this->assertCount(3, $models);
     }
 
-    /** @test */
+    #[Test]
     public function it_executes_multiple_modify_models_callbacks_in_order(): void
     {
         TestModel::factory()->count(2)->create();
@@ -242,7 +242,7 @@ class ElasticQueryWizardTest extends TestCase
 
     // === Field selection tests ===
 
-    /** @test */
+    #[Test]
     public function it_selects_only_allowed_fields(): void
     {
         TestModel::factory()->create(['name' => 'Test Name', 'category' => 'Test Category']);
@@ -258,7 +258,7 @@ class ElasticQueryWizardTest extends TestCase
         $this->assertArrayNotHasKey('category', $firstModel->toArray());
     }
 
-    /** @test */
+    #[Test]
     public function it_always_includes_primary_key_in_fields(): void
     {
         TestModel::factory()->create();
@@ -275,7 +275,7 @@ class ElasticQueryWizardTest extends TestCase
 
     // === Appends tests ===
 
-    /** @test */
+    #[Test]
     public function it_appends_accessors_to_models(): void
     {
         AppendModel::factory()->create(['firstname' => 'John', 'lastname' => 'Doe']);
@@ -292,7 +292,7 @@ class ElasticQueryWizardTest extends TestCase
 
     // === BoolQuery access tests ===
 
-    /** @test */
+    #[Test]
     public function it_provides_access_to_bool_query(): void
     {
         TestModel::factory()->count(3)->create();

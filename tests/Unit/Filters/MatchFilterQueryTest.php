@@ -7,14 +7,14 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Filters;
 use Jackardios\ElasticQueryWizard\Filters\MatchFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group filter
- */
+#[Group('unit')]
+#[Group('filter')]
 class MatchFilterQueryTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function it_builds_a_match_query(): void
     {
         $wizard = $this
@@ -28,7 +28,7 @@ class MatchFilterQueryTest extends UnitTestCase
         $this->assertEquals(['match' => ['name' => ['query' => 'John']]], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_add_a_query_for_blank_value(): void
     {
         $wizard = $this
@@ -41,7 +41,7 @@ class MatchFilterQueryTest extends UnitTestCase
         $this->assertEmpty($queries);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_extra_parameters(): void
     {
         $wizard = $this
@@ -59,7 +59,7 @@ class MatchFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_joins_array_values_with_comma(): void
     {
         $wizard = $this

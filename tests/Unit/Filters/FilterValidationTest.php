@@ -8,14 +8,14 @@ use Jackardios\ElasticQueryWizard\Filters\TermFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use Jackardios\QueryWizard\Exceptions\InvalidFilterQuery;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group filter
- */
+#[Group('unit')]
+#[Group('filter')]
 class FilterValidationTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function it_throws_for_invalid_filter(): void
     {
         $this->expectException(InvalidFilterQuery::class);
@@ -26,7 +26,7 @@ class FilterValidationTest extends UnitTestCase
             ->build();
     }
 
-    /** @test */
+    #[Test]
     public function the_exception_contains_unknown_and_allowed_filters(): void
     {
         $exception = new InvalidFilterQuery(collect(['unknown']), collect(['allowed']));
@@ -35,7 +35,7 @@ class FilterValidationTest extends UnitTestCase
         $this->assertEquals(['allowed'], $exception->allowedFilters->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_sets_property_to_name_by_default(): void
     {
         $filter = TermFilter::make('property_name');
@@ -43,7 +43,7 @@ class FilterValidationTest extends UnitTestCase
         $this->assertEquals($filter->getName(), $filter->getProperty());
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_valid_filters_without_throwing(): void
     {
         $wizard = $this

@@ -15,17 +15,17 @@ use Jackardios\QueryWizard\Enums\SortDirection;
 use Jackardios\QueryWizard\Exceptions\InvalidSortQuery;
 use Jackardios\QueryWizard\Sorts\AbstractSort;
 use Jackardios\QueryWizard\Values\Sort;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group sort
- * @group elastic-sort
- */
+#[Group('elastic')]
+#[Group('sort')]
+#[Group('elastic-sort')]
 class SortTest extends TestCase
 {
     use AssertsCollectionSorting;
 
-    /** @test */
+    #[Test]
     public function it_can_sort_a_query_ascending(): void
     {
         $searchBuilder = $this
@@ -36,7 +36,7 @@ class SortTest extends TestCase
         $this->assertEquals([["name" => "asc"]], $this->getSorts($searchBuilder));
     }
 
-    /** @test */
+    #[Test]
     public function it_can_sort_a_query_descending(): void
     {
         $searchBuilder = $this
@@ -47,7 +47,7 @@ class SortTest extends TestCase
         $this->assertEquals([["name" => "desc"]], $this->getSorts($searchBuilder));
     }
 
-    /** @test */
+    #[Test]
     public function it_can_sort_a_query_by_alias(): void
     {
         $searchBuilder = $this
@@ -58,7 +58,7 @@ class SortTest extends TestCase
         $this->assertEquals([["name" => "asc"]], $this->getSorts($searchBuilder));
     }
 
-    /** @test */
+    #[Test]
     public function it_can_allow_a_descending_sort_by_still_sort_ascending(): void
     {
         $searchBuilder = $this
@@ -69,7 +69,7 @@ class SortTest extends TestCase
         $this->assertEquals([["name" => "asc"]], $this->getSorts($searchBuilder));
     }
 
-    /** @test */
+    #[Test]
     public function it_can_sort_by_sketchy_alias_if_its_an_allowed_sort(): void
     {
         $searchBuilder = $this
@@ -80,7 +80,7 @@ class SortTest extends TestCase
         $this->assertEquals([["name" => "desc"]], $this->getSorts($searchBuilder));
     }
 
-    /** @test */
+    #[Test]
     public function it_will_throw_an_exception_if_a_sort_property_is_not_allowed(): void
     {
         $this->expectException(InvalidSortQuery::class);
@@ -91,7 +91,7 @@ class SortTest extends TestCase
             ->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_wont_sort_if_no_sort_query_parameter_is_given(): void
     {
         $searchBuilder = $this->createElasticWizardFromQuery()
@@ -101,7 +101,7 @@ class SortTest extends TestCase
         $this->assertEquals([], $this->getSorts($searchBuilder));
     }
 
-    /** @test */
+    #[Test]
     public function it_uses_default_sort_parameter_when_no_sort_was_requested(): void
     {
         $searchBuilder = $this->createElasticWizardFromQuery()
@@ -112,7 +112,7 @@ class SortTest extends TestCase
         $this->assertEquals([["name" => "asc"]], $this->getSorts($searchBuilder));
     }
 
-    /** @test */
+    #[Test]
     public function it_doesnt_use_the_default_sort_parameter_when_a_sort_was_requested(): void
     {
         $searchBuilder = $this->createElasticWizardWithSorts('id')
@@ -123,7 +123,7 @@ class SortTest extends TestCase
         $this->assertEquals([["id" => "asc"]], $this->getSorts($searchBuilder));
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_default_custom_sort_class_parameter(): void
     {
         $sortClass = $this->createCustomSort();
@@ -136,7 +136,7 @@ class SortTest extends TestCase
         $this->assertEquals([["name" => "asc"]], $this->getSorts($searchBuilder));
     }
 
-    /** @test */
+    #[Test]
     public function it_uses_default_descending_sort_parameter(): void
     {
         $searchBuilder = $this->createElasticWizardFromQuery()
@@ -147,7 +147,7 @@ class SortTest extends TestCase
         $this->assertEquals([["name" => "desc"]], $this->getSorts($searchBuilder));
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_multiple_default_sort_parameters(): void
     {
         $sortClass = $this->createCustomSort();
@@ -163,7 +163,7 @@ class SortTest extends TestCase
         ], $this->getSorts($searchBuilder));
     }
 
-    /** @test */
+    #[Test]
     public function it_can_allow_multiple_sort_parameters(): void
     {
         $searchBuilder = $this
@@ -174,7 +174,7 @@ class SortTest extends TestCase
         $this->assertEquals([["name" => "asc"]], $this->getSorts($searchBuilder));
     }
 
-    /** @test */
+    #[Test]
     public function it_can_allow_multiple_sort_parameters_as_an_array(): void
     {
         $searchBuilder = $this
@@ -185,7 +185,7 @@ class SortTest extends TestCase
         $this->assertEquals([["name" => "asc"]], $this->getSorts($searchBuilder));
     }
 
-    /** @test */
+    #[Test]
     public function it_can_sort_by_multiple_columns(): void
     {
         $searchBuilder = $this
@@ -199,7 +199,7 @@ class SortTest extends TestCase
         ], $this->getSorts($searchBuilder));
     }
 
-    /** @test */
+    #[Test]
     public function it_can_sort_by_a_custom_sort_class(): void
     {
         $sortClass = $this->createCustomSort();
@@ -212,7 +212,7 @@ class SortTest extends TestCase
         $this->assertEquals([["name" => "asc"]], $this->getSorts($searchBuilder));
     }
 
-    /** @test */
+    #[Test]
     public function it_resolves_queries_using_property_column_name(): void
     {
         $sort = FieldSort::make('name', 'nickname');
@@ -225,7 +225,7 @@ class SortTest extends TestCase
         $this->assertEquals([["name" => "asc"]], $this->getSorts($searchBuilder));
     }
 
-    /** @test */
+    #[Test]
     public function it_can_sort_descending_with_an_alias(): void
     {
         $searchBuilder = $this->createElasticWizardWithSorts('-exposed_property_name')
@@ -235,7 +235,7 @@ class SortTest extends TestCase
         $this->assertEquals([["name" => "desc"]], $this->getSorts($searchBuilder));
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_add_sort_clauses_multiple_times(): void
     {
         $searchBuilder = ElasticQueryWizard::for(TestModel::class)
@@ -246,7 +246,7 @@ class SortTest extends TestCase
         $this->assertEquals([["name" => "asc"]], $this->getSorts($searchBuilder));
     }
 
-    /** @test */
+    #[Test]
     public function given_a_default_sort_a_sort_alias_will_still_be_resolved(): void
     {
         $searchBuilder = $this->createElasticWizardWithSorts('-joined')
@@ -257,7 +257,7 @@ class SortTest extends TestCase
         $this->assertEquals([["created_at" => "desc"]], $this->getSorts($searchBuilder));
     }
 
-    /** @test */
+    #[Test]
     public function the_default_direction_of_an_allow_sort_can_be_set(): void
     {
         $sortClass = $this->createCustomSort();

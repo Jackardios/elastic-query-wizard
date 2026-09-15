@@ -13,12 +13,12 @@ use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
 use Jackardios\EsScoutDriver\Support\Query;
 use Jackardios\QueryWizard\Exceptions\InvalidFilterQuery;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group filter
- * @group elastic-filter
- */
+#[Group('elastic')]
+#[Group('filter')]
+#[Group('elastic-filter')]
 class FilterTest extends TestCase
 {
     protected Collection $models;
@@ -30,7 +30,7 @@ class FilterTest extends TestCase
         $this->models = TestModel::factory()->count(5)->create();
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_models_by_term_property_by_default(): void
     {
         $expectedModel = TestModel::factory()->create(['category' => 'some-testing-category']);
@@ -47,7 +47,7 @@ class FilterTest extends TestCase
         $this->assertEquals($expectedModel->category, $modelsResult->first()->category);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_models_by_an_array_as_filter_value(): void
     {
         $expectedModel = TestModel::factory()->create(['category' => 'some-testing-category']);
@@ -64,7 +64,7 @@ class FilterTest extends TestCase
         $this->assertEquals($expectedModel->category, $modelsResult->first()->category);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_models_and_return_an_empty_collection(): void
     {
         $modelsResult = $this
@@ -79,7 +79,7 @@ class FilterTest extends TestCase
         $this->assertCount(0, $modelsResult);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_a_custom_base_query_with_select(): void
     {
         $model = TestModel::factory()->create(['category' => 'unique-test-category-xyz']);
@@ -98,7 +98,7 @@ class FilterTest extends TestCase
         $this->assertModelsAttributesEqual($expectedModel, $modelResult);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_results_based_on_the_existence_of_a_property_in_an_array(): void
     {
         $expectedModels = collect([$this->models[0], $this->models[1]]);
@@ -121,7 +121,7 @@ class FilterTest extends TestCase
      * Use Elastic-specific filters (TermFilter, MatchFilter, etc.) instead.
      */
 
-    /** @test */
+    #[Test]
     public function it_can_filter_results_by_a_custom_filter_class(): void
     {
         $testModel = $this->models->first();
@@ -166,7 +166,7 @@ class FilterTest extends TestCase
         $this->assertEquals($testModel->id, $modelResult->id);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_allow_multiple_filters(): void
     {
         $expectedModels = TestModel::factory()->count(2)->create(['name' => 'abcdef']);
@@ -184,7 +184,7 @@ class FilterTest extends TestCase
         $this->assertEqualsCanonicalizing($expectedModels->pluck('id')->all(), $modelsResult->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_allow_multiple_filters_as_an_array(): void
     {
         $expectedModels = TestModel::factory()->count(2)->create(['name' => 'abcdef']);
@@ -202,7 +202,7 @@ class FilterTest extends TestCase
         $this->assertEqualsCanonicalizing($expectedModels->pluck('id')->all(), $modelsResult->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_by_multiple_filters(): void
     {
         $expectedModels = TestModel::factory()->count(2)->create(['name' => 'abcdef']);
@@ -221,7 +221,7 @@ class FilterTest extends TestCase
         $this->assertEquals([$expectedModels[0]->id], $modelsResult->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_guards_against_invalid_filters(): void
     {
         $this->expectException(InvalidFilterQuery::class);
@@ -232,7 +232,7 @@ class FilterTest extends TestCase
             ->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_can_create_a_custom_filter_with_an_instantiated_filter(): void
     {
         $customFilter = new class ('*') extends AbstractElasticFilter {
@@ -269,7 +269,7 @@ class FilterTest extends TestCase
         $this->assertNotEmpty($modelsResult);
     }
 
-    /** @test */
+    #[Test]
     public function an_invalid_filter_query_exception_contains_the_unknown_and_allowed_filters(): void
     {
         $exception = new InvalidFilterQuery(collect(['unknown filter']), collect(['allowed filter']));
@@ -278,7 +278,7 @@ class FilterTest extends TestCase
         $this->assertEquals(['allowed filter'], $exception->allowedFilters->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_sets_property_column_name_to_property_name_by_default(): void
     {
         $filter = TermFilter::make('property_name');
@@ -286,7 +286,7 @@ class FilterTest extends TestCase
         $this->assertEquals($filter->getName(), $filter->getProperty());
     }
 
-    /** @test */
+    #[Test]
     public function it_resolves_queries_using_property_column_name(): void
     {
         $filter = TermFilter::make('category', 'tag');
@@ -306,7 +306,7 @@ class FilterTest extends TestCase
         $this->assertEquals($expectedModel->category, $modelsResult->first()->category);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_using_boolean_flags(): void
     {
         TestModel::query()->update(['is_visible' => true]);
@@ -323,7 +323,7 @@ class FilterTest extends TestCase
         $this->assertGreaterThan(0, TestModel::all()->count());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_add_parameters_to_filters(): void
     {
         TestModel::factory()->create(['name' => 'St.Petersburg']);

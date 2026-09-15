@@ -8,12 +8,12 @@ use Illuminate\Support\Collection;
 use Jackardios\ElasticQueryWizard\Filters\MultiMatchFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group filter
- * @group elastic-filter
- */
+#[Group('elastic')]
+#[Group('filter')]
+#[Group('elastic-filter')]
 class MultiMatchFilterTest extends TestCase
 {
     protected Collection $models;
@@ -25,7 +25,7 @@ class MultiMatchFilterTest extends TestCase
         $this->models = TestModel::factory()->count(5)->create();
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_across_multiple_fields(): void
     {
         $expectedModel = TestModel::factory()->create([
@@ -46,7 +46,7 @@ class MultiMatchFilterTest extends TestCase
         $this->assertEquals($expectedModel->id, $modelsResult->first()->id);
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_empty_filter_value(): void
     {
         $modelsResult = $this
@@ -61,7 +61,7 @@ class MultiMatchFilterTest extends TestCase
         $this->assertCount(5, $modelsResult);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_with_parameters(): void
     {
         $expectedModel = TestModel::factory()->create([
@@ -85,7 +85,7 @@ class MultiMatchFilterTest extends TestCase
         $this->assertEquals($expectedModel->id, $modelsResult->first()->id);
     }
 
-    /** @test */
+    #[Test]
     public function it_should_apply_a_default_filter_value_if_nothing_in_request(): void
     {
         $model1 = TestModel::factory()->create(['name' => 'UniqueJohn Doe']);

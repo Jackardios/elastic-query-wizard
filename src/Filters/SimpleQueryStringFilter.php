@@ -24,6 +24,11 @@ final class SimpleQueryStringFilter extends AbstractElasticFilter
         return 'simple_query_string';
     }
 
+    public function validateValueShape(mixed $value): ?string
+    {
+        return $this->validateScalarOrFlatListValueShape($value);
+    }
+
     protected function getDefaultClause(): BoolClause
     {
         return BoolClause::MUST;

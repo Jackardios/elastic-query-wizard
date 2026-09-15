@@ -15,15 +15,15 @@ use Jackardios\ElasticQueryWizard\Filters\QueryStringFilter;
 use Jackardios\ElasticQueryWizard\Filters\SimpleQueryStringFilter;
 use Jackardios\ElasticQueryWizard\Filters\TermFilter;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group filter
- * @group clause
- */
+#[Group('unit')]
+#[Group('filter')]
+#[Group('clause')]
 class FilterClauseTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function term_filter_defaults_to_filter_clause(): void
     {
         $filter = TermFilter::make('name');
@@ -31,7 +31,7 @@ class FilterClauseTest extends UnitTestCase
         $this->assertEquals(BoolClause::FILTER, $filter->getEffectiveClause());
     }
 
-    /** @test */
+    #[Test]
     public function term_filter_can_be_set_to_must(): void
     {
         $filter = TermFilter::make('name')->inMust();
@@ -39,7 +39,7 @@ class FilterClauseTest extends UnitTestCase
         $this->assertEquals(BoolClause::MUST, $filter->getEffectiveClause());
     }
 
-    /** @test */
+    #[Test]
     public function term_filter_can_be_set_to_should(): void
     {
         $filter = TermFilter::make('name')->inShould();
@@ -47,7 +47,7 @@ class FilterClauseTest extends UnitTestCase
         $this->assertEquals(BoolClause::SHOULD, $filter->getEffectiveClause());
     }
 
-    /** @test */
+    #[Test]
     public function term_filter_can_be_set_to_must_not(): void
     {
         $filter = TermFilter::make('name')->inMustNot();
@@ -55,7 +55,7 @@ class FilterClauseTest extends UnitTestCase
         $this->assertEquals(BoolClause::MUST_NOT, $filter->getEffectiveClause());
     }
 
-    /** @test */
+    #[Test]
     public function match_filter_defaults_to_must_clause(): void
     {
         $filter = MatchFilter::make('title');
@@ -63,7 +63,7 @@ class FilterClauseTest extends UnitTestCase
         $this->assertEquals(BoolClause::MUST, $filter->getEffectiveClause());
     }
 
-    /** @test */
+    #[Test]
     public function match_filter_can_be_set_to_filter(): void
     {
         $filter = MatchFilter::make('title')->inFilter();
@@ -71,7 +71,7 @@ class FilterClauseTest extends UnitTestCase
         $this->assertEquals(BoolClause::FILTER, $filter->getEffectiveClause());
     }
 
-    /** @test */
+    #[Test]
     public function multi_match_filter_defaults_to_must_clause(): void
     {
         $filter = MultiMatchFilter::make(['title', 'content'], 'search');
@@ -79,7 +79,7 @@ class FilterClauseTest extends UnitTestCase
         $this->assertEquals(BoolClause::MUST, $filter->getEffectiveClause());
     }
 
-    /** @test */
+    #[Test]
     public function fuzzy_filter_defaults_to_must_clause(): void
     {
         $filter = FuzzyFilter::make('name');
@@ -87,7 +87,7 @@ class FilterClauseTest extends UnitTestCase
         $this->assertEquals(BoolClause::MUST, $filter->getEffectiveClause());
     }
 
-    /** @test */
+    #[Test]
     public function match_phrase_filter_defaults_to_must_clause(): void
     {
         $filter = MatchPhraseFilter::make('content');
@@ -95,7 +95,7 @@ class FilterClauseTest extends UnitTestCase
         $this->assertEquals(BoolClause::MUST, $filter->getEffectiveClause());
     }
 
-    /** @test */
+    #[Test]
     public function match_phrase_prefix_filter_defaults_to_must_clause(): void
     {
         $filter = MatchPhrasePrefixFilter::make('content');
@@ -103,7 +103,7 @@ class FilterClauseTest extends UnitTestCase
         $this->assertEquals(BoolClause::MUST, $filter->getEffectiveClause());
     }
 
-    /** @test */
+    #[Test]
     public function query_string_filter_defaults_to_must_clause(): void
     {
         $filter = QueryStringFilter::make('search');
@@ -111,7 +111,7 @@ class FilterClauseTest extends UnitTestCase
         $this->assertEquals(BoolClause::MUST, $filter->getEffectiveClause());
     }
 
-    /** @test */
+    #[Test]
     public function simple_query_string_filter_defaults_to_must_clause(): void
     {
         $filter = SimpleQueryStringFilter::make('search');
@@ -119,7 +119,7 @@ class FilterClauseTest extends UnitTestCase
         $this->assertEquals(BoolClause::MUST, $filter->getEffectiveClause());
     }
 
-    /** @test */
+    #[Test]
     public function more_like_this_filter_defaults_to_must_clause(): void
     {
         $filter = MoreLikeThisFilter::make(['title', 'content'], 'similar');
@@ -127,7 +127,7 @@ class FilterClauseTest extends UnitTestCase
         $this->assertEquals(BoolClause::MUST, $filter->getEffectiveClause());
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_term_filter_to_should_clause(): void
     {
         $wizard = $this
@@ -143,7 +143,7 @@ class FilterClauseTest extends UnitTestCase
         $this->assertEquals(['term' => ['status' => ['value' => 'active']]], $shouldQueries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_term_filter_to_must_not_clause(): void
     {
         $wizard = $this
@@ -159,7 +159,7 @@ class FilterClauseTest extends UnitTestCase
         $this->assertEquals(['term' => ['status' => ['value' => 'deleted']]], $mustNotQueries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_match_filter_to_filter_clause_when_overridden(): void
     {
         $wizard = $this

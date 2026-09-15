@@ -6,14 +6,14 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Filters;
 
 use Jackardios\ElasticQueryWizard\Filters\MatchPhraseFilter;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group filter
- */
+#[Group('unit')]
+#[Group('filter')]
 class MatchPhraseFilterQueryTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function it_builds_a_match_phrase_query(): void
     {
         $wizard = $this
@@ -27,7 +27,7 @@ class MatchPhraseFilterQueryTest extends UnitTestCase
         $this->assertEquals(['match_phrase' => ['bio' => ['query' => 'quick brown fox']]], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_add_a_query_for_blank_value(): void
     {
         $wizard = $this
@@ -40,7 +40,7 @@ class MatchPhraseFilterQueryTest extends UnitTestCase
         $this->assertEmpty($queries);
     }
 
-    /** @test */
+    #[Test]
     public function it_resolves_the_property_name_via_alias(): void
     {
         $wizard = $this
@@ -54,7 +54,7 @@ class MatchPhraseFilterQueryTest extends UnitTestCase
         $this->assertEquals(['match_phrase' => ['bio' => ['query' => 'quick brown fox']]], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_extra_parameters(): void
     {
         $wizard = $this
@@ -78,7 +78,7 @@ class MatchPhraseFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_array_input_by_joining_with_comma(): void
     {
         $wizard = $this

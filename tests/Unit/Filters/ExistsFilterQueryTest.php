@@ -7,14 +7,14 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Filters;
 use Jackardios\ElasticQueryWizard\Filters\ExistsFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group filter
- */
+#[Group('unit')]
+#[Group('filter')]
 class ExistsFilterQueryTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function it_adds_a_filter_clause_for_truthy_value(): void
     {
         $wizard = $this
@@ -30,7 +30,7 @@ class ExistsFilterQueryTest extends UnitTestCase
         $this->assertEmpty($mustNotQueries);
     }
 
-    /** @test */
+    #[Test]
     public function it_adds_a_must_not_clause_for_falsy_value(): void
     {
         $wizard = $this
@@ -46,7 +46,7 @@ class ExistsFilterQueryTest extends UnitTestCase
         $this->assertEquals(['exists' => ['field' => 'has_image']], $mustNotQueries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_add_a_query_for_blank_value(): void
     {
         $wizard = $this
@@ -61,7 +61,7 @@ class ExistsFilterQueryTest extends UnitTestCase
         $this->assertEmpty($mustNotQueries);
     }
 
-    /** @test */
+    #[Test]
     public function it_ignores_invalid_boolean_value(): void
     {
         $wizard = $this
@@ -76,7 +76,7 @@ class ExistsFilterQueryTest extends UnitTestCase
         $this->assertEmpty($mustNotQueries);
     }
 
-    /** @test */
+    #[Test]
     public function it_adds_a_filter_clause_for_integer_1(): void
     {
         $wizard = $this
@@ -90,7 +90,7 @@ class ExistsFilterQueryTest extends UnitTestCase
         $this->assertEquals(['exists' => ['field' => 'has_image']], $filterQueries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_adds_a_must_not_clause_for_integer_0(): void
     {
         $wizard = $this

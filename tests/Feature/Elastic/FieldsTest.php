@@ -9,12 +9,12 @@ use Illuminate\Support\Facades\Config;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
 use Jackardios\QueryWizard\Exceptions\InvalidFieldQuery;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group fields
- * @group elastic-fields
- */
+#[Group('elastic')]
+#[Group('fields')]
+#[Group('elastic-fields')]
 class FieldsTest extends TestCase
 {
     protected TestModel $model;
@@ -26,7 +26,7 @@ class FieldsTest extends TestCase
         $this->model = TestModel::factory()->create();
     }
 
-    /** @test */
+    #[Test]
     public function it_fetches_all_columns_if_no_field_was_requested(): void
     {
         $model = $this
@@ -42,7 +42,7 @@ class FieldsTest extends TestCase
         $this->assertModelsAttributesEqual($model, $expectedModel);
     }
 
-    /** @test */
+    #[Test]
     public function it_fetches_all_columns_if_no_field_was_requested_but_allowed_fields_were_specified(): void
     {
         $model = $this
@@ -59,7 +59,7 @@ class FieldsTest extends TestCase
         $this->assertModelsAttributesEqual($model, $expectedModel);
     }
 
-    /** @test */
+    #[Test]
     public function it_replaces_selected_columns_on_the_query(): void
     {
         $model = $this
@@ -81,7 +81,7 @@ class FieldsTest extends TestCase
         $this->assertModelsAttributesEqual($model, $expectedModel);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_fetch_specific_columns(): void
     {
         $model = $this
@@ -100,7 +100,7 @@ class FieldsTest extends TestCase
         $this->assertModelsAttributesEqual($model, $expectedModel);
     }
 
-    /** @test */
+    #[Test]
     public function it_wont_fetch_a_specific_column_if_its_not_allowed(): void
     {
         // In v3, requesting fields without allowedFields() throws InvalidFieldQuery
@@ -111,7 +111,7 @@ class FieldsTest extends TestCase
             ->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_guards_against_not_allowed_fields(): void
     {
         $this->expectException(InvalidFieldQuery::class);
@@ -122,7 +122,7 @@ class FieldsTest extends TestCase
             ->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_wont_use_sketchy_field_requests(): void
     {
         // In v3, requesting fields without allowedFields() throws InvalidFieldQuery
@@ -133,7 +133,7 @@ class FieldsTest extends TestCase
             ->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_hide_everything_when_invalid_fields_are_ignored(): void
     {
         Config::set('query-wizard.disable_invalid_field_query_exception', true);
@@ -153,7 +153,7 @@ class FieldsTest extends TestCase
 
     // ========== Relation Fields Tests ==========
 
-    /** @test */
+    #[Test]
     public function it_can_select_fields_for_included_relation(): void
     {
         $this->model->relatedModels()->create(['name' => 'Related']);
@@ -181,7 +181,7 @@ class FieldsTest extends TestCase
         $this->assertNotContains('test_model_id', $relatedAttributes);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_select_fields_for_nested_included_relation(): void
     {
         $related = $this->model->relatedModels()->create(['name' => 'Related']);
@@ -208,7 +208,7 @@ class FieldsTest extends TestCase
         $this->assertEquals(['id'], $nestedAttributes);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_use_wildcard_for_relation_fields(): void
     {
         $this->model->relatedModels()->create(['name' => 'Related']);
@@ -234,7 +234,7 @@ class FieldsTest extends TestCase
         $this->assertContains('name', $relatedAttributes);
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_exception_for_not_allowed_relation_field(): void
     {
         $this->model->relatedModels()->create(['name' => 'Related']);

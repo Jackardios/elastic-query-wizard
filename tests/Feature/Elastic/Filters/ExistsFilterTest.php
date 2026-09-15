@@ -8,12 +8,12 @@ use Illuminate\Support\Collection;
 use Jackardios\ElasticQueryWizard\Filters\ExistsFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group filter
- * @group elastic-filter
- */
+#[Group('elastic')]
+#[Group('filter')]
+#[Group('elastic-filter')]
 class ExistsFilterTest extends TestCase
 {
     protected Collection $models;
@@ -25,7 +25,7 @@ class ExistsFilterTest extends TestCase
         $this->models = TestModel::factory()->count(5)->create();
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_with_truthy_value(): void
     {
         $modelsResult = $this
@@ -40,7 +40,7 @@ class ExistsFilterTest extends TestCase
         $this->assertCount(5, $modelsResult);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_with_falsy_value(): void
     {
         $modelsResult = $this
@@ -55,7 +55,7 @@ class ExistsFilterTest extends TestCase
         $this->assertCount(0, $modelsResult);
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_empty_filter_value(): void
     {
         $modelsResult = $this

@@ -10,12 +10,12 @@ use Jackardios\ElasticQueryWizard\Tests\Concerns\AssertsCollectionSorting;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\GeoModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
 use Jackardios\EloquentSpatial\Objects\Point;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group sort
- * @group elastic-sort
- */
+#[Group('elastic')]
+#[Group('sort')]
+#[Group('elastic-sort')]
 class GeoDistanceSortTest extends TestCase
 {
     use AssertsCollectionSorting;
@@ -49,7 +49,7 @@ class GeoDistanceSortTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_sort_by_geo_distance_ascending(): void
     {
         $result = $this
@@ -66,7 +66,7 @@ class GeoDistanceSortTest extends TestCase
         $this->assertEquals([$this->models[0]->id, $this->models[1]->id, $this->models[2]->id], $result->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_sort_by_geo_distance_descending(): void
     {
         $result = $this
@@ -83,7 +83,7 @@ class GeoDistanceSortTest extends TestCase
         $this->assertEquals([$this->models[2]->id, $this->models[1]->id, $this->models[0]->id], $result->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_use_different_units(): void
     {
         $result = $this
@@ -101,7 +101,7 @@ class GeoDistanceSortTest extends TestCase
         $this->assertEquals([$this->models[0]->id, $this->models[1]->id, $this->models[2]->id], $result->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_use_arc_distance_type(): void
     {
         $result = $this
@@ -118,7 +118,7 @@ class GeoDistanceSortTest extends TestCase
         $this->assertEquals([$this->models[0]->id, $this->models[1]->id, $this->models[2]->id], $result->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_use_plane_distance_type(): void
     {
         $result = $this
@@ -136,7 +136,7 @@ class GeoDistanceSortTest extends TestCase
         $this->assertEquals([$this->models[0]->id, $this->models[1]->id, $this->models[2]->id], $result->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_ignore_unmapped(): void
     {
         $result = $this
@@ -152,7 +152,7 @@ class GeoDistanceSortTest extends TestCase
         $this->assertCount(3, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_sort_from_different_origin(): void
     {
         // Sort from Far Location's coordinates

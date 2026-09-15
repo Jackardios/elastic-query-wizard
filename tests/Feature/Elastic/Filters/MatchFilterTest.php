@@ -8,12 +8,12 @@ use Illuminate\Support\Collection;
 use Jackardios\ElasticQueryWizard\Filters\MatchFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group filter
- * @group elastic-filter
- */
+#[Group('elastic')]
+#[Group('filter')]
+#[Group('elastic-filter')]
 class MatchFilterTest extends TestCase
 {
     protected Collection $models;
@@ -25,7 +25,7 @@ class MatchFilterTest extends TestCase
         $this->models = TestModel::factory()->count(5)->create();
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_results(): void
     {
         $expectedModel = TestModel::factory()->create(['name' => 'Some new TESTING Name']);
@@ -43,7 +43,7 @@ class MatchFilterTest extends TestCase
         $this->assertEquals($expectedModel->id, $modelsResult->first()->id);
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_empty_filter_value(): void
     {
         $modelsResult = $this
@@ -58,7 +58,7 @@ class MatchFilterTest extends TestCase
         $this->assertCount(5, $modelsResult);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_results_by_array_of_values(): void
     {
         TestModel::factory()->create(['name' => 'UniqueJohn Doe']);
@@ -81,7 +81,7 @@ class MatchFilterTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function it_should_apply_a_default_filter_value_if_nothing_in_request(): void
     {
         $model1 = TestModel::factory()->create(['name' => 'UniqueJohn Doe']);
@@ -100,7 +100,7 @@ class MatchFilterTest extends TestCase
         $this->assertEquals($model1->id, $modelsResult->first()->id);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_apply_default_filter_when_filter_exists_and_default_is_set(): void
     {
         $model1 = TestModel::factory()->create(['name' => 'UniqueJohn UniqueDoe']);

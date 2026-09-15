@@ -6,14 +6,15 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Filters;
 
 use Jackardios\ElasticQueryWizard\Filters\RegexpFilter;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use Jackardios\QueryWizard\Exceptions\InvalidFilterQuery;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group filter
- */
+#[Group('unit')]
+#[Group('filter')]
 class RegexpFilterQueryTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function it_builds_a_regexp_query(): void
     {
         $wizard = $this
@@ -27,7 +28,7 @@ class RegexpFilterQueryTest extends UnitTestCase
         $this->assertEquals(['regexp' => ['username' => ['value' => 'joh.*n']]], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_add_a_query_for_blank_value(): void
     {
         $wizard = $this
@@ -40,7 +41,7 @@ class RegexpFilterQueryTest extends UnitTestCase
         $this->assertEmpty($queries);
     }
 
-    /** @test */
+    #[Test]
     public function it_resolves_the_property_name_via_alias(): void
     {
         $wizard = $this
@@ -54,7 +55,7 @@ class RegexpFilterQueryTest extends UnitTestCase
         $this->assertEquals(['regexp' => ['username' => ['value' => 'joh.*']]], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_extra_parameters(): void
     {
         $wizard = $this
@@ -78,17 +79,14 @@ class RegexpFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
-    public function it_handles_array_input_by_taking_first_element(): void
+    #[Test]
+    public function it_rejects_array_input(): void
     {
-        $wizard = $this
+        $this->expectException(InvalidFilterQuery::class);
+
+        $this
             ->createElasticWizardWithFilters(['username' => ['joh.*', 'jane.*']])
-            ->allowedFilters(RegexpFilter::make('username'));
-        $wizard->build();
-
-        $queries = $this->getFilterQueries($wizard->boolQuery());
-
-        $this->assertCount(1, $queries);
-        $this->assertEquals(['regexp' => ['username' => ['value' => 'joh.*']]], $queries[0]);
+            ->allowedFilters(RegexpFilter::make('username'))
+            ->build();
     }
 }

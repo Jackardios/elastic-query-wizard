@@ -8,14 +8,14 @@ use Illuminate\Database\Eloquent\Builder;
 use Jackardios\ElasticQueryWizard\Includes\AbstractElasticInclude;
 use Jackardios\EsScoutDriver\Search\SearchResult;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group include
- */
+#[Group('unit')]
+#[Group('include')]
 class AbstractElasticIncludeTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function it_can_set_and_get_search_result(): void
     {
         $include = $this->createInclude();
@@ -27,7 +27,7 @@ class AbstractElasticIncludeTest extends TestCase
         $this->assertSame($searchResult, $include->getSearchResult());
     }
 
-    /** @test */
+    #[Test]
     public function get_search_result_returns_null_by_default(): void
     {
         $include = $this->createInclude();
@@ -35,7 +35,7 @@ class AbstractElasticIncludeTest extends TestCase
         $this->assertNull($include->getSearchResult());
     }
 
-    /** @test */
+    #[Test]
     public function apply_returns_subject_unchanged_for_non_builder(): void
     {
         $include = $this->createInclude();
@@ -46,7 +46,7 @@ class AbstractElasticIncludeTest extends TestCase
         $this->assertSame($subject, $result);
     }
 
-    /** @test */
+    #[Test]
     public function apply_calls_handle_eloquent_when_subject_is_builder(): void
     {
         $include = new class ('relation', 'alias') extends AbstractElasticInclude {
@@ -81,7 +81,7 @@ class AbstractElasticIncludeTest extends TestCase
         $this->assertTrue($include->handleCalled);
     }
 
-    /** @test */
+    #[Test]
     public function get_type_returns_correct_type(): void
     {
         $include = $this->createInclude();

@@ -65,6 +65,37 @@ final class DateRangeFilter extends AbstractElasticFilter
         return 'date_range';
     }
 
+    /**
+     * The value must carry at least one of the configured bounds, otherwise the
+     * filter would silently do nothing.
+     */
+    public function validateValueShape(mixed $value): ?string
+    {
+        // An empty parameter means "not applied", not "malformed".
+        if ($this->isBlankValueShape($value)) {
+            return null;
+        }
+
+        if (! is_array($value)) {
+            return "Filter `{$this->getName()}` expects an object with `{$this->fromKey}` and/or `{$this->toKey}` keys.";
+        }
+
+        $hasFrom = array_key_exists($this->fromKey, $value);
+        $hasTo = array_key_exists($this->toKey, $value);
+
+        if (! $hasFrom && ! $hasTo) {
+            return "Filter `{$this->getName()}` expects at least one of the `{$this->fromKey}`, `{$this->toKey}` keys.";
+        }
+
+        foreach ([$this->fromKey, $this->toKey] as $key) {
+            if (array_key_exists($key, $value) && $value[$key] !== null && ! is_scalar($value[$key])) {
+                return "Filter `{$this->getName()}` expects a scalar value for `{$key}`.";
+            }
+        }
+
+        return null;
+    }
+
     public function buildQuery(mixed $value): ?QueryInterface
     {
         if (!is_array($value)) {

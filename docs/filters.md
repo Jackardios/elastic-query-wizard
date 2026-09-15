@@ -46,14 +46,14 @@ Filters allow you to limit Elasticsearch query results based on query parameters
 | `exists` | Field presence check | `ElasticFilter::exists('thumbnail')` |
 | `null` | NULL/NOT NULL check | `ElasticFilter::null('deleted_at')` |
 | `multiMatch` | Search across multiple fields | `ElasticFilter::multiMatch(['title', 'body'], 'q')` |
-| `wildcard` | Pattern matching (`*`, `?`) | `ElasticFilter::wildcard('sku')` |
+| `wildcard` | Pattern matching (`*`, `?`) — see [warning](#wildcard-filter) | `ElasticFilter::wildcard('sku')` |
 | `prefix` | Prefix-based search (autocomplete) | `ElasticFilter::prefix('username')` |
 | `fuzzy` | Typo-tolerant search | `ElasticFilter::fuzzy('name')` |
 | `ids` | Filter by document IDs | `ElasticFilter::ids('_id')` |
-| `regexp` | Regular expression matching | `ElasticFilter::regexp('slug')` |
+| `regexp` | Regular expression matching — see [warning](#regexp-filter) | `ElasticFilter::regexp('slug')` |
 | `matchPhrase` | Exact phrase match | `ElasticFilter::matchPhrase('title')` |
 | `matchPhrasePrefix` | Phrase prefix (autocomplete) | `ElasticFilter::matchPhrasePrefix('title')` |
-| `queryString` | Raw query string syntax | `ElasticFilter::queryString('search')` |
+| `queryString` | Raw query string syntax — see [warning](#query-string-filter) | `ElasticFilter::queryString('search')` |
 | `simpleQueryString` | Safe query string syntax | `ElasticFilter::simpleQueryString('search')` |
 | `geoDistance` | Distance from point | `ElasticFilter::geoDistance('location')` |
 | `geoBoundingBox` | Rectangle on map | `ElasticFilter::geoBoundingBox('location')` |
@@ -100,6 +100,11 @@ If you disable this exception in config, unknown filters are ignored:
 // By default: throws InvalidFilterQuery
 // With disable_invalid_filter_query_exception=true: ignored
 ```
+
+Allow-listing decides *which* filters run, not what a caller may put inside one. Three filters pass the raw value
+straight into the Elasticsearch DSL and therefore need a second look before you expose them to untrusted callers —
+[`queryString`](#query-string-filter) (the value can address fields you never allowed),
+[`regexp`](#regexp-filter) and [`wildcard`](#wildcard-filter) (the value can force an index-wide scan).
 
 ---
 
@@ -497,7 +502,10 @@ ElasticFilter::wildcard('sku')->withParameters([
 ])
 ```
 
-> **Warning:** Wildcard queries can be resource-intensive, especially if the pattern starts with `*`. Use with caution on large indices.
+> **Warning:** The value goes into the Elasticsearch pattern verbatim. A caller can send `*` or `*a*` and force a
+> full-index scan, so a leading-wildcard pattern from untrusted input is a denial-of-service vector on a large index.
+> Either restrict this filter to trusted callers, or normalize the value with `prepareValueWith()` (for example, strip
+> a leading `*`) before it reaches the query.
 
 ---
 
@@ -614,6 +622,11 @@ ElasticFilter::regexp('slug')
 GET /posts?filter[slug]=post-.*
 ```
 
+> **Warning:** The value is used as the regular expression itself, so the caller controls the pattern. Catastrophic
+> patterns (`.*.*.*`, deeply nested repetition) are expensive to evaluate and are a denial-of-service vector on a large
+> index. Prefer `prefix` or `match` for untrusted input; if you do expose `regexp`, cap the pattern with
+> `prepareValueWith()` and keep the index small.
+
 ---
 
 ## Match Phrase Filter
@@ -667,6 +680,11 @@ ElasticFilter::queryString('search')
 ```
 GET /posts?filter[search]=title:laravel AND status:published
 ```
+
+> **Warning:** The value is parsed as Elasticsearch query-string syntax, so the caller is not confined to the field you
+> configured — `other_field:value` queries a different field, and `*` or `field:*` scans the whole index. Anything the
+> document holds but the resource does not expose can be probed this way. Use `simpleQueryString` for untrusted input:
+> it has no field-qualified terms and ignores invalid operators instead of erroring.
 
 ---
 

@@ -17,12 +17,12 @@ use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
 use Jackardios\QueryWizard\Exceptions\InvalidIncludeQuery;
 use ReflectionClass;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group include
- * @group elastic-include
- */
+#[Group('elastic')]
+#[Group('include')]
+#[Group('elastic-include')]
 class IncludeTest extends TestCase
 {
     protected Collection $models;
@@ -47,7 +47,7 @@ class IncludeTest extends TestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_require_includes(): void
     {
         $models = $this->createElasticWizardFromQuery()
@@ -59,7 +59,7 @@ class IncludeTest extends TestCase
         $this->assertCount(TestModel::count(), $models);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_handle_empty_includes(): void
     {
         $models = $this->createElasticWizardFromQuery()
@@ -75,7 +75,7 @@ class IncludeTest extends TestCase
         $this->assertCount(TestModel::count(), $models);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_include_model_relations(): void
     {
         $models = $this
@@ -88,7 +88,7 @@ class IncludeTest extends TestCase
         $this->assertRelationLoaded($models, 'relatedModels');
     }
 
-    /** @test */
+    #[Test]
     public function it_can_include_model_relations_by_alias(): void
     {
         $models = $this
@@ -101,7 +101,7 @@ class IncludeTest extends TestCase
         $this->assertRelationLoaded($models, 'relatedModels');
     }
 
-    /** @test */
+    #[Test]
     public function it_can_include_an_includes_count(): void
     {
         $model = $this
@@ -115,7 +115,7 @@ class IncludeTest extends TestCase
         $this->assertNotNull($model->related_models_count);
     }
 
-    /** @test */
+    #[Test]
     public function allowing_an_include_also_allows_the_include_count(): void
     {
         // In v3, count includes must be explicitly allowed
@@ -131,7 +131,7 @@ class IncludeTest extends TestCase
         $this->assertNotNull($model->related_models_count);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_include_nested_model_relations(): void
     {
         $models = $this
@@ -146,7 +146,7 @@ class IncludeTest extends TestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function it_can_include_nested_model_relations_by_alias(): void
     {
         $models = $this
@@ -163,7 +163,7 @@ class IncludeTest extends TestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function it_can_include_model_relations_from_nested_model_relations(): void
     {
         // In v3, requesting 'relatedModels' requires it to be explicitly allowed
@@ -178,7 +178,7 @@ class IncludeTest extends TestCase
         $this->assertRelationLoaded($models, 'relatedModels');
     }
 
-    /** @test */
+    #[Test]
     public function it_can_include_both_parent_and_nested(): void
     {
         $models = $this
@@ -194,7 +194,7 @@ class IncludeTest extends TestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_the_include_count_for_the_first_level_of_nested_includes(): void
     {
         // In v3, count includes must be explicitly allowed
@@ -209,7 +209,7 @@ class IncludeTest extends TestCase
         $this->assertNotNull($model->related_models_count);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_allow_nested_related_models_count_when_only_nested_include_is_allowed(): void
     {
         $this->expectException(InvalidIncludeQuery::class);
@@ -223,7 +223,7 @@ class IncludeTest extends TestCase
             ->first();
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_allow_nested_count_via_dotted_path_when_only_nested_include_is_allowed(): void
     {
         $this->expectException(InvalidIncludeQuery::class);
@@ -237,7 +237,7 @@ class IncludeTest extends TestCase
             ->first();
     }
 
-    /** @test */
+    #[Test]
     public function it_can_include_morph_model_relations(): void
     {
         $models = $this
@@ -250,7 +250,7 @@ class IncludeTest extends TestCase
         $this->assertRelationLoaded($models, 'morphModels');
     }
 
-    /** @test */
+    #[Test]
     public function it_can_include_reverse_morph_model_relations(): void
     {
         $models = $this->createElasticWizardWithIncludes('parent', MorphModel::class)
@@ -262,7 +262,7 @@ class IncludeTest extends TestCase
         $this->assertRelationLoaded($models, 'parent');
     }
 
-    /** @test */
+    #[Test]
     public function it_can_include_camel_case_includes(): void
     {
         $models = $this
@@ -275,7 +275,7 @@ class IncludeTest extends TestCase
         $this->assertRelationLoaded($models, 'relatedModels');
     }
 
-    /** @test */
+    #[Test]
     public function it_can_include_models_on_an_empty_collection(): void
     {
         TestModel::query()->delete();
@@ -290,7 +290,7 @@ class IncludeTest extends TestCase
         $this->assertCount(0, $models);
     }
 
-    /** @test */
+    #[Test]
     public function it_guards_against_invalid_includes(): void
     {
         $this->expectException(InvalidIncludeQuery::class);
@@ -301,7 +301,7 @@ class IncludeTest extends TestCase
             ->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_exception_for_nested_not_allowed_include(): void
     {
         $this->expectException(InvalidIncludeQuery::class);
@@ -312,7 +312,7 @@ class IncludeTest extends TestCase
             ->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_can_allow_multiple_includes(): void
     {
         $models = $this
@@ -325,7 +325,7 @@ class IncludeTest extends TestCase
         $this->assertRelationLoaded($models, 'relatedModels');
     }
 
-    /** @test */
+    #[Test]
     public function it_can_allow_multiple_includes_as_an_array(): void
     {
         $models = $this
@@ -338,7 +338,7 @@ class IncludeTest extends TestCase
         $this->assertRelationLoaded($models, 'relatedModels');
     }
 
-    /** @test */
+    #[Test]
     public function it_can_remove_duplicate_includes_from_nested_includes(): void
     {
         $wizard = $this
@@ -359,7 +359,7 @@ class IncludeTest extends TestCase
         $this->assertContains('relatedModels.nestedRelatedModels', $includeNames);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_include_multiple_model_relations(): void
     {
         $models = $this
@@ -373,7 +373,7 @@ class IncludeTest extends TestCase
         $this->assertRelationLoaded($models, 'otherRelatedModels');
     }
 
-    /** @test */
+    #[Test]
     public function it_can_query_included_many_to_many_relationships(): void
     {
         DB::enableQueryLog();
@@ -391,7 +391,7 @@ class IncludeTest extends TestCase
         $this->assertQueryLogContains('select `related_through_pivot_models`.*, `pivot_models`.`test_model_id` as `pivot_test_model_id`, `pivot_models`.`related_through_pivot_model_id` as `pivot_related_through_pivot_model_id` from `related_through_pivot_models` inner join `pivot_models` on `related_through_pivot_models`.`id` = `pivot_models`.`related_through_pivot_model_id` where `pivot_models`.`test_model_id` in (1, 2, 3, 4, 5)');
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_correct_id_when_including_many_to_many_relationship(): void
     {
         $models = $this
@@ -406,7 +406,7 @@ class IncludeTest extends TestCase
         $this->assertEquals($relatedModel->id, $relatedModel->pivot->related_through_pivot_model_id);
     }
 
-    /** @test */
+    #[Test]
     public function an_invalid_include_query_exception_contains_the_unknown_and_allowed_includes(): void
     {
         $exception = new InvalidIncludeQuery(collect(['unknown include']), collect(['allowed include']));
@@ -415,7 +415,7 @@ class IncludeTest extends TestCase
         $this->assertEquals(['allowed include'], $exception->allowedIncludes->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_alias_multiple_allowed_includes(): void
     {
         $models = $this->createElasticWizardWithIncludes('relatedModelsCount,relationShipAlias')
@@ -433,7 +433,7 @@ class IncludeTest extends TestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function it_can_include_custom_include_class(): void
     {
         $includeClass = new class ('relatedModels') extends AbstractElasticInclude {
@@ -469,7 +469,7 @@ class IncludeTest extends TestCase
         $this->assertNotNull($modelResult->related_models_count);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_include_custom_include_class_by_alias(): void
     {
         $includeClass = (new class ('relatedModels') extends AbstractElasticInclude {
@@ -505,7 +505,7 @@ class IncludeTest extends TestCase
         $this->assertNotNull($modelResult->related_models_count);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_include_a_custom_base_query_with_select(): void
     {
         $modelResult = $this->createElasticWizardWithIncludes('relatedModelsCount')

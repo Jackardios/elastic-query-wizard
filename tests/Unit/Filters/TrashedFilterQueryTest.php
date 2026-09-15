@@ -9,14 +9,14 @@ use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\SoftDeleteModel;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use Jackardios\EsScoutDriver\Enums\SoftDeleteMode;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group filter
- */
+#[Group('unit')]
+#[Group('filter')]
 class TrashedFilterQueryTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function with_trashed_sets_soft_delete_mode_to_with_trashed(): void
     {
         Config::set('scout.soft_delete', true);
@@ -32,7 +32,7 @@ class TrashedFilterQueryTest extends UnitTestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function only_trashed_sets_soft_delete_mode_to_only_trashed(): void
     {
         Config::set('scout.soft_delete', true);
@@ -48,7 +48,7 @@ class TrashedFilterQueryTest extends UnitTestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function default_keeps_soft_delete_mode_as_exclude_trashed(): void
     {
         Config::set('scout.soft_delete', true);
@@ -64,7 +64,7 @@ class TrashedFilterQueryTest extends UnitTestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function true_value_sets_soft_delete_mode_to_with_trashed(): void
     {
         Config::set('scout.soft_delete', true);
@@ -80,7 +80,7 @@ class TrashedFilterQueryTest extends UnitTestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function false_value_sets_soft_delete_mode_to_exclude_trashed(): void
     {
         Config::set('scout.soft_delete', true);
@@ -96,7 +96,7 @@ class TrashedFilterQueryTest extends UnitTestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function without_value_sets_soft_delete_mode_to_exclude_trashed(): void
     {
         Config::set('scout.soft_delete', true);
@@ -112,7 +112,7 @@ class TrashedFilterQueryTest extends UnitTestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function no_soft_delete_config_keeps_default_mode(): void
     {
         Config::set('scout.soft_delete', false);

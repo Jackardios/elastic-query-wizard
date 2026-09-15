@@ -77,6 +77,19 @@ final class NestedFilter extends AbstractElasticFilter
         return 'nested';
     }
 
+    /**
+     * Only the built-in term/terms inner query has a fixed value contract.
+     * A custom innerQuery() decides for itself what the value may look like.
+     */
+    public function validateValueShape(mixed $value): ?string
+    {
+        if ($this->innerQuery !== null) {
+            return null;
+        }
+
+        return $this->validateScalarOrFlatListValueShape($value);
+    }
+
     public function buildQuery(mixed $value): ?QueryInterface
     {
         if (FilterValueSanitizer::isBlank($value)) {

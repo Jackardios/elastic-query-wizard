@@ -10,14 +10,14 @@ use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use Jackardios\QueryWizard\Contracts\IncludeInterface;
 use Jackardios\QueryWizard\Exceptions\InvalidIncludeQuery;
 use ReflectionClass;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group include
- */
+#[Group('unit')]
+#[Group('include')]
 class IncludeValidationTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function it_throws_for_invalid_include(): void
     {
         $this->expectException(InvalidIncludeQuery::class);
@@ -28,7 +28,7 @@ class IncludeValidationTest extends UnitTestCase
             ->build();
     }
 
-    /** @test */
+    #[Test]
     public function the_exception_contains_unknown_and_allowed_includes(): void
     {
         $exception = new InvalidIncludeQuery(collect(['unknown']), collect(['allowed']));
@@ -37,7 +37,7 @@ class IncludeValidationTest extends UnitTestCase
         $this->assertEquals(['allowed'], $exception->allowedIncludes->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_stores_allowed_includes(): void
     {
         $query = $this
@@ -52,7 +52,7 @@ class IncludeValidationTest extends UnitTestCase
         $this->assertContains('relatedModels.nestedRelatedModels', $rawIncludes);
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_valid_callback_include_without_throwing(): void
     {
         $wizard = $this

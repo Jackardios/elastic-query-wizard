@@ -8,12 +8,12 @@ use Illuminate\Support\Collection;
 use Jackardios\ElasticQueryWizard\Filters\TermFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group filter
- * @group elastic-filter
- */
+#[Group('elastic')]
+#[Group('filter')]
+#[Group('elastic-filter')]
 class TermFilterTest extends TestCase
 {
     protected Collection $models;
@@ -25,7 +25,7 @@ class TermFilterTest extends TestCase
         $this->models = TestModel::factory()->count(5)->create();
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_and_match_results(): void
     {
         $expectedModel = TestModel::factory()->create(['category' => 'some-testing-category']);
@@ -43,7 +43,7 @@ class TermFilterTest extends TestCase
         $this->assertEquals($expectedModel->id, $modelsResult->first()->id);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_and_reject_results(): void
     {
         TestModel::factory()->create(['category' => 'Some Testing Category']);
@@ -60,7 +60,7 @@ class TermFilterTest extends TestCase
         $this->assertCount(0, $modelsResult);
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_empty_filter_value(): void
     {
         $modelsResult = $this
@@ -75,7 +75,7 @@ class TermFilterTest extends TestCase
         $this->assertCount(5, $modelsResult);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_results_by_array_of_values(): void
     {
         $expectedModels = collect([
@@ -96,7 +96,7 @@ class TermFilterTest extends TestCase
         $this->assertEqualsCanonicalizing($expectedModels->pluck('id')->all(), $results->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_should_apply_a_default_filter_value_if_nothing_in_request(): void
     {
         $model1 = TestModel::factory()->create(['category' => 'UniqueJohn Doe']);
@@ -115,7 +115,7 @@ class TermFilterTest extends TestCase
         $this->assertEquals($models[0]->id, $model1->id);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_apply_default_filter_when_filter_exists_and_default_is_set(): void
     {
         $model1 = TestModel::factory()->create(['category' => 'UniqueJohn UniqueDoe']);

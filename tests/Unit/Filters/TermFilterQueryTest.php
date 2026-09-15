@@ -8,14 +8,14 @@ use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\Filters\TermFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group filter
- */
+#[Group('unit')]
+#[Group('filter')]
 class TermFilterQueryTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function it_builds_a_term_query_for_a_single_value(): void
     {
         $wizard = $this
@@ -29,7 +29,7 @@ class TermFilterQueryTest extends UnitTestCase
         $this->assertEquals(['term' => ['name' => ['value' => 'John']]], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_builds_a_terms_query_for_an_array_value(): void
     {
         $wizard = $this
@@ -43,7 +43,7 @@ class TermFilterQueryTest extends UnitTestCase
         $this->assertEquals(['terms' => ['name' => ['John', 'Jane']]], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_builds_a_terms_query_for_comma_separated_values(): void
     {
         $wizard = $this
@@ -57,7 +57,7 @@ class TermFilterQueryTest extends UnitTestCase
         $this->assertEquals(['terms' => ['name' => ['John', 'Jane']]], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_add_a_query_for_blank_value(): void
     {
         $wizard = $this
@@ -70,7 +70,7 @@ class TermFilterQueryTest extends UnitTestCase
         $this->assertEmpty($queries);
     }
 
-    /** @test */
+    #[Test]
     public function it_resolves_the_property_name_via_alias(): void
     {
         $wizard = $this
@@ -84,7 +84,7 @@ class TermFilterQueryTest extends UnitTestCase
         $this->assertEquals(['term' => ['category' => ['value' => 'php']]], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_extra_parameters(): void
     {
         $wizard = $this
@@ -100,7 +100,7 @@ class TermFilterQueryTest extends UnitTestCase
         $this->assertEquals(['term' => ['name' => ['value' => 'John', 'boost' => 1.5]]], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_filters_out_blank_items_from_array_values(): void
     {
         $wizard = $this
@@ -115,7 +115,7 @@ class TermFilterQueryTest extends UnitTestCase
         $this->assertEquals(['term' => ['name' => ['value' => 'John']]], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_filters_out_blank_items_and_uses_terms_for_multiple_values(): void
     {
         $wizard = $this

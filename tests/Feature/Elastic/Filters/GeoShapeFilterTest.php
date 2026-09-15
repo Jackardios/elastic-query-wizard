@@ -10,12 +10,12 @@ use Jackardios\ElasticQueryWizard\Filters\GeoShapeFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\GeoModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
 use Jackardios\EloquentSpatial\Objects\Point;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group filter
- * @group elastic-filter
- */
+#[Group('elastic')]
+#[Group('filter')]
+#[Group('elastic-filter')]
 class GeoShapeFilterTest extends TestCase
 {
     protected Collection $models;
@@ -55,7 +55,7 @@ class GeoShapeFilterTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_by_envelope_intersects(): void
     {
         $result = $this
@@ -76,7 +76,7 @@ class GeoShapeFilterTest extends TestCase
         $this->assertEquals($this->models[0]->id, $result->first()->id);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_with_explicit_intersects_relation(): void
     {
         $result = $this
@@ -99,7 +99,7 @@ class GeoShapeFilterTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_with_disjoint_relation(): void
     {
         $result = $this
@@ -123,7 +123,7 @@ class GeoShapeFilterTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_by_polygon(): void
     {
         $result = $this
@@ -144,7 +144,7 @@ class GeoShapeFilterTest extends TestCase
         $this->assertCount(2, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_by_point(): void
     {
         $result = $this
@@ -164,7 +164,7 @@ class GeoShapeFilterTest extends TestCase
         $this->assertEquals($this->models[0]->id, $result->first()->id);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_no_results_for_non_intersecting_shape(): void
     {
         $result = $this
@@ -182,7 +182,7 @@ class GeoShapeFilterTest extends TestCase
         $this->assertCount(0, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_empty_filter_value(): void
     {
         $result = $this
@@ -197,7 +197,7 @@ class GeoShapeFilterTest extends TestCase
         $this->assertCount(3, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_exception_for_invalid_envelope(): void
     {
         $this->expectException(InvalidGeoShapeValue::class);
@@ -213,7 +213,7 @@ class GeoShapeFilterTest extends TestCase
             ->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_exception_for_unknown_shape_type(): void
     {
         $this->expectException(InvalidGeoShapeValue::class);
@@ -229,7 +229,7 @@ class GeoShapeFilterTest extends TestCase
             ->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_can_use_alias(): void
     {
         $result = $this

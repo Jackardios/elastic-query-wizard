@@ -41,6 +41,10 @@ final class MoreLikeThisFilter extends AbstractElasticFilter
     {
         parent::__construct($property, $alias);
         $this->fields = $fields;
+
+        // `like` legitimately accepts document references ({_index, _id}) and
+        // mixed lists of them, so raw structured input must stay allowed.
+        $this->allowStructuredInput();
     }
 
     /**

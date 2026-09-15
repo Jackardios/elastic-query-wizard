@@ -11,12 +11,12 @@ use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Support\Query;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group filter
- * @group elastic-filter
- */
+#[Group('elastic')]
+#[Group('filter')]
+#[Group('elastic-filter')]
 class CallbackFilterTest extends TestCase
 {
     protected Collection $models;
@@ -28,7 +28,7 @@ class CallbackFilterTest extends TestCase
         $this->models = TestModel::factory()->count(3)->create();
     }
 
-    /** @test */
+    #[Test]
     public function it_should_filter_by_closure(): void
     {
         $expectedName = 'Some New Testing Name ' . Str::uuid()->toString();
@@ -50,7 +50,7 @@ class CallbackFilterTest extends TestCase
         $this->assertEquals($expectedModel->name, $modelsResult->first()->name);
     }
 
-    /** @test */
+    #[Test]
     public function it_should_filter_by_array_callback(): void
     {
         $expectedName = 'Some New Testing Name ' . Str::uuid()->toString();

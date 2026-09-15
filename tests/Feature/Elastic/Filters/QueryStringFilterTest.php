@@ -8,12 +8,12 @@ use Illuminate\Support\Collection;
 use Jackardios\ElasticQueryWizard\Filters\QueryStringFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group filter
- * @group elastic-filter
- */
+#[Group('elastic')]
+#[Group('filter')]
+#[Group('elastic-filter')]
 class QueryStringFilterTest extends TestCase
 {
     protected Collection $models;
@@ -30,7 +30,7 @@ class QueryStringFilterTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_with_simple_query(): void
     {
         $result = $this
@@ -47,7 +47,7 @@ class QueryStringFilterTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_with_and_operator(): void
     {
         $result = $this
@@ -61,7 +61,7 @@ class QueryStringFilterTest extends TestCase
         $this->assertEquals($this->models[0]->id, $result->first()->id);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_with_or_operator(): void
     {
         $result = $this
@@ -78,7 +78,7 @@ class QueryStringFilterTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_no_results_for_non_matching_query(): void
     {
         $result = $this
@@ -91,7 +91,7 @@ class QueryStringFilterTest extends TestCase
         $this->assertCount(0, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_empty_filter_value(): void
     {
         $result = $this

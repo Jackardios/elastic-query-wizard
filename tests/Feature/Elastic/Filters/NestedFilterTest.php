@@ -9,12 +9,12 @@ use Jackardios\ElasticQueryWizard\Filters\NestedFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\NestedModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
 use Jackardios\EsScoutDriver\Support\Query;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group filter
- * @group elastic-filter
- */
+#[Group('elastic')]
+#[Group('filter')]
+#[Group('elastic-filter')]
 class NestedFilterTest extends TestCase
 {
     protected Collection $models;
@@ -56,7 +56,7 @@ class NestedFilterTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_by_nested_field_single_value(): void
     {
         $result = $this
@@ -73,7 +73,7 @@ class NestedFilterTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_by_nested_field_multiple_values(): void
     {
         $result = $this
@@ -86,7 +86,7 @@ class NestedFilterTest extends TestCase
         $this->assertCount(3, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_no_results_for_non_matching_value(): void
     {
         $result = $this
@@ -99,7 +99,7 @@ class NestedFilterTest extends TestCase
         $this->assertCount(0, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_by_nested_keyword_field(): void
     {
         $result = $this
@@ -113,7 +113,7 @@ class NestedFilterTest extends TestCase
         $this->assertEquals($this->models[0]->id, $result->first()->id);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_by_nested_boolean_field(): void
     {
         $result = $this
@@ -133,7 +133,7 @@ class NestedFilterTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_with_custom_range_inner_query(): void
     {
         $result = $this
@@ -150,7 +150,7 @@ class NestedFilterTest extends TestCase
         $this->assertEquals($this->models[0]->id, $result->first()->id);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_with_score_mode(): void
     {
         $result = $this
@@ -165,7 +165,7 @@ class NestedFilterTest extends TestCase
         $this->assertCount(2, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_empty_filter_value(): void
     {
         $result = $this
@@ -178,7 +178,7 @@ class NestedFilterTest extends TestCase
         $this->assertCount(3, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_use_alias(): void
     {
         $result = $this
@@ -192,7 +192,7 @@ class NestedFilterTest extends TestCase
         $this->assertEquals($this->models[1]->id, $result->first()->id);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_by_nested_numeric_field_with_range(): void
     {
         $result = $this

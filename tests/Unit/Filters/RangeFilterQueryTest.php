@@ -8,14 +8,14 @@ use Jackardios\ElasticQueryWizard\Exceptions\InvalidRangeValue;
 use Jackardios\ElasticQueryWizard\Filters\RangeFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group filter
- */
+#[Group('unit')]
+#[Group('filter')]
 class RangeFilterQueryTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function it_builds_a_range_query(): void
     {
         $wizard = $this
@@ -29,7 +29,7 @@ class RangeFilterQueryTest extends UnitTestCase
         $this->assertEquals(['range' => ['age' => ['gte' => '18', 'lte' => '65']]], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_add_a_query_for_empty_value(): void
     {
         $wizard = $this
@@ -42,7 +42,7 @@ class RangeFilterQueryTest extends UnitTestCase
         $this->assertEmpty($queries);
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_for_invalid_range_keys(): void
     {
         $this->expectException(InvalidRangeValue::class);
@@ -53,7 +53,7 @@ class RangeFilterQueryTest extends UnitTestCase
             ->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_for_zero_string_scalar_value(): void
     {
         $this->expectException(InvalidRangeValue::class);
@@ -64,7 +64,7 @@ class RangeFilterQueryTest extends UnitTestCase
             ->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_supports_single_bound(): void
     {
         $wizard = $this
@@ -78,7 +78,7 @@ class RangeFilterQueryTest extends UnitTestCase
         $this->assertEquals(['range' => ['age' => ['gt' => '10']]], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_for_legacy_from_operator(): void
     {
         $this->expectException(InvalidRangeValue::class);
@@ -90,7 +90,7 @@ class RangeFilterQueryTest extends UnitTestCase
             ->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_for_legacy_to_operator(): void
     {
         $this->expectException(InvalidRangeValue::class);
@@ -102,7 +102,7 @@ class RangeFilterQueryTest extends UnitTestCase
             ->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_for_legacy_include_lower_operator(): void
     {
         $this->expectException(InvalidRangeValue::class);
@@ -114,7 +114,7 @@ class RangeFilterQueryTest extends UnitTestCase
             ->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_for_legacy_include_upper_operator(): void
     {
         $this->expectException(InvalidRangeValue::class);

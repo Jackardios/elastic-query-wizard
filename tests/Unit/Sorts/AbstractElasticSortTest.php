@@ -7,14 +7,14 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Sorts;
 use Jackardios\ElasticQueryWizard\Sorts\AbstractElasticSort;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group sort
- */
+#[Group('unit')]
+#[Group('sort')]
 class AbstractElasticSortTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function apply_returns_subject_unchanged_for_non_search_builder(): void
     {
         $sort = $this->createSort();
@@ -25,7 +25,7 @@ class AbstractElasticSortTest extends TestCase
         $this->assertSame($subject, $result);
     }
 
-    /** @test */
+    #[Test]
     public function apply_calls_handle_when_subject_is_search_builder(): void
     {
         $sort = new class ('property', 'alias') extends AbstractElasticSort {
@@ -63,7 +63,7 @@ class AbstractElasticSortTest extends TestCase
         $this->assertEquals('desc', $sort->capturedDirection);
     }
 
-    /** @test */
+    #[Test]
     public function get_type_returns_correct_type(): void
     {
         $sort = $this->createSort();
@@ -71,7 +71,7 @@ class AbstractElasticSortTest extends TestCase
         $this->assertEquals('test', $sort->getType());
     }
 
-    /** @test */
+    #[Test]
     public function get_property_returns_property(): void
     {
         $sort = $this->createSort();
@@ -79,7 +79,7 @@ class AbstractElasticSortTest extends TestCase
         $this->assertEquals('property', $sort->getProperty());
     }
 
-    /** @test */
+    #[Test]
     public function get_name_returns_alias_when_set(): void
     {
         $sort = $this->createSort();

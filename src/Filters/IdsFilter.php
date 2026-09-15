@@ -23,6 +23,11 @@ final class IdsFilter extends AbstractElasticFilter
         return 'ids';
     }
 
+    public function validateValueShape(mixed $value): ?string
+    {
+        return $this->validateScalarOrFlatListValueShape($value);
+    }
+
     public function buildQuery(mixed $value): ?QueryInterface
     {
         $prepared = FilterValueSanitizer::toArray($value);

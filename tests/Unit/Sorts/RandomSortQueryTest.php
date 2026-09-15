@@ -8,14 +8,14 @@ use Jackardios\ElasticQueryWizard\Sorts\RandomSort;
 use Jackardios\ElasticQueryWizard\Sorts\ScoreSort;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use stdClass;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group sort
- */
+#[Group('unit')]
+#[Group('sort')]
 class RandomSortQueryTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function it_adds_random_score_function(): void
     {
         $wizard = $this
@@ -36,7 +36,7 @@ class RandomSortQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_sorts_by_score_ascending(): void
     {
         $wizard = $this
@@ -51,7 +51,7 @@ class RandomSortQueryTest extends UnitTestCase
         ], $sorts);
     }
 
-    /** @test */
+    #[Test]
     public function it_sorts_by_score_descending(): void
     {
         $wizard = $this
@@ -66,7 +66,7 @@ class RandomSortQueryTest extends UnitTestCase
         ], $sorts);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_seed(): void
     {
         $wizard = $this
@@ -92,7 +92,7 @@ class RandomSortQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_string_seed(): void
     {
         $wizard = $this
@@ -118,7 +118,7 @@ class RandomSortQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_uses_default_seq_no_field_with_seed(): void
     {
         $wizard = $this
@@ -133,7 +133,7 @@ class RandomSortQueryTest extends UnitTestCase
         $this->assertEquals('_seq_no', $queries[0]['function_score']['functions'][0]['random_score']['field']);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_custom_field_with_seed(): void
     {
         $wizard = $this
@@ -163,7 +163,7 @@ class RandomSortQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_uses_alias_correctly(): void
     {
         $wizard = $this
@@ -177,7 +177,7 @@ class RandomSortQueryTest extends UnitTestCase
         $this->assertArrayHasKey('function_score', $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_correct_type(): void
     {
         $sort = RandomSort::make('shuffle');
@@ -185,7 +185,7 @@ class RandomSortQueryTest extends UnitTestCase
         $this->assertEquals('random', $sort->getType());
     }
 
-    /** @test */
+    #[Test]
     public function it_uses_default_property_name(): void
     {
         $sort = RandomSort::make();
@@ -194,7 +194,7 @@ class RandomSortQueryTest extends UnitTestCase
         $this->assertEquals('_random', $sort->getName());
     }
 
-    /** @test */
+    #[Test]
     public function it_combines_seed_and_field(): void
     {
         $wizard = $this
@@ -229,7 +229,7 @@ class RandomSortQueryTest extends UnitTestCase
         ], $sorts);
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_separate_score_sorts_when_used_with_score_sort(): void
     {
         // Edge case: RandomSort adds _score sort, ScoreSort also adds _score sort

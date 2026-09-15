@@ -9,14 +9,14 @@ use Jackardios\ElasticQueryWizard\ElasticQuery;
 use Jackardios\EsScoutDriver\Query\Compound\BoolQuery;
 use Jackardios\EsScoutDriver\Query\FullText\MatchQuery;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group factory
- */
+#[Group('unit')]
+#[Group('factory')]
 class ElasticQueryProxyTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function it_proxies_query_factory_methods(): void
     {
         $query = ElasticQuery::match('title', 'laravel');
@@ -28,7 +28,7 @@ class ElasticQueryProxyTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function it_proxies_bool_factory_method(): void
     {
         $query = ElasticQuery::bool();
@@ -36,7 +36,7 @@ class ElasticQueryProxyTest extends TestCase
         $this->assertInstanceOf(BoolQuery::class, $query);
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_for_unknown_method(): void
     {
         $this->expectException(BadMethodCallException::class);

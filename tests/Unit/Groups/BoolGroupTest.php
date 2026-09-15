@@ -9,14 +9,14 @@ use Jackardios\ElasticQueryWizard\ElasticGroup;
 use Jackardios\ElasticQueryWizard\Enums\BoolClause;
 use Jackardios\ElasticQueryWizard\Exceptions\DuplicateGroupChildFilterNameException;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group group
- */
+#[Group('unit')]
+#[Group('group')]
 class BoolGroupTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function it_can_be_created_via_factory(): void
     {
         $group = ElasticGroup::bool('advanced');
@@ -25,7 +25,7 @@ class BoolGroupTest extends UnitTestCase
         $this->assertEquals('bool_group', $group->getType());
     }
 
-    /** @test */
+    #[Test]
     public function it_defaults_to_filter_clause(): void
     {
         $group = ElasticGroup::bool('advanced');
@@ -33,7 +33,7 @@ class BoolGroupTest extends UnitTestCase
         $this->assertEquals(BoolClause::FILTER, $group->getEffectiveClause());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_be_set_to_must_clause(): void
     {
         $group = ElasticGroup::bool('advanced')->inMust();
@@ -41,7 +41,7 @@ class BoolGroupTest extends UnitTestCase
         $this->assertEquals(BoolClause::MUST, $group->getEffectiveClause());
     }
 
-    /** @test */
+    #[Test]
     public function it_accepts_children(): void
     {
         $children = [
@@ -55,7 +55,7 @@ class BoolGroupTest extends UnitTestCase
         $this->assertEquals($children, $group->getChildren());
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_child_filter_names(): void
     {
         $group = ElasticGroup::bool('advanced')->children([
@@ -68,7 +68,7 @@ class BoolGroupTest extends UnitTestCase
         $this->assertEquals(['status', 'priority'], $names);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_nested_child_filter_names(): void
     {
         $innerGroup = ElasticGroup::bool('inner')->children([
@@ -91,7 +91,7 @@ class BoolGroupTest extends UnitTestCase
         $this->assertCount(3, $names);
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_exception_when_leaf_filter_names_are_duplicated(): void
     {
         $this->expectException(DuplicateGroupChildFilterNameException::class);
@@ -104,7 +104,7 @@ class BoolGroupTest extends UnitTestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_accepts_minimum_should_match(): void
     {
         $group = ElasticGroup::bool('advanced')
@@ -127,7 +127,7 @@ class BoolGroupTest extends UnitTestCase
         $this->assertEquals(1, $array['bool']['minimum_should_match']);
     }
 
-    /** @test */
+    #[Test]
     public function it_builds_bool_query_with_should_children(): void
     {
         $group = ElasticGroup::bool('advanced')
@@ -150,7 +150,7 @@ class BoolGroupTest extends UnitTestCase
         $this->assertCount(2, $array['bool']['should']);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_null_when_no_child_values(): void
     {
         $group = ElasticGroup::bool('advanced')->children([
@@ -162,7 +162,7 @@ class BoolGroupTest extends UnitTestCase
         $this->assertNull($query);
     }
 
-    /** @test */
+    #[Test]
     public function it_accepts_boost(): void
     {
         $group = ElasticGroup::bool('advanced')
@@ -183,7 +183,7 @@ class BoolGroupTest extends UnitTestCase
         $this->assertEquals(1.5, $array['bool']['boost']);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_minimum_should_match_via_getter(): void
     {
         $group = ElasticGroup::bool('advanced')->minimumShouldMatch(2);
@@ -191,7 +191,7 @@ class BoolGroupTest extends UnitTestCase
         $this->assertEquals(2, $group->getMinimumShouldMatch());
     }
 
-    /** @test */
+    #[Test]
     public function it_accepts_percentage_minimum_should_match(): void
     {
         $group = ElasticGroup::bool('advanced')
@@ -216,7 +216,7 @@ class BoolGroupTest extends UnitTestCase
         $this->assertEquals('75%', $array['bool']['minimum_should_match']);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_null_defaults_for_getters(): void
     {
         $group = ElasticGroup::bool('advanced');
@@ -225,7 +225,7 @@ class BoolGroupTest extends UnitTestCase
         $this->assertNull($group->getBoost());
     }
 
-    /** @test */
+    #[Test]
     public function it_accepts_zero_boost(): void
     {
         $group = ElasticGroup::bool('advanced')
@@ -242,7 +242,7 @@ class BoolGroupTest extends UnitTestCase
         $this->assertEquals(0.0, $array['bool']['boost']);
     }
 
-    /** @test */
+    #[Test]
     public function it_combines_boost_and_minimum_should_match(): void
     {
         $group = ElasticGroup::bool('advanced')

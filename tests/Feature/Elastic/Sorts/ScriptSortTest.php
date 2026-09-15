@@ -9,12 +9,12 @@ use Jackardios\ElasticQueryWizard\Sorts\ScriptSort;
 use Jackardios\ElasticQueryWizard\Tests\Concerns\AssertsCollectionSorting;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group sort
- * @group elastic-sort
- */
+#[Group('elastic')]
+#[Group('sort')]
+#[Group('elastic-sort')]
 class ScriptSortTest extends TestCase
 {
     use AssertsCollectionSorting;
@@ -32,7 +32,7 @@ class ScriptSortTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_sort_by_script_ascending(): void
     {
         $result = $this
@@ -49,7 +49,7 @@ class ScriptSortTest extends TestCase
         $this->assertEquals([$this->models[1]->id, $this->models[0]->id, $this->models[2]->id], $result->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_sort_by_script_descending(): void
     {
         $result = $this
@@ -66,7 +66,7 @@ class ScriptSortTest extends TestCase
         $this->assertEquals([$this->models[2]->id, $this->models[0]->id, $this->models[1]->id], $result->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_use_script_with_params(): void
     {
         $result = $this
@@ -84,7 +84,7 @@ class ScriptSortTest extends TestCase
         $this->assertEquals([$this->models[1]->id, $this->models[0]->id, $this->models[2]->id], $result->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_sort_by_category_priority(): void
     {
         $result = $this
@@ -110,7 +110,7 @@ class ScriptSortTest extends TestCase
         $this->assertEquals([$this->models[1]->id, $this->models[0]->id, $this->models[2]->id], $result->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_use_string_type(): void
     {
         $result = $this
@@ -128,7 +128,7 @@ class ScriptSortTest extends TestCase
         $this->assertEquals([$this->models[0]->id, $this->models[1]->id, $this->models[2]->id], $result->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_use_alias(): void
     {
         $result = $this
@@ -144,7 +144,7 @@ class ScriptSortTest extends TestCase
         $this->assertEquals([$this->models[1]->id, $this->models[0]->id, $this->models[2]->id], $result->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_calculate_composite_score(): void
     {
         $result = $this

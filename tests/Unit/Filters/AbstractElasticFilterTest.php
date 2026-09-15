@@ -8,14 +8,14 @@ use Jackardios\ElasticQueryWizard\Filters\AbstractElasticFilter;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group filter
- */
+#[Group('unit')]
+#[Group('filter')]
 class AbstractElasticFilterTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function apply_returns_subject_unchanged_for_non_search_builder(): void
     {
         $filter = $this->createFilter();
@@ -26,7 +26,7 @@ class AbstractElasticFilterTest extends TestCase
         $this->assertSame($subject, $result);
     }
 
-    /** @test */
+    #[Test]
     public function apply_calls_handle_when_subject_is_search_builder(): void
     {
         $handleCalled = false;
@@ -72,7 +72,7 @@ class AbstractElasticFilterTest extends TestCase
         $this->assertEquals('test_value', $filter->capturedValue);
     }
 
-    /** @test */
+    #[Test]
     public function get_type_returns_correct_type(): void
     {
         $filter = $this->createFilter();
@@ -80,7 +80,7 @@ class AbstractElasticFilterTest extends TestCase
         $this->assertEquals('test', $filter->getType());
     }
 
-    /** @test */
+    #[Test]
     public function get_property_returns_property(): void
     {
         $filter = $this->createFilter();
@@ -88,7 +88,7 @@ class AbstractElasticFilterTest extends TestCase
         $this->assertEquals('property', $filter->getProperty());
     }
 
-    /** @test */
+    #[Test]
     public function get_name_returns_alias_when_set(): void
     {
         $filter = $this->createFilter();
@@ -96,7 +96,7 @@ class AbstractElasticFilterTest extends TestCase
         $this->assertEquals('alias', $filter->getName());
     }
 
-    /** @test */
+    #[Test]
     public function get_name_returns_property_when_no_alias(): void
     {
         $filter = new class ('property') extends AbstractElasticFilter {

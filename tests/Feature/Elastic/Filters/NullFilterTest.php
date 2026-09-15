@@ -8,12 +8,12 @@ use Illuminate\Support\Collection;
 use Jackardios\ElasticQueryWizard\Filters\NullFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group filter
- * @group elastic-filter
- */
+#[Group('elastic')]
+#[Group('filter')]
+#[Group('elastic-filter')]
 class NullFilterTest extends TestCase
 {
     protected Collection $models;
@@ -29,7 +29,7 @@ class NullFilterTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_for_null_values_with_true(): void
     {
         $result = $this
@@ -45,7 +45,7 @@ class NullFilterTest extends TestCase
         $this->assertCount(1, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_for_not_null_values_with_false(): void
     {
         $result = $this
@@ -59,7 +59,7 @@ class NullFilterTest extends TestCase
         $this->assertGreaterThanOrEqual(2, $result->count());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_invert_logic_for_true(): void
     {
         $result = $this
@@ -73,7 +73,7 @@ class NullFilterTest extends TestCase
         $this->assertGreaterThanOrEqual(2, $result->count());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_invert_logic_for_false(): void
     {
         $result = $this
@@ -87,7 +87,7 @@ class NullFilterTest extends TestCase
         $this->assertCount(1, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_empty_filter_value(): void
     {
         $result = $this
@@ -100,7 +100,7 @@ class NullFilterTest extends TestCase
         $this->assertCount(3, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_numeric_boolean_values(): void
     {
         $result = $this
@@ -114,7 +114,7 @@ class NullFilterTest extends TestCase
         $this->assertCount(1, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_use_alias(): void
     {
         $result = $this

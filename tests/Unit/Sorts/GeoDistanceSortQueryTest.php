@@ -6,14 +6,14 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Sorts;
 
 use Jackardios\ElasticQueryWizard\Sorts\GeoDistanceSort;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group sort
- */
+#[Group('unit')]
+#[Group('sort')]
 class GeoDistanceSortQueryTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function it_sorts_by_geo_distance_ascending(): void
     {
         $wizard = $this
@@ -33,7 +33,7 @@ class GeoDistanceSortQueryTest extends UnitTestCase
         ], $sorts[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_sorts_by_geo_distance_descending(): void
     {
         $wizard = $this
@@ -53,7 +53,7 @@ class GeoDistanceSortQueryTest extends UnitTestCase
         ], $sorts[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_custom_unit(): void
     {
         $wizard = $this
@@ -75,7 +75,7 @@ class GeoDistanceSortQueryTest extends UnitTestCase
         ], $sorts[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_mode(): void
     {
         $wizard = $this
@@ -98,7 +98,7 @@ class GeoDistanceSortQueryTest extends UnitTestCase
         ], $sorts[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_distance_type(): void
     {
         $wizard = $this
@@ -121,7 +121,7 @@ class GeoDistanceSortQueryTest extends UnitTestCase
         ], $sorts[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_ignore_unmapped(): void
     {
         $wizard = $this
@@ -144,7 +144,7 @@ class GeoDistanceSortQueryTest extends UnitTestCase
         ], $sorts[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_all_options(): void
     {
         $wizard = $this

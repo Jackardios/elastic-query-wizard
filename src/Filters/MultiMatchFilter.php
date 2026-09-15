@@ -37,6 +37,11 @@ final class MultiMatchFilter extends AbstractElasticFilter
         return 'multi_match';
     }
 
+    public function validateValueShape(mixed $value): ?string
+    {
+        return $this->validateScalarOrFlatListValueShape($value);
+    }
+
     protected function getDefaultClause(): BoolClause
     {
         return BoolClause::MUST;

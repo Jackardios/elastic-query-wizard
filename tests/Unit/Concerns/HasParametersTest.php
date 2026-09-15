@@ -7,13 +7,13 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Concerns;
 use BadMethodCallException;
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- */
+#[Group('unit')]
 class HasParametersTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function it_applies_parameters_to_query_builder(): void
     {
         $trait = $this->createTraitUser();
@@ -43,7 +43,7 @@ class HasParametersTest extends TestCase
         $this->assertEquals('AUTO', $mockBuilder->fuzziness);
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_for_non_existent_method(): void
     {
         $trait = $this->createTraitUser();
@@ -57,7 +57,7 @@ class HasParametersTest extends TestCase
         $trait->applyParametersOnQuery($mockBuilder);
     }
 
-    /** @test */
+    #[Test]
     public function it_merges_parameters(): void
     {
         $trait = $this->createTraitUser();
@@ -87,7 +87,7 @@ class HasParametersTest extends TestCase
         $this->assertEquals('AUTO', $mockBuilder->fuzziness);
     }
 
-    /** @test */
+    #[Test]
     public function it_converts_snake_case_to_camel_case(): void
     {
         $trait = $this->createTraitUser();
@@ -108,7 +108,7 @@ class HasParametersTest extends TestCase
         $this->assertEquals(50, $mockBuilder->maxExpansions);
     }
 
-    /** @test */
+    #[Test]
     public function with_parameters_returns_self(): void
     {
         $trait = $this->createTraitUser();

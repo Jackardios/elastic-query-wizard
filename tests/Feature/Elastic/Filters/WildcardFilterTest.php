@@ -8,12 +8,12 @@ use Illuminate\Support\Collection;
 use Jackardios\ElasticQueryWizard\Filters\WildcardFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group filter
- * @group elastic-filter
- */
+#[Group('elastic')]
+#[Group('filter')]
+#[Group('elastic-filter')]
 class WildcardFilterTest extends TestCase
 {
     protected Collection $models;
@@ -30,7 +30,7 @@ class WildcardFilterTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_with_wildcard_asterisk(): void
     {
         $result = $this
@@ -47,7 +47,7 @@ class WildcardFilterTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_with_wildcard_question_mark(): void
     {
         $result = $this
@@ -61,7 +61,7 @@ class WildcardFilterTest extends TestCase
         $this->assertEquals($this->models[2]->id, $result->first()->id);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_with_suffix_wildcard(): void
     {
         $result = $this
@@ -75,7 +75,7 @@ class WildcardFilterTest extends TestCase
         $this->assertEquals($this->models[1]->id, $result->first()->id);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_no_results_for_non_matching_pattern(): void
     {
         $result = $this
@@ -88,7 +88,7 @@ class WildcardFilterTest extends TestCase
         $this->assertCount(0, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_empty_filter_value(): void
     {
         $result = $this
@@ -101,7 +101,7 @@ class WildcardFilterTest extends TestCase
         $this->assertCount(4, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_use_alias(): void
     {
         $result = $this

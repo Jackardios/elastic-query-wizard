@@ -8,14 +8,14 @@ use BadMethodCallException;
 use Jackardios\ElasticQueryWizard\ElasticAggregation;
 use Jackardios\EsScoutDriver\Aggregations\Bucket\TermsAggregation;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group factory
- */
+#[Group('unit')]
+#[Group('factory')]
 class ElasticAggregationProxyTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function it_proxies_aggregation_factory_methods(): void
     {
         $aggregation = ElasticAggregation::terms('category');
@@ -27,7 +27,7 @@ class ElasticAggregationProxyTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_for_unknown_method(): void
     {
         $this->expectException(BadMethodCallException::class);

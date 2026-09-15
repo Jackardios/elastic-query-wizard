@@ -8,14 +8,14 @@ use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\ElasticGroup;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use Jackardios\QueryWizard\Exceptions\InvalidFilterQuery;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group group
- */
+#[Group('unit')]
+#[Group('group')]
 class GroupIntegrationTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function it_applies_bool_group_to_query(): void
     {
         $wizard = $this
@@ -44,7 +44,7 @@ class GroupIntegrationTest extends UnitTestCase
         $this->assertArrayHasKey('minimum_should_match', $filterQueries[0]['bool']);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_nested_group_to_query(): void
     {
         $wizard = $this
@@ -70,7 +70,7 @@ class GroupIntegrationTest extends UnitTestCase
         $this->assertEquals('sides', $filterQueries[0]['nested']['path']);
     }
 
-    /** @test */
+    #[Test]
     public function it_mixes_regular_filters_with_groups(): void
     {
         $wizard = $this
@@ -98,7 +98,7 @@ class GroupIntegrationTest extends UnitTestCase
         $this->assertCount(2, $filterQueries);
     }
 
-    /** @test */
+    #[Test]
     public function it_skips_group_when_no_child_values_provided(): void
     {
         $wizard = $this
@@ -123,7 +123,7 @@ class GroupIntegrationTest extends UnitTestCase
         $this->assertArrayHasKey('term', $filterQueries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_child_filter_names_as_allowed(): void
     {
         $wizard = $this
@@ -143,7 +143,7 @@ class GroupIntegrationTest extends UnitTestCase
         $this->assertTrue(true);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_group_to_must_clause(): void
     {
         $wizard = $this
@@ -167,7 +167,7 @@ class GroupIntegrationTest extends UnitTestCase
         $this->assertEmpty($filterQueries);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_group_to_should_clause(): void
     {
         $wizard = $this
@@ -191,7 +191,7 @@ class GroupIntegrationTest extends UnitTestCase
         $this->assertEmpty($filterQueries);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_nested_groups_inside_bool_group(): void
     {
         $wizard = $this
@@ -219,7 +219,7 @@ class GroupIntegrationTest extends UnitTestCase
         $this->assertArrayHasKey('filter', $filterQueries[0]['bool']);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_three_level_nested_groups(): void
     {
         $wizard = $this
@@ -256,7 +256,7 @@ class GroupIntegrationTest extends UnitTestCase
         $this->assertEquals('active', $status);
     }
 
-    /** @test */
+    #[Test]
     public function it_rejects_group_name_as_filter_key(): void
     {
         $this->expectException(InvalidFilterQuery::class);
@@ -274,7 +274,7 @@ class GroupIntegrationTest extends UnitTestCase
             ->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_deduplicates_filter_names_when_same_name_in_root_and_group(): void
     {
         $wizard = $this
@@ -300,7 +300,7 @@ class GroupIntegrationTest extends UnitTestCase
         $this->assertArrayHasKey('bool', $filterQueries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_apply_sibling_filter_when_group_name_matches_filter_name(): void
     {
         $wizard = $this
@@ -332,7 +332,7 @@ class GroupIntegrationTest extends UnitTestCase
         $this->assertEquals('high', $innerFilter['term']['priority']['value'] ?? null);
     }
 
-    /** @test */
+    #[Test]
     public function it_supports_dot_notation_fields_with_alias_in_nested_group(): void
     {
         $wizard = $this

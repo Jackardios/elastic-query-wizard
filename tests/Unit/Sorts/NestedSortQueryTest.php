@@ -7,14 +7,14 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Sorts;
 use Jackardios\ElasticQueryWizard\Sorts\NestedSort;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use Jackardios\EsScoutDriver\Support\Query;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group sort
- */
+#[Group('unit')]
+#[Group('sort')]
 class NestedSortQueryTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function it_sorts_by_nested_field_ascending(): void
     {
         $wizard = $this
@@ -34,7 +34,7 @@ class NestedSortQueryTest extends UnitTestCase
         ], $sorts);
     }
 
-    /** @test */
+    #[Test]
     public function it_sorts_by_nested_field_descending(): void
     {
         $wizard = $this
@@ -54,7 +54,7 @@ class NestedSortQueryTest extends UnitTestCase
         ], $sorts);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_mode(): void
     {
         $wizard = $this
@@ -77,7 +77,7 @@ class NestedSortQueryTest extends UnitTestCase
         ], $sorts);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_missing_first(): void
     {
         $wizard = $this
@@ -100,7 +100,7 @@ class NestedSortQueryTest extends UnitTestCase
         ], $sorts);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_missing_last(): void
     {
         $wizard = $this
@@ -123,7 +123,7 @@ class NestedSortQueryTest extends UnitTestCase
         ], $sorts);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_unmapped_type(): void
     {
         $wizard = $this
@@ -146,7 +146,7 @@ class NestedSortQueryTest extends UnitTestCase
         ], $sorts);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_nested_filter_with_query_interface(): void
     {
         $wizard = $this
@@ -174,7 +174,7 @@ class NestedSortQueryTest extends UnitTestCase
         ], $sorts);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_nested_filter_with_closure(): void
     {
         $wizard = $this
@@ -202,7 +202,7 @@ class NestedSortQueryTest extends UnitTestCase
         ], $sorts);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_nested_filter_with_array(): void
     {
         $wizard = $this
@@ -230,7 +230,7 @@ class NestedSortQueryTest extends UnitTestCase
         ], $sorts);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_max_children(): void
     {
         $wizard = $this
@@ -255,7 +255,7 @@ class NestedSortQueryTest extends UnitTestCase
         ], $sorts);
     }
 
-    /** @test */
+    #[Test]
     public function it_combines_all_options(): void
     {
         $wizard = $this
@@ -291,7 +291,7 @@ class NestedSortQueryTest extends UnitTestCase
         ], $sorts);
     }
 
-    /** @test */
+    #[Test]
     public function it_uses_alias_correctly(): void
     {
         $wizard = $this
@@ -311,7 +311,7 @@ class NestedSortQueryTest extends UnitTestCase
         ], $sorts);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_correct_type(): void
     {
         $sort = NestedSort::make('variants', 'price', 'price');

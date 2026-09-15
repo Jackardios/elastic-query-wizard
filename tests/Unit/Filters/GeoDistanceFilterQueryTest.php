@@ -8,14 +8,14 @@ use Jackardios\ElasticQueryWizard\Exceptions\InvalidGeoDistanceValue;
 use Jackardios\ElasticQueryWizard\Filters\GeoDistanceFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\GeoModel;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group filter
- */
+#[Group('unit')]
+#[Group('filter')]
 class GeoDistanceFilterQueryTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function it_builds_a_geo_distance_query(): void
     {
         $wizard = $this
@@ -34,7 +34,7 @@ class GeoDistanceFilterQueryTest extends UnitTestCase
         $this->assertEquals('10km', $geoDistance['distance']);
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_for_missing_lat(): void
     {
         $this->expectException(InvalidGeoDistanceValue::class);
@@ -47,7 +47,7 @@ class GeoDistanceFilterQueryTest extends UnitTestCase
             ->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_for_missing_distance(): void
     {
         $this->expectException(InvalidGeoDistanceValue::class);
@@ -60,7 +60,7 @@ class GeoDistanceFilterQueryTest extends UnitTestCase
             ->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_add_a_query_for_empty_value(): void
     {
         $wizard = $this
@@ -73,7 +73,7 @@ class GeoDistanceFilterQueryTest extends UnitTestCase
         $this->assertEmpty($queries);
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_for_non_numeric_lat(): void
     {
         $this->expectException(InvalidGeoDistanceValue::class);
@@ -86,7 +86,7 @@ class GeoDistanceFilterQueryTest extends UnitTestCase
             ->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_for_zero_string_scalar_value(): void
     {
         $this->expectException(InvalidGeoDistanceValue::class);

@@ -9,15 +9,16 @@ use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use Jackardios\QueryWizard\QueryParametersManager;
 use Mockery;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Tests for request-scope lifecycle handling.
- *
- * @group unit
  */
+#[Group('unit')]
 class RequestScopeTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function wizard_created_without_parameters_resolves_from_container(): void
     {
         // First manager
@@ -36,7 +37,7 @@ class RequestScopeTest extends UnitTestCase
         $this->assertSame($secondManager, $resolvedManager);
     }
 
-    /** @test */
+    #[Test]
     public function wizard_created_with_explicit_parameters_keeps_original(): void
     {
         $explicitManager = new QueryParametersManager();
@@ -54,7 +55,7 @@ class RequestScopeTest extends UnitTestCase
         $this->assertNotSame($containerManager, $resolvedManager);
     }
 
-    /** @test */
+    #[Test]
     public function forSchema_wizard_resolves_manager_from_container_on_access(): void
     {
         // First manager

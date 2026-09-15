@@ -8,12 +8,12 @@ use Illuminate\Support\Collection;
 use Jackardios\ElasticQueryWizard\Filters\MatchPhraseFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group filter
- * @group elastic-filter
- */
+#[Group('elastic')]
+#[Group('filter')]
+#[Group('elastic-filter')]
 class MatchPhraseFilterTest extends TestCase
 {
     protected Collection $models;
@@ -30,7 +30,7 @@ class MatchPhraseFilterTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_by_exact_phrase(): void
     {
         $result = $this
@@ -44,7 +44,7 @@ class MatchPhraseFilterTest extends TestCase
         $this->assertEquals($this->models[0]->id, $result->first()->id);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_match_words_in_different_order(): void
     {
         $result = $this
@@ -58,7 +58,7 @@ class MatchPhraseFilterTest extends TestCase
         $this->assertCount(0, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_match_single_word(): void
     {
         $result = $this
@@ -72,7 +72,7 @@ class MatchPhraseFilterTest extends TestCase
         $this->assertEquals($this->models[2]->id, $result->first()->id);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_no_results_for_non_matching_phrase(): void
     {
         $result = $this
@@ -85,7 +85,7 @@ class MatchPhraseFilterTest extends TestCase
         $this->assertCount(0, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_empty_filter_value(): void
     {
         $result = $this

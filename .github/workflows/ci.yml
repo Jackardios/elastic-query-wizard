@@ -6,9 +6,17 @@ on:
   pull_request:
     branches: [main, master, '*.x']
     types: [opened, synchronize, reopened, ready_for_review]
+  # composer.lock is not committed and CI runs composer update, so every build
+  # resolves jackardios/laravel-query-wizard:dev-master afresh. Without a timer a
+  # breaking change upstream stays invisible until someone happens to push here.
+  schedule:
+    - cron: '0 5 * * 1'
+  workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # Keyed by event too: without it a push to master shares a group with the
+  # scheduled run on the same ref and cancel-in-progress kills the canary.
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:

@@ -8,7 +8,6 @@ use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
 use Jackardios\ElasticQueryWizard\Filters\TermFilter;
 use Jackardios\ElasticQueryWizard\Groups\GroupInterface;
 use Jackardios\ElasticQueryWizard\Includes\AbstractElasticInclude;
@@ -21,7 +20,6 @@ use Jackardios\QueryWizard\Concerns\HandlesRelationPostProcessing;
 use Jackardios\QueryWizard\Concerns\HandlesSafeRelationSelect;
 use Jackardios\QueryWizard\Config\QueryWizardConfig;
 use Jackardios\QueryWizard\Contracts\FilterInterface;
-use Jackardios\QueryWizard\Exceptions\InvalidFilterQuery;
 use Jackardios\QueryWizard\Contracts\IncludeInterface;
 use Jackardios\QueryWizard\Contracts\SortInterface;
 use Jackardios\QueryWizard\Eloquent\Includes\RelationshipInclude;
@@ -72,6 +70,7 @@ class ElasticQueryWizard extends BaseQueryWizard
     /** @var array<int, Closure(SearchBuilder): mixed> */
     protected array $searchBuilderModifiers = [];
 
+    /** @var class-string<Model> */
     protected string $modelClass;
 
     /** @var array<int, string> */
@@ -209,9 +208,20 @@ class ElasticQueryWizard extends BaseQueryWizard
     protected function applyFields(array $fields): void
     {
         $requestedFields = $fields;
-        $fields = $this->applySafeRootFieldRequirements($fields);
-        $this->safeRootHiddenFields = array_values(array_diff($fields, $requestedFields));
         $this->validatedRequestedRootFields = array_values(array_unique($requestedFields));
+        $this->safeRootHiddenFields = [];
+
+        // An empty set means no sparse fieldset narrows this resource. The base
+        // package resolves a `fields` parameter that selects nothing for this
+        // resource to [] rather than null, so without this guard the select below
+        // would collapse to the key alone and hide every other attribute.
+        // EloquentQueryWizard::applyFields() makes the same distinction.
+        if (empty($requestedFields) || $requestedFields === ['*']) {
+            return;
+        }
+
+        $fields = $this->applySafeRootFieldRequirements($requestedFields);
+        $this->safeRootHiddenFields = array_values(array_diff($fields, $requestedFields));
 
         /** @var Model $model */
         $model = new $this->modelClass();
@@ -228,11 +238,7 @@ class ElasticQueryWizard extends BaseQueryWizard
 
     public function getResourceKey(): string
     {
-        if ($this->schema !== null) {
-            return $this->schema->type();
-        }
-
-        return Str::camel(class_basename($this->modelClass));
+        return $this->resolveDefaultResourceKey($this->modelClass);
     }
 
     /**
@@ -301,125 +307,131 @@ class ElasticQueryWizard extends BaseQueryWizard
     }
 
     /**
-     * Override to handle filter groups.
+     * Groups are containers: their own name is not a valid request key, their
+     * leaves are.
      *
-     * Groups contain child filters and need special handling:
-     * - Child filter names are registered as allowed filters
-     * - Child filter values are collected and passed to the group as an array
+     * Names are normalized here because they are matched against the request keys
+     * parsed by the parameters manager, which are normalized too.
+     *
+     * @param  array<string, FilterInterface>  $filters
+     * @return array<int, string>
      */
-    protected function applyFiltersToSubject(): void
+    protected function resolveAllowedFilterNames(array $filters): array
     {
-        $filters = $this->getEffectiveFilters();
-        $requestedFilterNames = $this->extractRequestedFilterNames();
-
-        $this->validateFiltersLimit(count($requestedFilterNames));
-
-        // Build allowed filter names including child filter names from groups
-        // Group names are excluded - they are not valid filter keys in URL
-        $allowedFilterNames = [];
-        $groupChildNames = [];
+        $names = [];
 
         foreach ($filters as $filter) {
             if ($filter instanceof GroupInterface) {
-                $groupChildNames = array_merge($groupChildNames, $filter->getChildFilterNames());
-            } else {
-                $allowedFilterNames[] = $filter->getName();
+                foreach ($filter->getChildFilterNames() as $childName) {
+                    $names[] = $this->normalizePublicPath($childName);
+                }
+
+                continue;
             }
+
+            $names[] = $this->normalizePublicPath($filter->getName());
         }
 
-        // Deduplicate: a filter name may appear both at root level and inside a group
-        $expandedAllowedNames = array_values(array_unique(
-            array_merge($allowedFilterNames, $groupChildNames)
-        ));
-        $allowedFilterNamesIndex = array_flip($expandedAllowedNames);
-        $prefixIndex = $this->buildPrefixIndex($expandedAllowedNames);
-
-        // Validate requested filter names
-        foreach ($requestedFilterNames as $filterName) {
-            if (! $this->isValidFilterName($filterName, $allowedFilterNamesIndex, $prefixIndex)) {
-                if (! $this->config->isInvalidFilterQueryExceptionDisabled()) {
-                    throw InvalidFilterQuery::filtersNotAllowed(
-                        collect([$filterName]),
-                        collect($expandedAllowedNames)
-                    );
-                }
-            }
-        }
-
-        // Collect all child names from groups upfront to skip duplicates at root level
-        $allGroupChildNames = array_flip($groupChildNames);
-
-        // Apply filters
-        foreach ($filters as $filter) {
-            if ($filter instanceof GroupInterface) {
-                // Collect child filter values for this group
-                $childValues = $this->collectGroupChildValuesForGroup($filter);
-
-                if (empty($childValues)) {
-                    continue;
-                }
-
-                // Apply the group with collected child values
-                $this->applyFilter($filter, $childValues);
-            } else {
-                // Skip if this filter name is handled by a group
-                if (isset($allGroupChildNames[$filter->getName()])) {
-                    continue;
-                }
-
-                $value = $this->resolveFilterValue($filter);
-
-                if ($value === null) {
-                    continue;
-                }
-
-                $preparedValue = $filter->prepareValue($value);
-
-                if ($preparedValue === null) {
-                    continue;
-                }
-
-                $this->applyFilter($filter, $preparedValue);
-            }
-        }
+        return array_values(array_unique($names));
     }
 
     /**
-     * Collect filter values for all children of a group.
+     * A filter name may be registered both at root level and inside a group.
+     * The group owns the request key in that case, so the root-level filter must
+     * not be applied a second time.
      *
-     * @param GroupInterface $group The group to collect values for
-     * @return array<string, mixed> Map of leaf child filter names to their prepared values
+     * The comparison is on normalized names on both sides - getEffectiveFilters()
+     * already keys by the normalized name, and the group children are normalized
+     * below. That is deliberate: what makes the root-level filter redundant is
+     * that it reads the same request key, and two names differing only in case
+     * collapse to one key once normalization is on.
+     *
+     * @param  array<string, FilterInterface>  $filters
+     * @return array<string, true>
      */
-    protected function collectGroupChildValuesForGroup(GroupInterface $group): array
+    protected function resolveShadowedFilterNames(array $filters): array
     {
-        $childValues = [];
+        $groupChildNames = [];
 
-        foreach ($group->getChildren() as $child) {
-            if ($child instanceof GroupInterface) {
-                // Recursively collect values for nested groups
-                $nestedValues = $this->collectGroupChildValuesForGroup($child);
-                if (! empty($nestedValues)) {
-                    $childValues = array_merge($childValues, $nestedValues);
-                }
-            } else {
-                $childName = $child->getName();
-                $value = $this->resolveFilterValue($child);
+        foreach ($filters as $filter) {
+            if (! $filter instanceof GroupInterface) {
+                continue;
+            }
 
-                if ($value === null) {
-                    continue;
-                }
-
-                $preparedValue = $child->prepareValue($value);
-
-                if ($preparedValue === null) {
-                    continue;
-                }
-
-                $childValues[$childName] = $preparedValue;
+            foreach ($filter->getChildFilterNames() as $childName) {
+                $groupChildNames[$this->normalizePublicPath($childName)] = true;
             }
         }
 
-        return $childValues;
+        if ($groupChildNames === []) {
+            return [];
+        }
+
+        $shadowed = [];
+
+        foreach ($filters as $name => $filter) {
+            if (! $filter instanceof GroupInterface && isset($groupChildNames[$name])) {
+                $shadowed[$name] = true;
+            }
+        }
+
+        return $shadowed;
+    }
+
+    /**
+     * A group resolves to the map of its leaves' prepared values.
+     *
+     * The map is keyed by the raw child name because that is what
+     * AbstractElasticGroup::applyChildrenToQuery() looks the values up by.
+     * Normalization only applies to the name set used for request validation.
+     */
+    protected function resolvePreparedFilterValue(FilterInterface $filter): mixed
+    {
+        if (! $filter instanceof GroupInterface) {
+            return parent::resolvePreparedFilterValue($filter);
+        }
+
+        $childValues = [];
+
+        foreach ($this->collectGroupLeafFilters($filter) as $child) {
+            // Dispatch through $this, not parent::, so a subclass that customises
+            // value resolution sees leaves nested in a group as well as root-level
+            // filters. collectGroupLeafFilters() has already flattened away every
+            // group, so this cannot recurse back into this branch.
+            $preparedValue = $this->resolvePreparedFilterValue($child);
+
+            if ($preparedValue === null) {
+                continue;
+            }
+
+            $childValues[$child->getName()] = $preparedValue;
+        }
+
+        return $childValues === [] ? null : $childValues;
+    }
+
+    /**
+     * Flatten a group tree down to its leaf filters.
+     *
+     * @return array<int, FilterInterface>
+     */
+    protected function collectGroupLeafFilters(GroupInterface $group): array
+    {
+        $leaves = [];
+
+        foreach ($group->getChildren() as $child) {
+            if ($child instanceof GroupInterface) {
+                foreach ($this->collectGroupLeafFilters($child) as $nestedChild) {
+                    $leaves[] = $nestedChild;
+                }
+
+                continue;
+            }
+
+            $leaves[] = $child;
+        }
+
+        return $leaves;
     }
 
     /**
@@ -460,7 +472,13 @@ class ElasticQueryWizard extends BaseQueryWizard
         }
 
         if (! empty($relationshipIncludes)) {
-            $safeRelationSelectColumnsByPath = $this->safeRelationSelectColumnsByPath;
+            $safeRelationSelectColumnsByPath = [];
+            foreach ($relationshipPaths as $relationPath) {
+                $columns = $this->getSafeRelationSelectColumns($relationPath);
+                if ($columns !== null) {
+                    $safeRelationSelectColumnsByPath[$relationPath] = $columns;
+                }
+            }
 
             $this->addBuildQueryModifier(
                 function (Builder $builder, SearchResult $searchResult) use ($relationshipIncludes, $safeRelationSelectColumnsByPath) {
@@ -494,29 +512,14 @@ class ElasticQueryWizard extends BaseQueryWizard
         }
     }
 
-    public function build(): mixed
+    protected function prepareBuild(): void
     {
-        $currentScopeSignature = $this->resolveBuildScopeSignature();
-
-        if ($this->built) {
-            if ($this->builtScopeSignature === $currentScopeSignature) {
-                return $this->subject;
-            }
-            $this->invalidateBuild();
-        }
-
-        $this->applyTapCallbacks();
         $this->applySearchBuilderModifiers();
-        $this->applyFiltersToSubject();
-        $this->applySortsToSubject();
-        $this->applyIncludesToSubject();
-        $this->applyFieldsToSubject();
+    }
+
+    protected function finalizeBuild(): void
+    {
         $this->finalizeSubject();
-
-        $this->built = true;
-        $this->builtScopeSignature = $currentScopeSignature;
-
-        return $this->subject;
     }
 
     protected function invalidateBuild(): void
@@ -718,17 +721,17 @@ class ElasticQueryWizard extends BaseQueryWizard
         );
     }
 
+    /**
+     * Only the taint flag is reset: a fresh clone has not been modified through
+     * the search-builder proxy yet.
+     *
+     * The derived post-processing state (append tree, relation field tree, root
+     * field masks, build-query modifiers) is left in place - it describes the
+     * subject this clone carries over, and only build() can rebuild it.
+     */
     public function __clone(): void
     {
         parent::__clone();
         $this->proxyModified = false;
-        $this->resetSafeRelationSelectState();
-        $this->relationFieldTree = $this->emptyRelationFieldTree();
-        $this->relationFieldTreePrepared = false;
-        $this->appendTree = $this->emptyAppendTree();
-        $this->appendTreePrepared = false;
-        $this->safeRootHiddenFields = [];
-        $this->buildQueryModifiers = [];
-        $this->validatedRequestedRootFields = [];
     }
 }

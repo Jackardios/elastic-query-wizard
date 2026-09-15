@@ -25,6 +25,11 @@ final class TrashedFilter extends AbstractElasticFilter
         return 'trashed';
     }
 
+    public function validateValueShape(mixed $value): ?string
+    {
+        return $this->validateScalarOrBlankValueShape($value);
+    }
+
     /**
      * This filter doesn't add a query, it modifies the soft delete mode.
      */

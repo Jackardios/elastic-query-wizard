@@ -8,12 +8,12 @@ use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
 use Jackardios\ElasticQueryWizard\Filters\MatchFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group highlighting
- * @group elastic-highlighting
- */
+#[Group('elastic')]
+#[Group('highlighting')]
+#[Group('elastic-highlighting')]
 class HighlightingTest extends TestCase
 {
     protected function setUp(): void
@@ -25,7 +25,7 @@ class HighlightingTest extends TestCase
         TestModel::factory()->create(['name' => 'Bob Johnson Manager', 'category' => 'management']);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_add_highlighting_to_search(): void
     {
         $result = $this
@@ -43,7 +43,7 @@ class HighlightingTest extends TestCase
         $this->assertNotEmpty($hits);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_highlight_multiple_fields(): void
     {
         $result = $this
@@ -59,7 +59,7 @@ class HighlightingTest extends TestCase
         $this->assertCount(1, $result->models());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_use_custom_highlight_tags(): void
     {
         $result = $this
@@ -77,7 +77,7 @@ class HighlightingTest extends TestCase
         $this->assertCount(1, $result->models());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_highlight_with_fragment_size(): void
     {
         TestModel::factory()->create([
@@ -99,7 +99,7 @@ class HighlightingTest extends TestCase
         $this->assertGreaterThanOrEqual(1, $result->models()->count());
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_results_without_highlighting_when_not_configured(): void
     {
         $result = $this
@@ -111,7 +111,7 @@ class HighlightingTest extends TestCase
         $this->assertCount(1, $result->models());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_highlight_with_require_field_match(): void
     {
         $result = $this
@@ -128,7 +128,7 @@ class HighlightingTest extends TestCase
         $this->assertCount(1, $result->models());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_use_fvh_highlighter(): void
     {
         $result = $this
@@ -145,7 +145,7 @@ class HighlightingTest extends TestCase
         $this->assertCount(1, $result->models());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_highlight_with_boundary_settings(): void
     {
         $result = $this
@@ -163,7 +163,7 @@ class HighlightingTest extends TestCase
         $this->assertCount(1, $result->models());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_access_highlight_data_from_hits(): void
     {
         $result = $this
@@ -183,7 +183,7 @@ class HighlightingTest extends TestCase
         $this->assertNotNull($firstHit);
     }
 
-    /** @test */
+    #[Test]
     public function it_works_with_pagination_and_highlighting(): void
     {
         TestModel::factory()->count(10)->create(['name' => 'Developer User']);

@@ -8,12 +8,12 @@ use Illuminate\Support\Collection;
 use Jackardios\ElasticQueryWizard\Filters\RegexpFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group filter
- * @group elastic-filter
- */
+#[Group('elastic')]
+#[Group('filter')]
+#[Group('elastic-filter')]
 class RegexpFilterTest extends TestCase
 {
     protected Collection $models;
@@ -30,7 +30,7 @@ class RegexpFilterTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_by_regexp_pattern(): void
     {
         $result = $this
@@ -47,7 +47,7 @@ class RegexpFilterTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_with_character_class(): void
     {
         $result = $this
@@ -61,7 +61,7 @@ class RegexpFilterTest extends TestCase
         $this->assertEquals($this->models[3]->id, $result->first()->id);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_with_alternation(): void
     {
         $result = $this
@@ -74,7 +74,7 @@ class RegexpFilterTest extends TestCase
         $this->assertCount(1, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_no_results_for_non_matching_pattern(): void
     {
         $result = $this
@@ -87,7 +87,7 @@ class RegexpFilterTest extends TestCase
         $this->assertCount(0, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_empty_filter_value(): void
     {
         $result = $this

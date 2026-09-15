@@ -6,14 +6,14 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Filters;
 
 use Jackardios\ElasticQueryWizard\Filters\NullFilter;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group filter
- */
+#[Group('unit')]
+#[Group('filter')]
 class NullFilterQueryTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function it_adds_a_must_not_clause_for_truthy_value(): void
     {
         $wizard = $this
@@ -29,7 +29,7 @@ class NullFilterQueryTest extends UnitTestCase
         $this->assertEquals(['exists' => ['field' => 'deleted_at']], $mustNotQueries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_adds_a_filter_clause_for_falsy_value(): void
     {
         $wizard = $this
@@ -45,7 +45,7 @@ class NullFilterQueryTest extends UnitTestCase
         $this->assertEmpty($mustNotQueries);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_add_a_query_for_blank_value(): void
     {
         $wizard = $this
@@ -60,7 +60,7 @@ class NullFilterQueryTest extends UnitTestCase
         $this->assertEmpty($mustNotQueries);
     }
 
-    /** @test */
+    #[Test]
     public function it_ignores_invalid_boolean_value(): void
     {
         $wizard = $this
@@ -75,7 +75,7 @@ class NullFilterQueryTest extends UnitTestCase
         $this->assertEmpty($mustNotQueries);
     }
 
-    /** @test */
+    #[Test]
     public function it_adds_a_must_not_clause_for_integer_1(): void
     {
         $wizard = $this
@@ -89,7 +89,7 @@ class NullFilterQueryTest extends UnitTestCase
         $this->assertEquals(['exists' => ['field' => 'deleted_at']], $mustNotQueries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_adds_a_filter_clause_for_integer_0(): void
     {
         $wizard = $this
@@ -103,7 +103,7 @@ class NullFilterQueryTest extends UnitTestCase
         $this->assertEquals(['exists' => ['field' => 'deleted_at']], $filterQueries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_correct_type(): void
     {
         $filter = NullFilter::make('deleted_at', 'is_null');
@@ -111,7 +111,7 @@ class NullFilterQueryTest extends UnitTestCase
         $this->assertEquals('null', $filter->getType());
     }
 
-    /** @test */
+    #[Test]
     public function it_inverts_logic_for_truthy_value(): void
     {
         $wizard = $this
@@ -128,7 +128,7 @@ class NullFilterQueryTest extends UnitTestCase
         $this->assertEmpty($mustNotQueries);
     }
 
-    /** @test */
+    #[Test]
     public function it_inverts_logic_for_falsy_value(): void
     {
         $wizard = $this
@@ -145,7 +145,7 @@ class NullFilterQueryTest extends UnitTestCase
         $this->assertEquals(['exists' => ['field' => 'thumbnail']], $mustNotQueries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_reset_inverted_logic(): void
     {
         $wizard = $this
@@ -166,7 +166,7 @@ class NullFilterQueryTest extends UnitTestCase
         $this->assertEquals(['exists' => ['field' => 'deleted_at']], $mustNotQueries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_inverts_logic_for_integer_1(): void
     {
         $wizard = $this
@@ -181,7 +181,7 @@ class NullFilterQueryTest extends UnitTestCase
         $this->assertEquals(['exists' => ['field' => 'thumbnail']], $filterQueries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_inverts_logic_for_integer_0(): void
     {
         $wizard = $this

@@ -7,14 +7,14 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Filters;
 use Jackardios\ElasticQueryWizard\Exceptions\InvalidGeoShapeValue;
 use Jackardios\ElasticQueryWizard\Filters\GeoShapeFilter;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group filter
- */
+#[Group('unit')]
+#[Group('filter')]
 class GeoShapeFilterQueryTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function it_builds_envelope_query(): void
     {
         $wizard = $this
@@ -42,7 +42,7 @@ class GeoShapeFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_builds_polygon_query(): void
     {
         // GeoJSON polygon format: coordinates = [outer_ring, hole1, hole2, ...]
@@ -75,7 +75,7 @@ class GeoShapeFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_builds_point_query(): void
     {
         $wizard = $this
@@ -103,7 +103,7 @@ class GeoShapeFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_builds_indexed_shape_query(): void
     {
         $wizard = $this
@@ -134,7 +134,7 @@ class GeoShapeFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_builds_indexed_shape_query_with_default_path(): void
     {
         $wizard = $this
@@ -164,7 +164,7 @@ class GeoShapeFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_relation_parameter(): void
     {
         $wizard = $this
@@ -193,7 +193,7 @@ class GeoShapeFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_ignore_unmapped(): void
     {
         $wizard = $this
@@ -223,7 +223,7 @@ class GeoShapeFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_for_unknown_type(): void
     {
         $this->expectException(InvalidGeoShapeValue::class);
@@ -240,7 +240,7 @@ class GeoShapeFilterQueryTest extends UnitTestCase
         $wizard->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_for_missing_type(): void
     {
         $this->expectException(InvalidGeoShapeValue::class);
@@ -256,7 +256,7 @@ class GeoShapeFilterQueryTest extends UnitTestCase
         $wizard->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_for_invalid_envelope(): void
     {
         $this->expectException(InvalidGeoShapeValue::class);
@@ -273,7 +273,7 @@ class GeoShapeFilterQueryTest extends UnitTestCase
         $wizard->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_for_invalid_polygon(): void
     {
         $this->expectException(InvalidGeoShapeValue::class);
@@ -290,7 +290,7 @@ class GeoShapeFilterQueryTest extends UnitTestCase
         $wizard->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_for_invalid_point(): void
     {
         $this->expectException(InvalidGeoShapeValue::class);
@@ -307,7 +307,7 @@ class GeoShapeFilterQueryTest extends UnitTestCase
         $wizard->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_for_invalid_indexed_shape(): void
     {
         $this->expectException(InvalidGeoShapeValue::class);
@@ -325,7 +325,7 @@ class GeoShapeFilterQueryTest extends UnitTestCase
         $wizard->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_add_query_for_empty_value(): void
     {
         $wizard = $this
@@ -338,7 +338,7 @@ class GeoShapeFilterQueryTest extends UnitTestCase
         $this->assertEmpty($queries);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_add_query_for_null_value(): void
     {
         $wizard = $this
@@ -351,7 +351,7 @@ class GeoShapeFilterQueryTest extends UnitTestCase
         $this->assertEmpty($queries);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_add_query_for_non_array_value(): void
     {
         $wizard = $this
@@ -364,7 +364,7 @@ class GeoShapeFilterQueryTest extends UnitTestCase
         $this->assertEmpty($queries);
     }
 
-    /** @test */
+    #[Test]
     public function it_uses_alias_correctly(): void
     {
         $wizard = $this
@@ -384,7 +384,7 @@ class GeoShapeFilterQueryTest extends UnitTestCase
         $this->assertArrayHasKey('boundary', $queries[0]['geo_shape']);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_correct_type(): void
     {
         $filter = GeoShapeFilter::make('boundary');
@@ -392,7 +392,7 @@ class GeoShapeFilterQueryTest extends UnitTestCase
         $this->assertEquals('geo_shape', $filter->getType());
     }
 
-    /** @test */
+    #[Test]
     public function it_combines_relation_and_ignore_unmapped(): void
     {
         $wizard = $this

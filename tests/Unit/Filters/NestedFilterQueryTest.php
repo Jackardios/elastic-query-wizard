@@ -7,14 +7,14 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Filters;
 use Jackardios\ElasticQueryWizard\Filters\NestedFilter;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use Jackardios\EsScoutDriver\Support\Query;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group filter
- */
+#[Group('unit')]
+#[Group('filter')]
 class NestedFilterQueryTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function it_builds_nested_term_query_for_single_value(): void
     {
         $wizard = $this
@@ -35,7 +35,7 @@ class NestedFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_builds_nested_terms_query_for_multiple_values(): void
     {
         $wizard = $this
@@ -56,7 +56,7 @@ class NestedFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_score_mode(): void
     {
         $wizard = $this
@@ -80,7 +80,7 @@ class NestedFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_ignore_unmapped(): void
     {
         $wizard = $this
@@ -104,7 +104,7 @@ class NestedFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_uses_custom_inner_query_closure(): void
     {
         $wizard = $this
@@ -128,7 +128,7 @@ class NestedFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_uses_custom_inner_query_interface(): void
     {
         $wizard = $this
@@ -152,7 +152,7 @@ class NestedFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_add_query_for_blank_value(): void
     {
         $wizard = $this
@@ -165,7 +165,7 @@ class NestedFilterQueryTest extends UnitTestCase
         $this->assertEmpty($queries);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_add_query_for_null_value(): void
     {
         $wizard = $this
@@ -178,7 +178,7 @@ class NestedFilterQueryTest extends UnitTestCase
         $this->assertEmpty($queries);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_add_query_for_empty_array(): void
     {
         $wizard = $this
@@ -191,7 +191,7 @@ class NestedFilterQueryTest extends UnitTestCase
         $this->assertEmpty($queries);
     }
 
-    /** @test */
+    #[Test]
     public function it_resolves_alias_correctly(): void
     {
         $wizard = $this
@@ -212,7 +212,7 @@ class NestedFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_correct_type(): void
     {
         $filter = NestedFilter::make('comments', 'author');
@@ -220,7 +220,7 @@ class NestedFilterQueryTest extends UnitTestCase
         $this->assertEquals('nested', $filter->getType());
     }
 
-    /** @test */
+    #[Test]
     public function it_combines_all_options(): void
     {
         $wizard = $this
@@ -247,7 +247,7 @@ class NestedFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_filters_blank_items_from_array(): void
     {
         $wizard = $this

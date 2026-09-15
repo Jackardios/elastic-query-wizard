@@ -8,14 +8,14 @@ use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\ElasticGroup;
 use Jackardios\ElasticQueryWizard\Enums\BoolClause;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group group
- */
+#[Group('unit')]
+#[Group('group')]
 class NestedGroupTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function it_can_be_created_via_factory(): void
     {
         $group = ElasticGroup::nested('sides');
@@ -25,7 +25,7 @@ class NestedGroupTest extends UnitTestCase
         $this->assertEquals('nested_group', $group->getType());
     }
 
-    /** @test */
+    #[Test]
     public function it_defaults_to_filter_clause(): void
     {
         $group = ElasticGroup::nested('sides');
@@ -33,7 +33,7 @@ class NestedGroupTest extends UnitTestCase
         $this->assertEquals(BoolClause::FILTER, $group->getEffectiveClause());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_be_set_to_must_clause(): void
     {
         $group = ElasticGroup::nested('sides')->inMust();
@@ -41,7 +41,7 @@ class NestedGroupTest extends UnitTestCase
         $this->assertEquals(BoolClause::MUST, $group->getEffectiveClause());
     }
 
-    /** @test */
+    #[Test]
     public function it_accepts_children(): void
     {
         $children = [
@@ -54,7 +54,7 @@ class NestedGroupTest extends UnitTestCase
         $this->assertCount(2, $group->getChildren());
     }
 
-    /** @test */
+    #[Test]
     public function it_accepts_score_mode(): void
     {
         $group = ElasticGroup::nested('sides')
@@ -73,7 +73,7 @@ class NestedGroupTest extends UnitTestCase
         $this->assertEquals('avg', $array['nested']['score_mode']);
     }
 
-    /** @test */
+    #[Test]
     public function it_accepts_ignore_unmapped(): void
     {
         $group = ElasticGroup::nested('sides')
@@ -92,7 +92,7 @@ class NestedGroupTest extends UnitTestCase
         $this->assertTrue($array['nested']['ignore_unmapped']);
     }
 
-    /** @test */
+    #[Test]
     public function it_builds_nested_query_with_inner_bool(): void
     {
         $group = ElasticGroup::nested('sides')->children([
@@ -114,7 +114,7 @@ class NestedGroupTest extends UnitTestCase
         $this->assertArrayHasKey('bool', $array['nested']['query']);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_null_when_no_child_values(): void
     {
         $group = ElasticGroup::nested('sides')->children([
@@ -126,7 +126,7 @@ class NestedGroupTest extends UnitTestCase
         $this->assertNull($query);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_use_alias(): void
     {
         $group = ElasticGroup::nested('sides', 'side_filters');
@@ -135,7 +135,7 @@ class NestedGroupTest extends UnitTestCase
         $this->assertEquals('sides', $group->getPath());
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_score_mode_via_getter(): void
     {
         $group = ElasticGroup::nested('sides')->scoreMode('max');
@@ -143,7 +143,7 @@ class NestedGroupTest extends UnitTestCase
         $this->assertEquals('max', $group->getScoreMode());
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_ignore_unmapped_via_getter(): void
     {
         $group = ElasticGroup::nested('sides')->ignoreUnmapped();
@@ -151,7 +151,7 @@ class NestedGroupTest extends UnitTestCase
         $this->assertTrue($group->getIgnoreUnmapped());
     }
 
-    /** @test */
+    #[Test]
     public function it_accepts_inner_hits_with_defaults(): void
     {
         $group = ElasticGroup::nested('sides')
@@ -171,7 +171,7 @@ class NestedGroupTest extends UnitTestCase
         $this->assertArrayHasKey('inner_hits', $array['nested']);
     }
 
-    /** @test */
+    #[Test]
     public function it_accepts_inner_hits_with_options(): void
     {
         $group = ElasticGroup::nested('comments')
@@ -198,7 +198,7 @@ class NestedGroupTest extends UnitTestCase
         $this->assertArrayHasKey('sort', $array['nested']['inner_hits']);
     }
 
-    /** @test */
+    #[Test]
     public function it_combines_all_nested_options(): void
     {
         $group = ElasticGroup::nested('reviews')
@@ -225,7 +225,7 @@ class NestedGroupTest extends UnitTestCase
         $this->assertEquals(['size' => 3], $array['nested']['inner_hits']);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_null_defaults_for_getters(): void
     {
         $group = ElasticGroup::nested('sides');
@@ -235,7 +235,7 @@ class NestedGroupTest extends UnitTestCase
         $this->assertNull($group->getInnerHits());
     }
 
-    /** @test */
+    #[Test]
     public function it_accepts_ignore_unmapped_false(): void
     {
         $group = ElasticGroup::nested('sides')
@@ -253,7 +253,7 @@ class NestedGroupTest extends UnitTestCase
         $this->assertFalse($array['nested']['ignore_unmapped']);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_include_inner_hits_when_null(): void
     {
         $group = ElasticGroup::nested('sides')

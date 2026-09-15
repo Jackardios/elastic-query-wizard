@@ -24,6 +24,11 @@ final class MatchPhraseFilter extends AbstractElasticFilter
         return 'match_phrase';
     }
 
+    public function validateValueShape(mixed $value): ?string
+    {
+        return $this->validateScalarOrFlatListValueShape($value);
+    }
+
     protected function getDefaultClause(): BoolClause
     {
         return BoolClause::MUST;

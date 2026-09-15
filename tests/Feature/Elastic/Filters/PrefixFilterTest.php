@@ -8,12 +8,12 @@ use Illuminate\Support\Collection;
 use Jackardios\ElasticQueryWizard\Filters\PrefixFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group filter
- * @group elastic-filter
- */
+#[Group('elastic')]
+#[Group('filter')]
+#[Group('elastic-filter')]
 class PrefixFilterTest extends TestCase
 {
     protected Collection $models;
@@ -30,7 +30,7 @@ class PrefixFilterTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_by_prefix(): void
     {
         $result = $this
@@ -47,7 +47,7 @@ class PrefixFilterTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_by_full_term_as_prefix(): void
     {
         $result = $this
@@ -61,7 +61,7 @@ class PrefixFilterTest extends TestCase
         $this->assertEquals($this->models[0]->id, $result->first()->id);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_no_results_for_non_matching_prefix(): void
     {
         $result = $this
@@ -74,7 +74,7 @@ class PrefixFilterTest extends TestCase
         $this->assertCount(0, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_is_case_sensitive_on_keyword_fields(): void
     {
         $result = $this
@@ -88,7 +88,7 @@ class PrefixFilterTest extends TestCase
         $this->assertCount(0, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_empty_filter_value(): void
     {
         $result = $this
@@ -101,7 +101,7 @@ class PrefixFilterTest extends TestCase
         $this->assertCount(4, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_use_alias(): void
     {
         $result = $this

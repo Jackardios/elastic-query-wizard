@@ -26,25 +26,21 @@ final class ExistsFilter extends AbstractElasticFilter
         return 'exists';
     }
 
+    public function validateValueShape(mixed $value): ?string
+    {
+        return $this->validateScalarOrBlankValueShape($value);
+    }
+
     /**
      * This filter has conditional clause logic (filter vs must_not) so we
-     * implement buildQuery to return the query, and override handle() for
+     * implement buildQuery to return null, and override handle() for
      * the conditional clause logic.
      */
     public function buildQuery(mixed $value): ?QueryInterface
     {
-        if (FilterValueSanitizer::isBlank($value)) {
-            return null;
-        }
-
-        $normalized = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-        if ($normalized === null) {
-            return null;
-        }
-
-        $query = Query::exists($this->property);
-
-        return $this->applyParametersOnQuery($query);
+        // buildQuery returns null because this filter has conditional clause logic
+        // that requires handle() to decide between filter and must_not
+        return null;
     }
 
     public function handle(SearchBuilder $builder, mixed $value): void

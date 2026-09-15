@@ -9,12 +9,12 @@ use Jackardios\ElasticQueryWizard\Sorts\RandomSort;
 use Jackardios\ElasticQueryWizard\Tests\Concerns\AssertsCollectionSorting;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group sort
- * @group elastic-sort
- */
+#[Group('elastic')]
+#[Group('sort')]
+#[Group('elastic-sort')]
 class RandomSortTest extends TestCase
 {
     use AssertsCollectionSorting;
@@ -28,7 +28,7 @@ class RandomSortTest extends TestCase
         $this->models = TestModel::factory()->count(10)->create();
     }
 
-    /** @test */
+    #[Test]
     public function it_can_sort_randomly(): void
     {
         $result = $this
@@ -46,7 +46,7 @@ class RandomSortTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_consistent_order_with_same_seed(): void
     {
         $seed = 12345;
@@ -68,7 +68,7 @@ class RandomSortTest extends TestCase
         $this->assertEquals($result1->pluck('id')->all(), $result2->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_different_order_with_different_seeds(): void
     {
         $result1 = $this
@@ -91,7 +91,7 @@ class RandomSortTest extends TestCase
         $this->assertCount(10, $result2);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_use_string_seed(): void
     {
         $seed = 'session-id-123';
@@ -113,7 +113,7 @@ class RandomSortTest extends TestCase
         $this->assertEquals($result1->pluck('id')->all(), $result2->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_specify_field_for_seeded_random(): void
     {
         $result = $this
@@ -130,7 +130,7 @@ class RandomSortTest extends TestCase
         $this->assertCount(10, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_works_with_alias(): void
     {
         $result = $this

@@ -14,14 +14,14 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Jackardios\QueryWizard\Enums\SortDirection;
 use Jackardios\QueryWizard\Values\Sort;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group wizard
- */
+#[Group('unit')]
+#[Group('wizard')]
 class ElasticQueryWizardTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function it_throws_for_non_class_string(): void
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -30,7 +30,7 @@ class ElasticQueryWizardTest extends UnitTestCase
         ElasticQueryWizard::for('not a class name');
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_for_non_searchable_model(): void
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -38,7 +38,7 @@ class ElasticQueryWizardTest extends UnitTestCase
         ElasticQueryWizard::for(\Illuminate\Database\Eloquent\Model::class);
     }
 
-    /** @test */
+    #[Test]
     public function it_builds_query_with_filters_and_sorts(): void
     {
         $wizard = $this->createElasticWizardFromQuery([
@@ -58,7 +58,7 @@ class ElasticQueryWizardTest extends UnitTestCase
         $this->assertEquals([['name' => 'desc']], $sorts);
     }
 
-    /** @test */
+    #[Test]
     public function it_builds_query_with_multiple_elastic_filters(): void
     {
         $wizard = $this->createElasticWizardFromQuery([
@@ -79,7 +79,7 @@ class ElasticQueryWizardTest extends UnitTestCase
         $this->assertCount(2, $filterQueries);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_default_sorts(): void
     {
         $wizard = $this->createElasticWizardFromQuery([])
@@ -96,7 +96,7 @@ class ElasticQueryWizardTest extends UnitTestCase
         ], $sorts);
     }
 
-    /** @test */
+    #[Test]
     public function it_overrides_default_sorts_with_requested_sorts(): void
     {
         $wizard = $this->createElasticWizardFromQuery([
@@ -112,7 +112,7 @@ class ElasticQueryWizardTest extends UnitTestCase
         $this->assertEquals([['category' => 'desc']], $sorts);
     }
 
-    /** @test */
+    #[Test]
     public function it_creates_wizard_from_model_instance(): void
     {
         $model = new TestModel();
@@ -121,7 +121,7 @@ class ElasticQueryWizardTest extends UnitTestCase
         $this->assertInstanceOf(ElasticQueryWizard::class, $wizard);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_subject_as_search_builder(): void
     {
         $wizard = ElasticQueryWizard::for(TestModel::class);
@@ -129,7 +129,7 @@ class ElasticQueryWizardTest extends UnitTestCase
         $this->assertInstanceOf(\Jackardios\EsScoutDriver\Search\SearchBuilder::class, $wizard->getSubject());
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_declarative_search_builder_mutations_before_build(): void
     {
         $wizard = ElasticQueryWizard::for(TestModel::class)
@@ -161,7 +161,7 @@ class ElasticQueryWizardTest extends UnitTestCase
         $this->assertContains(['term' => ['category' => ['value' => 'users']]], $mustQueriesFromBody);
     }
 
-    /** @test */
+    #[Test]
     public function it_reapplies_search_builder_mutations_after_build_invalidation(): void
     {
         $wizard = ElasticQueryWizard::for(TestModel::class)
@@ -180,7 +180,7 @@ class ElasticQueryWizardTest extends UnitTestCase
         $this->assertSame(15, $params['body']['size']);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_tap_search_builder_callback(): void
     {
         $wizard = ElasticQueryWizard::for(TestModel::class)
@@ -192,7 +192,7 @@ class ElasticQueryWizardTest extends UnitTestCase
         $this->assertSame(0.75, $params['body']['min_score']);
     }
 
-    /** @test */
+    #[Test]
     public function bool_query_after_build_locks_configuration_changes(): void
     {
         $wizard = ElasticQueryWizard::for(TestModel::class);
@@ -206,7 +206,7 @@ class ElasticQueryWizardTest extends UnitTestCase
         $wizard->allowedFilters(TermFilter::make('name'));
     }
 
-    /** @test */
+    #[Test]
     public function modify_query_after_build_throws_logic_exception(): void
     {
         $wizard = ElasticQueryWizard::for(TestModel::class);
@@ -218,7 +218,7 @@ class ElasticQueryWizardTest extends UnitTestCase
         $wizard->modifyQuery(static function (Builder $builder, array $rawResult): void {});
     }
 
-    /** @test */
+    #[Test]
     public function modify_models_after_build_throws_logic_exception(): void
     {
         $wizard = ElasticQueryWizard::for(TestModel::class);

@@ -10,14 +10,14 @@ use Jackardios\QueryWizard\Eloquent\Includes\ExistsInclude;
 use Jackardios\QueryWizard\Eloquent\Includes\RelationshipInclude;
 use Jackardios\QueryWizard\Includes\CallbackInclude;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group factory
- */
+#[Group('unit')]
+#[Group('factory')]
 class ElasticIncludeFactoryTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function relationship_creates_relationship_include(): void
     {
         $include = ElasticInclude::relationship('relation', 'alias');
@@ -27,7 +27,7 @@ class ElasticIncludeFactoryTest extends TestCase
         $this->assertEquals('alias', $include->getName());
     }
 
-    /** @test */
+    #[Test]
     public function count_creates_count_include(): void
     {
         $include = ElasticInclude::count('relation', 'alias');
@@ -37,7 +37,7 @@ class ElasticIncludeFactoryTest extends TestCase
         $this->assertEquals('alias', $include->getName());
     }
 
-    /** @test */
+    #[Test]
     public function callback_creates_callback_include(): void
     {
         $callback = fn($subject) => $subject;
@@ -48,7 +48,7 @@ class ElasticIncludeFactoryTest extends TestCase
         $this->assertEquals('alias', $include->getName());
     }
 
-    /** @test */
+    #[Test]
     public function relationship_without_alias_uses_relation_as_name(): void
     {
         $include = ElasticInclude::relationship('relatedModels');
@@ -58,7 +58,7 @@ class ElasticIncludeFactoryTest extends TestCase
         $this->assertEquals('relatedModels', $include->getName());
     }
 
-    /** @test */
+    #[Test]
     public function count_without_alias_uses_relation_as_name(): void
     {
         $include = ElasticInclude::count('relatedModels');
@@ -68,7 +68,7 @@ class ElasticIncludeFactoryTest extends TestCase
         $this->assertEquals('relatedModels', $include->getName());
     }
 
-    /** @test */
+    #[Test]
     public function exists_creates_exists_include(): void
     {
         $include = ElasticInclude::exists('relation', 'alias');
@@ -78,7 +78,7 @@ class ElasticIncludeFactoryTest extends TestCase
         $this->assertEquals('alias', $include->getName());
     }
 
-    /** @test */
+    #[Test]
     public function exists_without_alias_uses_relation_as_name(): void
     {
         $include = ElasticInclude::exists('relatedModels');

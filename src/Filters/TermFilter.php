@@ -23,6 +23,11 @@ final class TermFilter extends AbstractElasticFilter
         return 'term';
     }
 
+    public function validateValueShape(mixed $value): ?string
+    {
+        return $this->validateScalarOrFlatListValueShape($value);
+    }
+
     public function buildQuery(mixed $value): ?QueryInterface
     {
         $prepared = FilterValueSanitizer::toScalarArray($value);

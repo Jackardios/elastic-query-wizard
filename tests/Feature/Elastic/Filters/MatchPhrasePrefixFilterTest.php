@@ -8,12 +8,12 @@ use Illuminate\Support\Collection;
 use Jackardios\ElasticQueryWizard\Filters\MatchPhrasePrefixFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group filter
- * @group elastic-filter
- */
+#[Group('elastic')]
+#[Group('filter')]
+#[Group('elastic-filter')]
 class MatchPhrasePrefixFilterTest extends TestCase
 {
     protected Collection $models;
@@ -30,7 +30,7 @@ class MatchPhrasePrefixFilterTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_by_phrase_prefix(): void
     {
         $result = $this
@@ -44,7 +44,7 @@ class MatchPhrasePrefixFilterTest extends TestCase
         $this->assertEquals($this->models[0]->id, $result->first()->id);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_match_multiple_documents_with_same_prefix(): void
     {
         $result = $this
@@ -61,7 +61,7 @@ class MatchPhrasePrefixFilterTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function it_can_filter_by_single_word_prefix(): void
     {
         $result = $this
@@ -78,7 +78,7 @@ class MatchPhrasePrefixFilterTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_no_results_for_non_matching_prefix(): void
     {
         $result = $this
@@ -91,7 +91,7 @@ class MatchPhrasePrefixFilterTest extends TestCase
         $this->assertCount(0, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_empty_filter_value(): void
     {
         $result = $this

@@ -30,14 +30,14 @@ use Jackardios\ElasticQueryWizard\Filters\TrashedFilter;
 use Jackardios\ElasticQueryWizard\Filters\WildcardFilter;
 use Jackardios\QueryWizard\Filters\PassthroughFilter;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group factory
- */
+#[Group('unit')]
+#[Group('factory')]
 class ElasticFilterFactoryTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function term_creates_term_filter(): void
     {
         $filter = ElasticFilter::term('field', 'alias');
@@ -47,7 +47,7 @@ class ElasticFilterFactoryTest extends TestCase
         $this->assertEquals('alias', $filter->getName());
     }
 
-    /** @test */
+    #[Test]
     public function match_creates_match_filter(): void
     {
         $filter = ElasticFilter::match('field', 'alias');
@@ -57,7 +57,7 @@ class ElasticFilterFactoryTest extends TestCase
         $this->assertEquals('alias', $filter->getName());
     }
 
-    /** @test */
+    #[Test]
     public function range_creates_range_filter(): void
     {
         $filter = ElasticFilter::range('field', 'alias');
@@ -67,7 +67,7 @@ class ElasticFilterFactoryTest extends TestCase
         $this->assertEquals('alias', $filter->getName());
     }
 
-    /** @test */
+    #[Test]
     public function exists_creates_exists_filter(): void
     {
         $filter = ElasticFilter::exists('field', 'alias');
@@ -77,7 +77,7 @@ class ElasticFilterFactoryTest extends TestCase
         $this->assertEquals('alias', $filter->getName());
     }
 
-    /** @test */
+    #[Test]
     public function multi_match_creates_multi_match_filter(): void
     {
         $filter = ElasticFilter::multiMatch(['field1', 'field2'], 'search', 'alias');
@@ -87,7 +87,7 @@ class ElasticFilterFactoryTest extends TestCase
         $this->assertEquals('alias', $filter->getName());
     }
 
-    /** @test */
+    #[Test]
     public function geo_bounding_box_creates_geo_bounding_box_filter(): void
     {
         $filter = ElasticFilter::geoBoundingBox('location', 'bbox');
@@ -97,7 +97,7 @@ class ElasticFilterFactoryTest extends TestCase
         $this->assertEquals('bbox', $filter->getName());
     }
 
-    /** @test */
+    #[Test]
     public function geo_distance_creates_geo_distance_filter(): void
     {
         $filter = ElasticFilter::geoDistance('location', 'distance');
@@ -107,7 +107,7 @@ class ElasticFilterFactoryTest extends TestCase
         $this->assertEquals('distance', $filter->getName());
     }
 
-    /** @test */
+    #[Test]
     public function wildcard_creates_wildcard_filter(): void
     {
         $filter = ElasticFilter::wildcard('field', 'alias');
@@ -117,7 +117,7 @@ class ElasticFilterFactoryTest extends TestCase
         $this->assertEquals('alias', $filter->getName());
     }
 
-    /** @test */
+    #[Test]
     public function prefix_creates_prefix_filter(): void
     {
         $filter = ElasticFilter::prefix('field', 'alias');
@@ -127,7 +127,7 @@ class ElasticFilterFactoryTest extends TestCase
         $this->assertEquals('alias', $filter->getName());
     }
 
-    /** @test */
+    #[Test]
     public function fuzzy_creates_fuzzy_filter(): void
     {
         $filter = ElasticFilter::fuzzy('field', 'alias');
@@ -137,7 +137,7 @@ class ElasticFilterFactoryTest extends TestCase
         $this->assertEquals('alias', $filter->getName());
     }
 
-    /** @test */
+    #[Test]
     public function regexp_creates_regexp_filter(): void
     {
         $filter = ElasticFilter::regexp('field', 'alias');
@@ -147,7 +147,7 @@ class ElasticFilterFactoryTest extends TestCase
         $this->assertEquals('alias', $filter->getName());
     }
 
-    /** @test */
+    #[Test]
     public function ids_creates_ids_filter(): void
     {
         $filter = ElasticFilter::ids('field', 'alias');
@@ -157,7 +157,7 @@ class ElasticFilterFactoryTest extends TestCase
         $this->assertEquals('alias', $filter->getName());
     }
 
-    /** @test */
+    #[Test]
     public function match_phrase_creates_match_phrase_filter(): void
     {
         $filter = ElasticFilter::matchPhrase('field', 'alias');
@@ -167,7 +167,7 @@ class ElasticFilterFactoryTest extends TestCase
         $this->assertEquals('alias', $filter->getName());
     }
 
-    /** @test */
+    #[Test]
     public function match_phrase_prefix_creates_match_phrase_prefix_filter(): void
     {
         $filter = ElasticFilter::matchPhrasePrefix('field', 'alias');
@@ -177,7 +177,7 @@ class ElasticFilterFactoryTest extends TestCase
         $this->assertEquals('alias', $filter->getName());
     }
 
-    /** @test */
+    #[Test]
     public function query_string_creates_query_string_filter(): void
     {
         $filter = ElasticFilter::queryString('field', 'alias');
@@ -187,7 +187,7 @@ class ElasticFilterFactoryTest extends TestCase
         $this->assertEquals('alias', $filter->getName());
     }
 
-    /** @test */
+    #[Test]
     public function simple_query_string_creates_simple_query_string_filter(): void
     {
         $filter = ElasticFilter::simpleQueryString('field', 'alias');
@@ -197,7 +197,7 @@ class ElasticFilterFactoryTest extends TestCase
         $this->assertEquals('alias', $filter->getName());
     }
 
-    /** @test */
+    #[Test]
     public function trashed_creates_trashed_filter(): void
     {
         $filter = ElasticFilter::trashed('alias');
@@ -207,7 +207,7 @@ class ElasticFilterFactoryTest extends TestCase
         $this->assertEquals('alias', $filter->getName());
     }
 
-    /** @test */
+    #[Test]
     public function callback_creates_callback_filter(): void
     {
         $callback = fn() => null;
@@ -218,7 +218,7 @@ class ElasticFilterFactoryTest extends TestCase
         $this->assertEquals('alias', $filter->getName());
     }
 
-    /** @test */
+    #[Test]
     public function passthrough_creates_passthrough_filter(): void
     {
         $filter = ElasticFilter::passthrough('name', 'alias');
@@ -228,7 +228,7 @@ class ElasticFilterFactoryTest extends TestCase
         $this->assertEquals('alias', $filter->getName());
     }
 
-    /** @test */
+    #[Test]
     public function date_range_creates_date_range_filter(): void
     {
         $filter = ElasticFilter::dateRange('created_at', 'date');
@@ -238,7 +238,7 @@ class ElasticFilterFactoryTest extends TestCase
         $this->assertEquals('date', $filter->getName());
     }
 
-    /** @test */
+    #[Test]
     public function null_creates_null_filter(): void
     {
         $filter = ElasticFilter::null('deleted_at', 'deleted');
@@ -248,7 +248,7 @@ class ElasticFilterFactoryTest extends TestCase
         $this->assertEquals('deleted', $filter->getName());
     }
 
-    /** @test */
+    #[Test]
     public function nested_creates_nested_filter(): void
     {
         $filter = ElasticFilter::nested('comments', 'author', 'comment_author');
@@ -258,7 +258,7 @@ class ElasticFilterFactoryTest extends TestCase
         $this->assertEquals('comment_author', $filter->getName());
     }
 
-    /** @test */
+    #[Test]
     public function geo_shape_creates_geo_shape_filter(): void
     {
         $filter = ElasticFilter::geoShape('boundary', 'area');
@@ -268,7 +268,7 @@ class ElasticFilterFactoryTest extends TestCase
         $this->assertEquals('area', $filter->getName());
     }
 
-    /** @test */
+    #[Test]
     public function more_like_this_creates_more_like_this_filter(): void
     {
         $filter = ElasticFilter::moreLikeThis(['title', 'body'], 'similar', 'related');

@@ -6,14 +6,14 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Filters;
 
 use Jackardios\ElasticQueryWizard\Filters\MoreLikeThisFilter;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group filter
- */
+#[Group('unit')]
+#[Group('filter')]
 class MoreLikeThisFilterQueryTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function it_builds_mlt_query_with_text(): void
     {
         $wizard = $this
@@ -32,7 +32,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_builds_mlt_query_with_document_reference(): void
     {
         $wizard = $this
@@ -58,7 +58,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_builds_mlt_query_with_array_of_values(): void
     {
         $wizard = $this
@@ -79,7 +79,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_min_term_freq(): void
     {
         $wizard = $this
@@ -101,7 +101,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_max_query_terms(): void
     {
         $wizard = $this
@@ -123,7 +123,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_doc_freq_limits(): void
     {
         $wizard = $this
@@ -148,7 +148,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_word_length_limits(): void
     {
         $wizard = $this
@@ -173,7 +173,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_analyzer(): void
     {
         $wizard = $this
@@ -195,7 +195,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_minimum_should_match_as_int(): void
     {
         $wizard = $this
@@ -217,7 +217,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_minimum_should_match_as_string(): void
     {
         $wizard = $this
@@ -239,7 +239,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_boost(): void
     {
         $wizard = $this
@@ -261,7 +261,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_include(): void
     {
         $wizard = $this
@@ -283,7 +283,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_boost_terms(): void
     {
         $wizard = $this
@@ -305,7 +305,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_add_query_for_blank_value(): void
     {
         $wizard = $this
@@ -318,7 +318,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         $this->assertEmpty($queries);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_add_query_for_null_value(): void
     {
         $wizard = $this
@@ -331,7 +331,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         $this->assertEmpty($queries);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_add_query_for_whitespace_only(): void
     {
         $wizard = $this
@@ -344,7 +344,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         $this->assertEmpty($queries);
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_add_query_for_empty_array(): void
     {
         $wizard = $this
@@ -357,7 +357,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         $this->assertEmpty($queries);
     }
 
-    /** @test */
+    #[Test]
     public function it_filters_blank_items_from_array(): void
     {
         $wizard = $this
@@ -378,7 +378,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_uses_alias_correctly(): void
     {
         $wizard = $this
@@ -397,7 +397,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         ], $queries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_correct_type(): void
     {
         $filter = MoreLikeThisFilter::make(['title'], 'similar');
@@ -405,7 +405,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         $this->assertEquals('more_like_this', $filter->getType());
     }
 
-    /** @test */
+    #[Test]
     public function it_combines_all_options(): void
     {
         $wizard = $this

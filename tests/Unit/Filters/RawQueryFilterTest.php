@@ -8,14 +8,14 @@ use Jackardios\ElasticQueryWizard\ElasticGroup;
 use Jackardios\ElasticQueryWizard\Filters\AbstractElasticFilter;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group filter
- */
+#[Group('unit')]
+#[Group('filter')]
 class RawQueryFilterTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function it_applies_raw_query_from_custom_filter_at_root_level(): void
     {
         $rawFilter = new class ('status', 'status') extends AbstractElasticFilter {
@@ -53,7 +53,7 @@ class RawQueryFilterTest extends UnitTestCase
         $this->assertEquals(['term' => ['status' => ['value' => 'active']]], $filterQueries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_applies_raw_query_from_custom_filter_inside_group(): void
     {
         $rawFilter = new class ('status', 'status') extends AbstractElasticFilter {

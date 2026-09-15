@@ -10,12 +10,12 @@ use Jackardios\ElasticQueryWizard\Tests\Concerns\AssertsCollectionSorting;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\NestedModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
 use Jackardios\EsScoutDriver\Support\Query;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group sort
- * @group elastic-sort
- */
+#[Group('elastic')]
+#[Group('sort')]
+#[Group('elastic-sort')]
 class NestedSortTest extends TestCase
 {
     use AssertsCollectionSorting;
@@ -59,7 +59,7 @@ class NestedSortTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_sort_by_nested_field_ascending(): void
     {
         $result = $this
@@ -74,7 +74,7 @@ class NestedSortTest extends TestCase
         $this->assertEquals([$this->models[1]->id, $this->models[2]->id, $this->models[0]->id], $result->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_sort_by_nested_field_descending(): void
     {
         $result = $this
@@ -89,7 +89,7 @@ class NestedSortTest extends TestCase
         $this->assertEquals([$this->models[2]->id, $this->models[0]->id, $this->models[1]->id], $result->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_sort_with_min_mode(): void
     {
         $result = $this
@@ -104,7 +104,7 @@ class NestedSortTest extends TestCase
         $this->assertEquals([$this->models[1]->id, $this->models[2]->id, $this->models[0]->id], $result->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_sort_with_max_mode(): void
     {
         $result = $this
@@ -119,7 +119,7 @@ class NestedSortTest extends TestCase
         $this->assertEquals([$this->models[1]->id, $this->models[0]->id, $this->models[2]->id], $result->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_sort_with_avg_mode(): void
     {
         $result = $this
@@ -134,7 +134,7 @@ class NestedSortTest extends TestCase
         $this->assertEquals([$this->models[1]->id, $this->models[0]->id, $this->models[2]->id], $result->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_sort_by_nested_integer_field(): void
     {
         $result = $this
@@ -149,7 +149,7 @@ class NestedSortTest extends TestCase
         $this->assertEquals([$this->models[1]->id, $this->models[2]->id, $this->models[0]->id], $result->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_sort_descending_with_alias(): void
     {
         $result = $this
@@ -164,7 +164,7 @@ class NestedSortTest extends TestCase
         $this->assertEquals([$this->models[0]->id, $this->models[2]->id, $this->models[1]->id], $result->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_sort_with_nested_filter(): void
     {
         $result = $this
@@ -183,7 +183,7 @@ class NestedSortTest extends TestCase
         $this->assertEquals([$this->models[1]->id, $this->models[2]->id, $this->models[0]->id], $result->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_sort_with_missing_last(): void
     {
         NestedModel::factory()->create([
@@ -208,7 +208,7 @@ class NestedSortTest extends TestCase
         $this->assertEquals('Product D', $result->last()->title);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_sort_with_missing_first(): void
     {
         NestedModel::factory()->create([
@@ -233,7 +233,7 @@ class NestedSortTest extends TestCase
         $this->assertEquals('Product D', $result->first()->title);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_sort_with_max_children(): void
     {
         $result = $this
@@ -251,7 +251,7 @@ class NestedSortTest extends TestCase
         $this->assertCount(3, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_combine_multiple_sort_options(): void
     {
         $result = $this

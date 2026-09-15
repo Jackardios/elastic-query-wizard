@@ -8,14 +8,14 @@ use Jackardios\ElasticQueryWizard\Exceptions\InvalidGeoBoundingBoxValue;
 use Jackardios\ElasticQueryWizard\Filters\GeoBoundingBoxFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\GeoModel;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group filter
- */
+#[Group('unit')]
+#[Group('filter')]
 class GeoBoundingBoxFilterQueryTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function it_builds_a_geo_bounding_box_query(): void
     {
         $wizard = $this
@@ -34,7 +34,7 @@ class GeoBoundingBoxFilterQueryTest extends UnitTestCase
         $this->assertArrayHasKey('bottom_right', $queries[0]['geo_bounding_box']['location']);
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_for_invalid_bbox_value(): void
     {
         $this->expectException(InvalidGeoBoundingBoxValue::class);
@@ -47,7 +47,7 @@ class GeoBoundingBoxFilterQueryTest extends UnitTestCase
             ->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_for_wrong_count_of_values(): void
     {
         $this->expectException(InvalidGeoBoundingBoxValue::class);
@@ -60,7 +60,7 @@ class GeoBoundingBoxFilterQueryTest extends UnitTestCase
             ->build();
     }
 
-    /** @test */
+    #[Test]
     public function it_does_not_add_a_query_for_empty_value(): void
     {
         $wizard = $this
@@ -73,7 +73,7 @@ class GeoBoundingBoxFilterQueryTest extends UnitTestCase
         $this->assertEmpty($queries);
     }
 
-    /** @test */
+    #[Test]
     public function it_preserves_longitude_order_for_antimeridian_crossing_boxes(): void
     {
         $wizard = $this

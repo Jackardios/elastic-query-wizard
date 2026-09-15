@@ -10,12 +10,12 @@ use Jackardios\ElasticQueryWizard\Sorts\ScoreSort;
 use Jackardios\ElasticQueryWizard\Tests\Concerns\AssertsCollectionSorting;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group sort
- * @group elastic-sort
- */
+#[Group('elastic')]
+#[Group('sort')]
+#[Group('elastic-sort')]
 class ScoreSortTest extends TestCase
 {
     use AssertsCollectionSorting;
@@ -33,7 +33,7 @@ class ScoreSortTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_sort_by_score_descending(): void
     {
         $result = $this
@@ -53,7 +53,7 @@ class ScoreSortTest extends TestCase
         $this->assertContains($this->models[1]->id, $result->pluck('id')->all());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_sort_by_score_ascending(): void
     {
         $result = $this
@@ -71,7 +71,7 @@ class ScoreSortTest extends TestCase
         $this->assertCount(2, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_results_with_default_scoring(): void
     {
         $result = $this
@@ -85,7 +85,7 @@ class ScoreSortTest extends TestCase
         $this->assertCount(3, $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_works_with_alias(): void
     {
         $result = $this

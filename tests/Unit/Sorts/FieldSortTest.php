@@ -6,14 +6,14 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Sorts;
 
 use Jackardios\ElasticQueryWizard\Sorts\FieldSort;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group sort
- */
+#[Group('unit')]
+#[Group('sort')]
 class FieldSortTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function get_type_returns_field(): void
     {
         $sort = FieldSort::make('name');
@@ -21,7 +21,7 @@ class FieldSortTest extends TestCase
         $this->assertEquals('field', $sort->getType());
     }
 
-    /** @test */
+    #[Test]
     public function get_property_returns_property(): void
     {
         $sort = FieldSort::make('name');
@@ -29,7 +29,7 @@ class FieldSortTest extends TestCase
         $this->assertEquals('name', $sort->getProperty());
     }
 
-    /** @test */
+    #[Test]
     public function get_name_returns_alias_when_set(): void
     {
         $sort = FieldSort::make('name', 'nickname');
@@ -37,7 +37,7 @@ class FieldSortTest extends TestCase
         $this->assertEquals('nickname', $sort->getName());
     }
 
-    /** @test */
+    #[Test]
     public function get_name_returns_property_when_no_alias(): void
     {
         $sort = FieldSort::make('name');

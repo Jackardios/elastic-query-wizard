@@ -9,12 +9,12 @@ use Jackardios\ElasticQueryWizard\Filters\TermFilter;
 use Jackardios\ElasticQueryWizard\Sorts\FieldSort;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group elastic
- * @group pagination
- * @group elastic-pagination
- */
+#[Group('elastic')]
+#[Group('pagination')]
+#[Group('elastic-pagination')]
 class PaginationTest extends TestCase
 {
     protected function setUp(): void
@@ -24,7 +24,7 @@ class PaginationTest extends TestCase
         TestModel::factory()->count(25)->create();
     }
 
-    /** @test */
+    #[Test]
     public function it_can_paginate_results(): void
     {
         $paginator = ElasticQueryWizard::for(TestModel::class)
@@ -36,7 +36,7 @@ class PaginationTest extends TestCase
         $this->assertEquals(3, $paginator->lastPage());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_get_specific_page(): void
     {
         $paginator = ElasticQueryWizard::for(TestModel::class)
@@ -47,7 +47,7 @@ class PaginationTest extends TestCase
         $this->assertEquals(10, $paginator->count());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_get_last_page_with_remaining_items(): void
     {
         $paginator = ElasticQueryWizard::for(TestModel::class)
@@ -58,7 +58,7 @@ class PaginationTest extends TestCase
         $this->assertEquals(5, $paginator->count()); // 25 - 10 - 10 = 5
     }
 
-    /** @test */
+    #[Test]
     public function it_can_paginate_with_filters(): void
     {
         TestModel::factory()->count(15)->create(['category' => 'paginate-test-category']);
@@ -74,7 +74,7 @@ class PaginationTest extends TestCase
         $this->assertEquals(3, $paginator->lastPage());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_paginate_with_sorts(): void
     {
         $paginator = $this
@@ -90,7 +90,7 @@ class PaginationTest extends TestCase
         $this->assertCount(10, $models);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_access_models_from_paginator(): void
     {
         $paginator = ElasticQueryWizard::for(TestModel::class)
@@ -103,7 +103,7 @@ class PaginationTest extends TestCase
         $this->assertInstanceOf(TestModel::class, $models->first());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_use_custom_page_name(): void
     {
         $paginator = ElasticQueryWizard::for(TestModel::class)
@@ -113,7 +113,7 @@ class PaginationTest extends TestCase
         $this->assertEquals('p', $paginator->getPageName());
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_empty_page_for_beyond_last_page(): void
     {
         $paginator = ElasticQueryWizard::for(TestModel::class)
@@ -123,7 +123,7 @@ class PaginationTest extends TestCase
         $this->assertEquals(0, $paginator->count());
     }
 
-    /** @test */
+    #[Test]
     public function it_can_count_without_pagination(): void
     {
         $count = ElasticQueryWizard::for(TestModel::class)
@@ -133,7 +133,7 @@ class PaginationTest extends TestCase
         $this->assertEquals(25, $count);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_count_with_filters(): void
     {
         TestModel::factory()->count(10)->create(['category' => 'count-test-category']);

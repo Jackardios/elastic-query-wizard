@@ -7,14 +7,15 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Filters;
 use DateTimeImmutable;
 use Jackardios\ElasticQueryWizard\Filters\DateRangeFilter;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use Jackardios\QueryWizard\Exceptions\InvalidFilterQuery;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Attributes\Test;
 
-/**
- * @group unit
- * @group filter
- */
+#[Group('unit')]
+#[Group('filter')]
 class DateRangeFilterQueryTest extends UnitTestCase
 {
-    /** @test */
+    #[Test]
     public function it_adds_a_range_filter_with_from_and_to(): void
     {
         $wizard = $this
@@ -35,7 +36,7 @@ class DateRangeFilterQueryTest extends UnitTestCase
         ], $filterQueries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_adds_a_range_filter_with_only_from(): void
     {
         $wizard = $this
@@ -55,7 +56,7 @@ class DateRangeFilterQueryTest extends UnitTestCase
         ], $filterQueries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_adds_a_range_filter_with_only_to(): void
     {
         $wizard = $this
@@ -75,33 +76,42 @@ class DateRangeFilterQueryTest extends UnitTestCase
         ], $filterQueries[0]);
     }
 
-    /** @test */
-    public function it_does_not_add_a_filter_for_empty_array(): void
+    #[Test]
+    public function it_ignores_an_empty_value(): void
     {
         $wizard = $this
             ->createElasticWizardWithFilters(['date' => []])
             ->allowedFilters(DateRangeFilter::make('created_at', 'date'));
         $wizard->build();
 
-        $filterQueries = $this->getFilterQueries($wizard->boolQuery());
-
-        $this->assertEmpty($filterQueries);
+        $this->assertEmpty($this->getFilterQueries($wizard->boolQuery()));
     }
 
-    /** @test */
-    public function it_does_not_add_a_filter_for_non_array_value(): void
+    #[Test]
+    public function it_rejects_an_array_without_any_known_bound(): void
     {
-        $wizard = $this
-            ->createElasticWizardWithFilters(['date' => 'not-an-array'])
-            ->allowedFilters(DateRangeFilter::make('created_at', 'date'));
-        $wizard->build();
+        // Carries data, but none of it addresses a bound - silently matching
+        // everything would be worse than saying so.
+        $this->expectException(InvalidFilterQuery::class);
 
-        $filterQueries = $this->getFilterQueries($wizard->boolQuery());
-
-        $this->assertEmpty($filterQueries);
+        $this
+            ->createElasticWizardWithFilters(['date' => ['unknown' => '2024-01-01']])
+            ->allowedFilters(DateRangeFilter::make('created_at', 'date'))
+            ->build();
     }
 
-    /** @test */
+    #[Test]
+    public function it_rejects_a_non_array_value(): void
+    {
+        $this->expectException(InvalidFilterQuery::class);
+
+        $this
+            ->createElasticWizardWithFilters(['date' => 'not-an-array'])
+            ->allowedFilters(DateRangeFilter::make('created_at', 'date'))
+            ->build();
+    }
+
+    #[Test]
     public function it_uses_custom_from_and_to_keys(): void
     {
         $wizard = $this
@@ -126,7 +136,7 @@ class DateRangeFilterQueryTest extends UnitTestCase
         ], $filterQueries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_adds_format_parameter(): void
     {
         $wizard = $this
@@ -150,7 +160,7 @@ class DateRangeFilterQueryTest extends UnitTestCase
         ], $filterQueries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_adds_timezone_parameter(): void
     {
         $wizard = $this
@@ -174,7 +184,7 @@ class DateRangeFilterQueryTest extends UnitTestCase
         ], $filterQueries[0]);
     }
 
-    /** @test */
+    #[Test]
     public function it_ignores_empty_string_values(): void
     {
         $wizard = $this
@@ -187,7 +197,7 @@ class DateRangeFilterQueryTest extends UnitTestCase
         $this->assertEmpty($filterQueries);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_correct_type(): void
     {
         $filter = DateRangeFilter::make('created_at', 'date');
