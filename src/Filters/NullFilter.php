@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Filters;
 
+use Jackardios\ElasticQueryWizard\Concerns\AddsExistsQuery;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Query\Compound\BoolQuery;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
@@ -21,6 +22,8 @@ use Jackardios\EsScoutDriver\Support\Query;
  */
 final class NullFilter extends AbstractElasticFilter
 {
+    use AddsExistsQuery;
+
     protected bool $invertLogic = false;
 
     public static function make(string $property, ?string $alias = null): static
@@ -93,16 +96,8 @@ final class NullFilter extends AbstractElasticFilter
             return;
         }
 
-        $query = Query::exists($this->property);
-
         $shouldBeNull = $this->invertLogic ? ! $isTruthy : $isTruthy;
 
-        if ($shouldBeNull) {
-            // Field should be NULL (not exist) -> use must_not with exists query
-            $boolQuery->addMustNot($query);
-        } else {
-            // Field should NOT be NULL (must exist) -> use effective clause with exists query
-            $this->addQueryToBuilder($boolQuery, $query);
-        }
+        $this->addExistsQuery($boolQuery, Query::exists($this->property), $shouldBeNull);
     }
 }

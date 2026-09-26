@@ -208,4 +208,25 @@ class BoolGroupHandleInGroupTest extends UnitTestCase
         // 1 must_not: null filter
         $this->assertCount(1, $array['bool']['must_not']);
     }
+
+    #[Test]
+    public function a_missing_field_in_an_or_group_is_one_of_the_alternatives(): void
+    {
+        $group = ElasticGroup::bool('any')->minimumShouldMatch(1)->children([
+            ElasticFilter::exists('deleted_by')->alias('has_del')->inShould(),
+            ElasticFilter::term('status')->alias('st')->inShould(),
+        ]);
+
+        $query = $group->buildGroupQuery(['has_del' => false, 'st' => 'a']);
+
+        $this->assertSame([
+            'bool' => [
+                'should' => [
+                    ['bool' => ['must_not' => [['exists' => ['field' => 'deleted_by']]]]],
+                    ['term' => ['status' => ['value' => 'a']]],
+                ],
+                'minimum_should_match' => 1,
+            ],
+        ], $query?->toArray());
+    }
 }

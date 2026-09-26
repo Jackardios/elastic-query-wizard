@@ -341,6 +341,10 @@ GET /posts?filter[thumbnail]=false
 { "bool": { "must_not": { "exists": { "field": "thumbnail" } } } }
 ```
 
+The negation follows the clause: with `inShould()` a missing field is one of the alternatives
+(`"should": [{ "bool": { "must_not": [{ "exists": … }] } }, …]`), and with `inMustNot()` it keeps the documents that have
+the field (`"filter": [{ "exists": … }]`). The Null Filter does the same for "field IS NULL".
+
 ---
 
 ## Null Filter

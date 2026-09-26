@@ -102,4 +102,43 @@ class ExistsFilterQueryTest extends UnitTestCase
         $this->assertCount(1, $mustNotQueries);
         $this->assertEquals(['exists' => ['field' => 'has_image']], $mustNotQueries[0]);
     }
+
+    #[Test]
+    public function a_falsy_value_in_should_is_an_alternative_to_its_siblings(): void
+    {
+        $wizard = $this
+            ->createElasticWizardWithFilters(['has_image' => 'false'])
+            ->allowedFilters(ExistsFilter::make('has_image')->inShould());
+        $wizard->build();
+
+        $this->assertSame(
+            [['bool' => ['must_not' => [['exists' => ['field' => 'has_image']]]]]],
+            $this->getShouldQueries($wizard->boolQuery())
+        );
+        $this->assertEmpty($this->getMustNotQueries($wizard->boolQuery()));
+    }
+
+    #[Test]
+    public function a_falsy_value_in_must_not_requires_the_field(): void
+    {
+        $wizard = $this
+            ->createElasticWizardWithFilters(['has_image' => 'false'])
+            ->allowedFilters(ExistsFilter::make('has_image')->inMustNot());
+        $wizard->build();
+
+        $this->assertSame([['exists' => ['field' => 'has_image']]], $this->getFilterQueries($wizard->boolQuery()));
+        $this->assertEmpty($this->getMustNotQueries($wizard->boolQuery()));
+    }
+
+    #[Test]
+    public function a_truthy_value_in_must_not_excludes_the_field(): void
+    {
+        $wizard = $this
+            ->createElasticWizardWithFilters(['has_image' => 'true'])
+            ->allowedFilters(ExistsFilter::make('has_image')->inMustNot());
+        $wizard->build();
+
+        $this->assertSame([['exists' => ['field' => 'has_image']]], $this->getMustNotQueries($wizard->boolQuery()));
+        $this->assertEmpty($this->getFilterQueries($wizard->boolQuery()));
+    }
 }

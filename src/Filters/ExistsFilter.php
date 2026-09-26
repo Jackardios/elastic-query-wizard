@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Filters;
 
+use Jackardios\ElasticQueryWizard\Concerns\AddsExistsQuery;
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
-use Jackardios\ElasticQueryWizard\Enums\BoolClause;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Query\Compound\BoolQuery;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
@@ -14,6 +14,7 @@ use Jackardios\EsScoutDriver\Support\Query;
 
 final class ExistsFilter extends AbstractElasticFilter
 {
+    use AddsExistsQuery;
     use HasParameters;
 
     public static function make(string $property, ?string $alias = null): static
@@ -64,19 +65,6 @@ final class ExistsFilter extends AbstractElasticFilter
             return;
         }
 
-        $query = Query::exists($this->property);
-        $query = $this->applyParametersOnQuery($query);
-
-        // Truthy: field must exist (filter), Falsy: field must NOT exist (must_not)
-        $effectiveClause = $normalized
-            ? ($this->clause ?? BoolClause::FILTER)
-            : BoolClause::MUST_NOT;
-
-        match ($effectiveClause) {
-            BoolClause::FILTER => $boolQuery->addFilter($query),
-            BoolClause::MUST => $boolQuery->addMust($query),
-            BoolClause::SHOULD => $boolQuery->addShould($query),
-            BoolClause::MUST_NOT => $boolQuery->addMustNot($query),
-        };
+        $this->addExistsQuery($boolQuery, $this->applyParametersOnQuery(Query::exists($this->property)), ! $normalized);
     }
 }
