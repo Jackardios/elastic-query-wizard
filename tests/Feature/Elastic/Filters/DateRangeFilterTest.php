@@ -252,4 +252,21 @@ class DateRangeFilterTest extends TestCase
             ->allowedFilters(DateRangeFilter::make('created_at'))
             ->build();
     }
+
+    #[Test]
+    public function a_date_to_bound_covers_its_whole_day_in_the_filter_timezone(): void
+    {
+        $late = TestModel::factory()->create(['name' => 'Late June Model', 'created_at' => Carbon::parse('2024-06-30 23:30:00', 'UTC')]);
+        $search = fn (DateRangeFilter $filter): array => $this
+            ->createElasticWizardWithFilters(['created_at' => ['from' => '2024-06-01', 'to' => '2024-06-30']])
+            ->allowedFilters($filter)
+            ->build()
+            ->execute()
+            ->models()
+            ->pluck('id')
+            ->all();
+
+        $this->assertEqualsCanonicalizing([$this->models[2]->id, $late->id], $search(DateRangeFilter::make('created_at')));
+        $this->assertEqualsCanonicalizing([$this->models[2]->id], $search(DateRangeFilter::make('created_at')->timezone('+03:00')));
+    }
 }

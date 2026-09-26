@@ -4,17 +4,28 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Filters;
 
+use DateTimeImmutable;
 use DateTimeInterface;
+use DateTimeZone;
+use Exception;
+use InvalidArgumentException;
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Query\Term\RangeQuery;
 use Jackardios\EsScoutDriver\Support\Query;
+use Jackardios\QueryWizard\Support\FilterValueParser;
 
 /**
- * Specialized range filter for date fields with custom from/to keys.
+ * Range filter for date fields, reading dates like laravel-query-wizard's
+ * date range filter.
  *
- * Unlike RangeFilter, this uses configurable keys (default: 'from'/'to')
- * and internally converts them to ES 9.x compatible gte/lte operators.
+ * Each bound is a date (Y-m-d) or an ISO 8601 date-time, read in the filter's
+ * timezone (the application's by default); a date-time with an offset keeps
+ * its instant. A date names the whole day, so `to=2024-01-31` ends before
+ * 2024-02-01 starts. Any other value is a 400 (InvalidFilterValue).
+ *
+ * The bounds reach Elasticsearch as ISO 8601 date-times with an offset, read
+ * with the `strict_date_optional_time` format whatever the field's own format.
  *
  * @example filter[created_at][from]=2024-01-01&filter[created_at][to]=2024-12-31
  */
@@ -22,13 +33,15 @@ final class DateRangeFilter extends AbstractElasticFilter
 {
     use HasParameters;
 
+    private const DEFAULT_ES_FORMAT = 'strict_date_optional_time';
+
     protected string $fromKey = 'from';
 
     protected string $toKey = 'to';
 
-    protected ?string $dateFormat = null;
+    protected ?string $esFormat = null;
 
-    protected ?string $timezone = null;
+    protected ?DateTimeZone $timezone = null;
 
     public static function make(string $property, ?string $alias = null): static
     {
@@ -50,20 +63,40 @@ final class DateRangeFilter extends AbstractElasticFilter
     }
 
     /**
-     * Set the date format for Elasticsearch.
+     * The format Elasticsearch reads the bounds with. The bounds are ISO 8601
+     * date-times with an offset, so the format must read them; the default is
+     * `strict_date_optional_time`.
      *
      * @see https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-date-format.html
      */
-    public function dateFormat(string $format): static
+    public function esFormat(string $format): static
     {
-        $this->dateFormat = $format;
+        $this->esFormat = $format;
 
         return $this;
     }
 
+    /**
+     * @deprecated Use esFormat(). The bounds are ISO 8601 date-times, so the format must read them.
+     */
+    public function dateFormat(string $format): static
+    {
+        return $this->esFormat($format);
+    }
+
+    /**
+     * The timezone a bound without an offset is read in, such as
+     * `Europe/Moscow` or `+03:00`; the application's by default.
+     *
+     * @throws InvalidArgumentException For an unknown timezone
+     */
     public function timezone(string $timezone): static
     {
-        $this->timezone = $timezone;
+        try {
+            $this->timezone = new DateTimeZone($timezone);
+        } catch (Exception $exception) {
+            throw new InvalidArgumentException("Unknown timezone `{$timezone}`.", 0, $exception);
+        }
 
         return $this;
     }
@@ -85,7 +118,6 @@ final class DateRangeFilter extends AbstractElasticFilter
      */
     public function validateValueShape(mixed $value): ?string
     {
-        // An empty parameter means "not applied", not "malformed".
         if ($this->isBlankValueShape($value)) {
             return null;
         }
@@ -102,7 +134,9 @@ final class DateRangeFilter extends AbstractElasticFilter
         }
 
         foreach ([$this->fromKey, $this->toKey] as $key) {
-            if (array_key_exists($key, $value) && $value[$key] !== null && ! is_scalar($value[$key])) {
+            $bound = $value[$key] ?? null;
+
+            if ($bound !== null && ! is_scalar($bound) && ! $bound instanceof DateTimeInterface) {
                 return "Filter `{$this->getName()}` expects a scalar value for `{$key}`.";
             }
         }
@@ -116,43 +150,35 @@ final class DateRangeFilter extends AbstractElasticFilter
             return null;
         }
 
-        $from = $this->normalizeDate($value[$this->fromKey] ?? null);
-        $to = $this->normalizeDate($value[$this->toKey] ?? null);
+        $timezone = $this->timezone ?? FilterValueParser::defaultTimezone();
+        $from = FilterValueParser::isoDate($value[$this->fromKey] ?? null, $this, $timezone, $this->fromKey);
+        $to = FilterValueParser::isoDate($value[$this->toKey] ?? null, $this, $timezone, $this->toKey);
 
         if ($from === null && $to === null) {
             return null;
         }
 
-        $query = Query::range($this->property);
+        $query = Query::range($this->property)->format($this->esFormat ?? self::DEFAULT_ES_FORMAT);
 
         if ($from !== null) {
-            $query->gte($from);
+            $query->gte(self::isoDateTime($from->value));
         }
+
         if ($to !== null) {
-            $query->lte($to);
-        }
-        if ($this->dateFormat !== null) {
-            $query->format($this->dateFormat);
-        }
-        if ($this->timezone !== null) {
-            $query->timeZone($this->timezone);
+            [$operator, $end] = $to->upToBound();
+
+            if ($operator === '<') {
+                $query->lt(self::isoDateTime($end->value));
+            } else {
+                $query->lte(self::isoDateTime($end->value));
+            }
         }
 
         return $this->applyParametersOnQuery($query);
     }
 
-    protected function normalizeDate(mixed $value): string|int|float|null
+    private static function isoDateTime(DateTimeImmutable $date): string
     {
-        if ($value === null || $value === '') {
-            return null;
-        }
-        if ($value instanceof DateTimeInterface) {
-            return $value->format('Y-m-d\TH:i:s');
-        }
-        if (is_string($value) || is_int($value) || is_float($value)) {
-            return $value;
-        }
-
-        return null;
+        return $date->format($date->format('u') === '000000' ? DATE_ATOM : 'Y-m-d\TH:i:s.uP');
     }
 }

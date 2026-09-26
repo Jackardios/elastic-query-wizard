@@ -1117,7 +1117,7 @@ Values are read in any letter case. Any other value, `1` and `0` included, retur
 
 ## Date Range Filter
 
-Specialized range filter for date fields with custom from/to keys. Unlike `RangeFilter` which uses `gt/gte/lt/lte`, this filter uses configurable keys (default: `from`/`to`).
+Range filter for date fields with `from`/`to` keys, reading dates like `laravel-query-wizard`'s date range filter.
 
 ### Usage
 
@@ -1134,18 +1134,32 @@ GET /orders?filter[created_at][from]=2024-01-01&filter[created_at][to]=2024-12-3
 # Only "from" bound
 GET /orders?filter[created_at][from]=2024-01-01
 
-# Only "to" bound
-GET /orders?filter[created_at][to]=2024-12-31
+# Date-times, with or without an offset
+GET /orders?filter[created_at][from]=2024-01-01T09:00&filter[created_at][to]=2024-01-01T18:00:00%2B03:00
 ```
+
+### Reading Dates
+
+- Each bound is a date (`Y-m-d`) or an ISO 8601 date-time. Anything else — `abc`, epoch numbers, `01/01/2024`,
+  date math such as `now-1d` — returns 400 (`InvalidFilterValue`).
+- A bound without an offset is read in the application timezone, or the one set with `timezone()`; a date-time with
+  an offset keeps its instant. Clients must send `+` in an offset as `%2B`.
+- A date names the whole day: `to=2024-12-31` becomes `lt` the start of 2025-01-01.
+- A `DateTimeInterface` works as a `default()` bound.
+
+The bounds reach Elasticsearch as ISO 8601 date-times with an offset, read with the `strict_date_optional_time`
+format, so the field's own mapping format does not matter.
 
 ### Elasticsearch Query
 
 ```json
+// GET /orders?filter[created_at][from]=2024-01-01&filter[created_at][to]=2024-12-31, application timezone UTC
 {
   "range": {
     "created_at": {
-      "gte": "2024-01-01",
-      "lte": "2024-12-31"
+      "gte": "2024-01-01T00:00:00+00:00",
+      "lt": "2025-01-01T00:00:00+00:00",
+      "format": "strict_date_optional_time"
     }
   }
 }
@@ -1155,18 +1169,19 @@ GET /orders?filter[created_at][to]=2024-12-31
 
 ```php
 ElasticFilter::dateRange('created_at')
-    ->fromKey('start')           // Change "from" key to "start"
-    ->toKey('end')               // Change "to" key to "end"
-    ->dateFormat('yyyy-MM-dd')   // Set date format
-    ->timezone('+03:00')         // Set timezone
+    ->fromKey('start')                  // Change "from" key to "start"
+    ->toKey('end')                      // Change "to" key to "end"
+    ->timezone('Europe/Moscow')         // Read bounds without an offset in this timezone
+    ->esFormat('strict_date_time')      // Format Elasticsearch reads the bounds with
 ```
 
 | Method | Description |
 |--------|-------------|
 | `fromKey(string)` | Change the key for the lower bound (default: `from`) |
 | `toKey(string)` | Change the key for the upper bound (default: `to`) |
-| `dateFormat(string)` | Set the date format for Elasticsearch |
-| `timezone(string)` | Set the timezone for date parsing |
+| `timezone(string)` | Timezone for bounds without an offset (default: the application's); an unknown one throws `InvalidArgumentException` |
+| `esFormat(string)` | Elasticsearch `format` for the bounds (default: `strict_date_optional_time`); it must read ISO 8601 date-times with an offset |
+| `dateFormat(string)` | Deprecated alias of `esFormat()` |
 
 ### With Custom Keys
 
@@ -1183,14 +1198,8 @@ GET /posts?filter[period][start]=2024-01-01&filter[period][end]=2024-06-30
 
 ### When to Use
 
-Use `DateRangeFilter` when:
-- You want `from`/`to` style parameters instead of `gte`/`lte`
-- You need custom key names for date bounds
-- You want built-in date format and timezone support
-
-Use `RangeFilter` when:
-- You need standard Elasticsearch operators (`gt`, `gte`, `lt`, `lte`)
-- You're working with numeric values, not dates
+Use `DateRangeFilter` for dates: it reads them in the application timezone and covers whole days. Use `RangeFilter`
+for numbers, or to pass dates to Elasticsearch as sent (`gt`, `gte`, `lt`, `lte`).
 
 ---
 

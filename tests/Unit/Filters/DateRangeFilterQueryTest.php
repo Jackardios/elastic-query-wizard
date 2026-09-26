@@ -7,6 +7,8 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Filters;
 use Jackardios\ElasticQueryWizard\Filters\DateRangeFilter;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use Jackardios\QueryWizard\Exceptions\InvalidFilterQuery;
+use Jackardios\QueryWizard\Exceptions\InvalidFilterValue;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -28,8 +30,9 @@ class DateRangeFilterQueryTest extends UnitTestCase
         $this->assertEquals([
             'range' => [
                 'created_at' => [
-                    'gte' => '2024-01-01',
-                    'lte' => '2024-12-31',
+                    'gte' => '2024-01-01T00:00:00+00:00',
+                    'lt' => '2025-01-01T00:00:00+00:00',
+                    'format' => 'strict_date_optional_time',
                 ],
             ],
         ], $filterQueries[0]);
@@ -49,7 +52,8 @@ class DateRangeFilterQueryTest extends UnitTestCase
         $this->assertEquals([
             'range' => [
                 'created_at' => [
-                    'gte' => '2024-01-01',
+                    'gte' => '2024-01-01T00:00:00+00:00',
+                    'format' => 'strict_date_optional_time',
                 ],
             ],
         ], $filterQueries[0]);
@@ -69,7 +73,8 @@ class DateRangeFilterQueryTest extends UnitTestCase
         $this->assertEquals([
             'range' => [
                 'created_at' => [
-                    'lte' => '2024-12-31',
+                    'lt' => '2025-01-01T00:00:00+00:00',
+                    'format' => 'strict_date_optional_time',
                 ],
             ],
         ], $filterQueries[0]);
@@ -128,59 +133,129 @@ class DateRangeFilterQueryTest extends UnitTestCase
         $this->assertEquals([
             'range' => [
                 'created_at' => [
-                    'gte' => '2024-01-01',
-                    'lte' => '2024-12-31',
+                    'gte' => '2024-01-01T00:00:00+00:00',
+                    'lt' => '2025-01-01T00:00:00+00:00',
+                    'format' => 'strict_date_optional_time',
                 ],
             ],
         ], $filterQueries[0]);
     }
 
     #[Test]
-    public function it_adds_format_parameter(): void
+    public function es_format_sets_the_format_the_bounds_are_read_with(): void
     {
-        $wizard = $this
-            ->createElasticWizardWithFilters(['date' => ['from' => '01/01/2024']])
-            ->allowedFilters(
-                DateRangeFilter::make('created_at', 'date')
-                    ->dateFormat('dd/MM/yyyy')
+        foreach (['esFormat', 'dateFormat'] as $method) {
+            $wizard = $this
+                ->createElasticWizardWithFilters(['date' => ['from' => '2024-01-01']])
+                ->allowedFilters(DateRangeFilter::make('created_at', 'date')->{$method}('strict_date_time_no_millis'));
+            $wizard->build();
+
+            $this->assertSame(
+                ['gte' => '2024-01-01T00:00:00+00:00', 'format' => 'strict_date_time_no_millis'],
+                $this->getFilterQueries($wizard->boolQuery())[0]['range']['created_at']
             );
-        $wizard->build();
-
-        $filterQueries = $this->getFilterQueries($wizard->boolQuery());
-
-        $this->assertCount(1, $filterQueries);
-        $this->assertEquals([
-            'range' => [
-                'created_at' => [
-                    'gte' => '01/01/2024',
-                    'format' => 'dd/MM/yyyy',
-                ],
-            ],
-        ], $filterQueries[0]);
+        }
     }
 
     #[Test]
-    public function it_adds_timezone_parameter(): void
+    public function bounds_without_an_offset_are_read_in_the_filter_timezone(): void
     {
         $wizard = $this
-            ->createElasticWizardWithFilters(['date' => ['from' => '2024-01-01']])
-            ->allowedFilters(
-                DateRangeFilter::make('created_at', 'date')
-                    ->timezone('Europe/Moscow')
-            );
+            ->createElasticWizardWithFilters(['date' => ['from' => '2024-01-01', 'to' => '2024-01-31T18:00']])
+            ->allowedFilters(DateRangeFilter::make('created_at', 'date')->timezone('Europe/Moscow'));
         $wizard->build();
 
-        $filterQueries = $this->getFilterQueries($wizard->boolQuery());
+        $this->assertSame(
+            ['gte' => '2024-01-01T00:00:00+03:00', 'lte' => '2024-01-31T18:00:00+03:00', 'format' => 'strict_date_optional_time'],
+            $this->getFilterQueries($wizard->boolQuery())[0]['range']['created_at']
+        );
+    }
 
-        $this->assertCount(1, $filterQueries);
-        $this->assertEquals([
-            'range' => [
-                'created_at' => [
-                    'gte' => '2024-01-01',
-                    'time_zone' => 'Europe/Moscow',
-                ],
-            ],
-        ], $filterQueries[0]);
+    #[Test]
+    public function bounds_are_read_in_the_application_timezone_by_default(): void
+    {
+        $default = date_default_timezone_get();
+        date_default_timezone_set('Asia/Tokyo');
+
+        try {
+            $wizard = $this
+                ->createElasticWizardWithFilters(['date' => ['from' => '2024-01-01', 'to' => '2024-01-31T10:00:00Z']])
+                ->allowedFilters(DateRangeFilter::make('created_at', 'date'));
+            $wizard->build();
+        } finally {
+            date_default_timezone_set($default);
+        }
+
+        $this->assertSame(
+            ['gte' => '2024-01-01T00:00:00+09:00', 'lte' => '2024-01-31T19:00:00+09:00', 'format' => 'strict_date_optional_time'],
+            $this->getFilterQueries($wizard->boolQuery())[0]['range']['created_at']
+        );
+    }
+
+    #[Test]
+    public function a_date_to_bound_covers_the_whole_day(): void
+    {
+        $wizard = $this
+            ->createElasticWizardWithFilters(['date' => ['to' => '9999-12-31']])
+            ->allowedFilters(DateRangeFilter::make('created_at', 'date'));
+        $wizard->build();
+
+        $this->assertSame(
+            ['lte' => '9999-12-31T23:59:59+00:00', 'format' => 'strict_date_optional_time'],
+            $this->getFilterQueries($wizard->boolQuery())[0]['range']['created_at']
+        );
+    }
+
+    #[Test]
+    public function a_default_bound_may_be_a_date_time_object(): void
+    {
+        $wizard = $this
+            ->createElasticWizardFromQuery()
+            ->allowedFilters(DateRangeFilter::make('created_at', 'date')->default([
+                'from' => new \DateTimeImmutable('2024-01-01 10:30:00.250000', new \DateTimeZone('UTC')),
+            ]));
+        $wizard->build();
+
+        $this->assertSame(
+            ['gte' => '2024-01-01T10:30:00.250000+00:00', 'format' => 'strict_date_optional_time'],
+            $this->getFilterQueries($wizard->boolQuery())[0]['range']['created_at']
+        );
+    }
+
+    /**
+     * @return array<string, array{0: string}>
+     */
+    public static function unreadableBounds(): array
+    {
+        return [
+            'text' => ['abc'],
+            'epoch seconds' => ['1700000000'],
+            'year' => ['2024'],
+            'date math' => ['now-1d'],
+            'other format' => ['01/01/2024'],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('unreadableBounds')]
+    public function a_bound_that_is_not_an_iso_date_is_a_400(string $bound): void
+    {
+        $this->expectException(InvalidFilterValue::class);
+        $this->expectExceptionMessage('Expected a date (Y-m-d) or an ISO 8601 date-time for `from`');
+
+        $this
+            ->createElasticWizardWithFilters(['date' => ['from' => $bound]])
+            ->allowedFilters(DateRangeFilter::make('created_at', 'date'))
+            ->build();
+    }
+
+    #[Test]
+    public function an_unknown_timezone_is_refused_when_configured(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unknown timezone `Mars/Base`');
+
+        DateRangeFilter::make('created_at')->timezone('Mars/Base');
     }
 
     #[Test]

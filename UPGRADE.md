@@ -469,6 +469,12 @@ The request is parsed by `laravel-query-wizard` v3, whose stricter rules apply t
   `->indexedShapes($index, $path)` on the filter and takes only an `id` from the client (v2 let the client set `index`
   and `path`, so it could read any index, and a `path` naming a plain field echoed its value in the error).
 - **More like this** keeps a text whole instead of splitting it on the separator; send several texts as a list.
+- **Date ranges** read dates like `laravel-query-wizard`: each bound is a date or an ISO 8601 date-time (other values,
+  including epoch numbers and date math, → 400), read in the application timezone or the filter's `timezone()` (v2
+  passed `timezone()` to Elasticsearch as `time_zone`, and without it Elasticsearch read dates in UTC). A date `to` covers
+  the whole day. The bounds are sent as ISO 8601 date-times with an offset and `format: strict_date_optional_time`.
+  `dateFormat()` is deprecated in favor of `esFormat()`, and since the bounds are ISO date-times, the format must read
+  them: `dateFormat('dd/MM/yyyy')` with `from=01/01/2024` is now a 400.
 - **Values.** A range bound left empty is no bound. A geo bounding box also takes named edges (`left`, `bottom`,
   `right`, `top`). A geo shape polygon keeps its holes and is closed when its last point differs from its first.
   Coordinates that overflow to infinity (`1e999`) are rejected instead of failing the JSON encoding with a 500.
