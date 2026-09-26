@@ -773,6 +773,10 @@ ElasticAggregation::dateHistogram('field', '1d');
 
 ## Breaking Changes in FilterValueSanitizer
 
+`FilterValueSanitizer` is `@internal` in v3: it reads the values of the built-in filters and may change in a minor
+release. Read values in custom filters with `laravel-query-wizard`'s `Support\FilterValueParser` (`number()`,
+`boolean()`, `isoDate()`, `isBlank()`, …), which throws the 400 `InvalidFilterValue` for a value it cannot read.
+
 ### Range Filter Operators
 
 Legacy range operators are no longer supported and will throw `InvalidRangeValue`:

@@ -13,6 +13,12 @@ use Jackardios\QueryWizard\Exceptions\InvalidFilterValue;
 use Jackardios\QueryWizard\Support\FilterValueParser;
 use Jackardios\QueryWizard\Support\ParsedDate;
 
+/**
+ * Reads the values of the built-in filters. Custom filters read theirs with
+ * laravel-query-wizard's `FilterValueParser`.
+ *
+ * @internal
+ */
 class FilterValueSanitizer
 {
     public const RANGE_OPERATORS = ['gt', 'gte', 'lt', 'lte'];

@@ -33,6 +33,7 @@ made since those snapshots.
   terms that start with a wildcard unless `allow_leading_wildcard` is set.
 - A more-like-this document reference takes only an `_id` and is read from the searched index; a geo shape
   `indexed_shape` needs `indexedShapes($index, $path)` and takes only an `id`.
+- `FilterValueSanitizer` is `@internal`; custom filters read values with `laravel-query-wizard`'s `FilterValueParser`.
 - `withParameters()` checks each name against the filter's query when the filter is configured
   (`InvalidArgumentException`).
 - Date range bounds are read like `laravel-query-wizard` reads dates: a date or an ISO 8601 date-time (other values,
@@ -61,6 +62,8 @@ made since those snapshots.
 - A bool group leaves out `minimum_should_match` when the request fills none of its should children.
 - A group child that cannot run in a group, a group named like another filter and a filter in two groups throw when
   the wizard is configured or built instead of misbehaving on a request.
+- Two nested groups with `innerHits()` on one path no longer fail the search: an inner hits result set without a
+  `name` is named after its group.
 - A range bound left empty is no bound; coordinates that overflow to infinity no longer fail the JSON encoding.
 - A clone of a wizard whose built search was changed keeps the change lock.
 
