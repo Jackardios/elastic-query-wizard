@@ -37,7 +37,7 @@
     ],
     "require": {
         "php": "^8.2",
-        "jackardios/es-scout-driver": "dev-main",
+        "jackardios/es-scout-driver": "^1.0.0-rc.1",
         "jackardios/laravel-query-wizard": "^3.0.0-rc.2",
         "laravel/framework": "^12.61.1 || ^13.12.0"
     },
@@ -73,6 +73,5 @@
             "php-http/discovery": true
         }
     },
-    "minimum-stability": "dev",
     "prefer-stable": true
 }

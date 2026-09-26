@@ -13,9 +13,10 @@ This guide covers migrating from `jackardios/elastic-query-wizard` v2 to v3.
 
 **v3:**
 ```json
-"jackardios/es-scout-driver": "dev-main",
-"jackardios/laravel-query-wizard": "dev-master",
-"laravel/framework": "^v10.0 || ^v11.0 || ^v12.0"
+"php": "^8.2",
+"jackardios/es-scout-driver": "^1.0.0-rc.1",
+"jackardios/laravel-query-wizard": "^3.0.0-rc.2",
+"laravel/framework": "^12.61.1 || ^13.12.0"
 ```
 
 > **Important:** The underlying ES driver changed from `elastic-scout-driver-plus` to `es-scout-driver`. This is a completely different package with different APIs.
@@ -383,6 +384,18 @@ $builder->must($query);
 $builder->filter($query);
 $builder->should($query);
 $builder->mustNot($query);
+```
+
+### Soft Deletes
+
+The soft delete mode moved from the bool query to the search builder in `es-scout-driver` 1.0:
+
+```php
+// Before
+$wizard->boolQuery()->withTrashed();
+
+// After
+$wizard->withTrashed();   // also onlyTrashed(), excludeTrashed()
 ```
 
 ### New Methods in v3

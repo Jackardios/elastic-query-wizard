@@ -28,7 +28,7 @@ class TrashedFilterQueryTest extends UnitTestCase
 
         $this->assertEquals(
             SoftDeleteMode::WithTrashed,
-            $wizard->boolQuery()->getSoftDeleteMode()
+            $wizard->getSubject()->getSoftDeleteMode()
         );
     }
 
@@ -44,7 +44,7 @@ class TrashedFilterQueryTest extends UnitTestCase
 
         $this->assertEquals(
             SoftDeleteMode::OnlyTrashed,
-            $wizard->boolQuery()->getSoftDeleteMode()
+            $wizard->getSubject()->getSoftDeleteMode()
         );
     }
 
@@ -60,7 +60,7 @@ class TrashedFilterQueryTest extends UnitTestCase
 
         $this->assertEquals(
             SoftDeleteMode::ExcludeTrashed,
-            $wizard->boolQuery()->getSoftDeleteMode()
+            $wizard->getSubject()->getSoftDeleteMode()
         );
     }
 
@@ -76,7 +76,7 @@ class TrashedFilterQueryTest extends UnitTestCase
 
         $this->assertEquals(
             SoftDeleteMode::WithTrashed,
-            $wizard->boolQuery()->getSoftDeleteMode()
+            $wizard->getSubject()->getSoftDeleteMode()
         );
     }
 
@@ -92,7 +92,7 @@ class TrashedFilterQueryTest extends UnitTestCase
 
         $this->assertEquals(
             SoftDeleteMode::ExcludeTrashed,
-            $wizard->boolQuery()->getSoftDeleteMode()
+            $wizard->getSubject()->getSoftDeleteMode()
         );
     }
 
@@ -108,7 +108,7 @@ class TrashedFilterQueryTest extends UnitTestCase
 
         $this->assertEquals(
             SoftDeleteMode::ExcludeTrashed,
-            $wizard->boolQuery()->getSoftDeleteMode()
+            $wizard->getSubject()->getSoftDeleteMode()
         );
     }
 
@@ -126,7 +126,7 @@ class TrashedFilterQueryTest extends UnitTestCase
         // but the Engine won't apply any __soft_deleted filter
         $this->assertEquals(
             SoftDeleteMode::ExcludeTrashed,
-            $wizard->boolQuery()->getSoftDeleteMode()
+            $wizard->getSubject()->getSoftDeleteMode()
         );
     }
 }

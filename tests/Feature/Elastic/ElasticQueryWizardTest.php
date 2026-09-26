@@ -56,7 +56,7 @@ class ElasticQueryWizardTest extends TestCase
 
         // With trashed
         $queryWizard = ElasticQueryWizard::for(SoftDeleteModel::class);
-        $queryWizard->boolQuery()->withTrashed();
+        $queryWizard->withTrashed();
         $this->assertCount(5, $queryWizard->execute()->models());
     }
 
