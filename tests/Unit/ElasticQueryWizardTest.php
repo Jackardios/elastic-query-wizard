@@ -209,6 +209,21 @@ class ElasticQueryWizardTest extends UnitTestCase
     }
 
     #[Test]
+    public function a_clone_keeps_the_lock_of_a_bool_query_changed_after_build(): void
+    {
+        $wizard = ElasticQueryWizard::for(TestModel::class);
+        $wizard->build();
+        $wizard->boolQuery()->filter(ElasticQuery::term('tenant_id', 7));
+
+        $clone = clone $wizard;
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Cannot modify query wizard configuration after calling query builder methods.');
+
+        $clone->allowedFilters(TermFilter::make('name'));
+    }
+
+    #[Test]
     public function modify_query_after_build_throws_logic_exception(): void
     {
         $wizard = ElasticQueryWizard::for(TestModel::class);

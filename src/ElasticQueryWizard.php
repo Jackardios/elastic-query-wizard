@@ -83,6 +83,11 @@ class ElasticQueryWizard extends BaseQueryWizard
     /** @var array<string, bool> */
     private static array $searchBuilderFluentMethods = [];
 
+    /**
+     * Set when the built search builder is changed through the proxy. A clone
+     * keeps it: reconfiguring rebuilds from the original subject and would drop
+     * those changes.
+     */
     private bool $proxyModified = false;
 
     public function __construct(
@@ -570,18 +575,5 @@ class ElasticQueryWizard extends BaseQueryWizard
                 $methodName
             )
         );
-    }
-
-    /**
-     * Only the taint flag is reset: a fresh clone has not been modified through
-     * the search-builder proxy yet.
-     *
-     * The shape of the build is left in place: it describes the subject this
-     * clone carries over, and only build() can rebuild it.
-     */
-    public function __clone(): void
-    {
-        parent::__clone();
-        $this->proxyModified = false;
     }
 }
