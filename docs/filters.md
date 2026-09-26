@@ -107,6 +107,10 @@ straight into the Elasticsearch DSL and therefore need a second look before you 
 [`queryString`](#query-string-filter) (the value can address fields you never allowed),
 [`regexp`](#regexp-filter) and [`wildcard`](#wildcard-filter) (the value can force an index-wide scan).
 
+The text and pattern filters (`prefix`, `wildcard`, `regexp`, `fuzzy`, the match family, `queryString` and
+`simpleQueryString`) take `maxLength(int)`: a longer value returns 400 (`InvalidFilterValue`). Only `regexp` has a limit
+by default (1000, see [Regexp Filter](#regexp-filter)).
+
 ---
 
 ## Key Concepts
@@ -642,8 +646,18 @@ GET /posts?filter[slug]=post-.*
 
 > **Warning:** The value is used as the regular expression itself, so the caller controls the pattern. Catastrophic
 > patterns (`.*.*.*`, deeply nested repetition) are expensive to evaluate and are a denial-of-service vector on a large
-> index. Prefer `prefix` or `match` for untrusted input; if you do expose `regexp`, cap the pattern with
-> `prepareValueWith()` and keep the index small.
+> index. Prefer `prefix` or `match` for untrusted input; if you do expose `regexp`, shorten the limit with
+> `maxLength()`, turn off the optional operators and keep the index small:
+>
+> ```php
+> ElasticFilter::regexp('slug')
+>     ->maxLength(100)
+>     ->withParameters(['flags' => 'NONE', 'max_determinized_states' => 1000])
+> ```
+
+A pattern longer than 1000 characters, Elasticsearch's default `index.max_regex_length`, returns 400
+(`InvalidFilterValue`) instead of failing the search. Call `maxLength()` with the index's own limit if you changed it,
+or `maxLength(null)` to leave the check to Elasticsearch.
 
 ---
 

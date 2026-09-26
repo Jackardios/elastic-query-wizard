@@ -475,6 +475,9 @@ The request is parsed by `laravel-query-wizard` v3, whose stricter rules apply t
   the whole day. The bounds are sent as ISO 8601 date-times with an offset and `format: strict_date_optional_time`.
   `dateFormat()` is deprecated in favor of `esFormat()`, and since the bounds are ISO date-times, the format must read
   them: `dateFormat('dd/MM/yyyy')` with `from=01/01/2024` is now a 400.
+- **Regexp patterns** longer than 1000 characters (Elasticsearch's default `index.max_regex_length`) return 400
+  instead of a 500 from Elasticsearch; `maxLength()` sets another limit. The text and pattern filters take
+  `maxLength()` as an opt-in limit.
 - **Values.** A range bound left empty is no bound. A geo bounding box also takes named edges (`left`, `bottom`,
   `right`, `top`). A geo shape polygon keeps its holes and is closed when its last point differs from its first.
   Coordinates that overflow to infinity (`1e999`) are rejected instead of failing the JSON encoding with a 500.

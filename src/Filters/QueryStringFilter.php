@@ -6,6 +6,7 @@ namespace Jackardios\ElasticQueryWizard\Filters;
 
 use Illuminate\Support\Str;
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
+use Jackardios\ElasticQueryWizard\Concerns\LimitsValueLength;
 use Jackardios\ElasticQueryWizard\Enums\BoolClause;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Query\FullText\QueryStringQuery;
@@ -24,6 +25,7 @@ use Jackardios\QueryWizard\Exceptions\InvalidFilterValue;
 final class QueryStringFilter extends AbstractElasticFilter
 {
     use HasParameters;
+    use LimitsValueLength;
 
     /**
      * The value is one text, which may contain the separator; call
@@ -68,6 +70,8 @@ final class QueryStringFilter extends AbstractElasticFilter
         if ($prepared === null || $prepared === '') {
             return null;
         }
+
+        $this->assertValueLength($prepared);
 
         if (! $this->allowsLeadingWildcard() && self::hasLeadingWildcard($prepared)) {
             throw InvalidFilterValue::make($value, $this, 'A term may not start with `*` or `?`.');

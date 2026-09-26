@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jackardios\ElasticQueryWizard\Filters;
 
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
+use Jackardios\ElasticQueryWizard\Concerns\LimitsValueLength;
 use Jackardios\ElasticQueryWizard\Enums\BoolClause;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Query\FullText\MultiMatchQuery;
@@ -14,6 +15,7 @@ use Jackardios\EsScoutDriver\Support\Query;
 final class MultiMatchFilter extends AbstractElasticFilter
 {
     use HasParameters;
+    use LimitsValueLength;
 
     /**
      * The value is one text, which may contain the separator; call
@@ -74,6 +76,8 @@ final class MultiMatchFilter extends AbstractElasticFilter
         if ($prepared === null || $prepared === '') {
             return null;
         }
+
+        $this->assertValueLength($prepared);
 
         $query = Query::multiMatch($this->fields, $prepared);
 
