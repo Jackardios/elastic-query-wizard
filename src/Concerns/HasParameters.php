@@ -14,7 +14,8 @@ trait HasParameters
 
     /**
      * @template T of object
-     * @param T $queryBuilder
+     *
+     * @param  T  $queryBuilder
      * @return T
      */
     public function applyParametersOnQuery(object $queryBuilder): object

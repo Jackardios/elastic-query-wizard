@@ -36,7 +36,7 @@ final class NestedFilter extends AbstractElasticFilter
 
     public static function make(string $path, string $property, ?string $alias = null): static
     {
-        return new static($path, $property, $alias);
+        return new self($path, $property, $alias);
     }
 
     /**
@@ -44,22 +44,24 @@ final class NestedFilter extends AbstractElasticFilter
      *
      * If not set, creates a term/terms query on "{path}.{property}".
      *
-     * @param QueryInterface|Closure(mixed): QueryInterface|array<string, mixed> $query
+     * @param  QueryInterface|Closure(mixed): QueryInterface|array<string, mixed>  $query
      */
     public function innerQuery(QueryInterface|Closure|array $query): static
     {
         $this->innerQuery = $query;
+
         return $this;
     }
 
     /**
      * Set the score mode for nested hits aggregation.
      *
-     * @param string $mode One of: 'avg', 'max', 'min', 'sum', 'none'
+     * @param  string  $mode  One of: 'avg', 'max', 'min', 'sum', 'none'
      */
     public function scoreMode(string $mode): static
     {
         $this->scoreMode = $mode;
+
         return $this;
     }
 
@@ -69,6 +71,7 @@ final class NestedFilter extends AbstractElasticFilter
     public function ignoreUnmapped(bool $ignore = true): static
     {
         $this->ignoreUnmapped = $ignore;
+
         return $this;
     }
 
@@ -126,7 +129,7 @@ final class NestedFilter extends AbstractElasticFilter
                 : $this->innerQuery;
         }
 
-        $nestedField = $this->path . '.' . $this->property;
+        $nestedField = $this->path.'.'.$this->property;
         $prepared = FilterValueSanitizer::toScalarArray($value);
 
         if ($prepared === []) {

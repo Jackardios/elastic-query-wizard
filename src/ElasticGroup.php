@@ -26,7 +26,6 @@ use Jackardios\ElasticQueryWizard\Groups\NestedGroup;
  *         ElasticFilter::term(field: 'status', key: 'status')->inShould(),
  *         ElasticFilter::term(field: 'priority', key: 'priority')->inShould(),
  *     ])
- *
  * @example NestedGroup with inner_hits
  * ElasticGroup::nested('comments')
  *     ->scoreMode('avg')
@@ -42,8 +41,8 @@ final class ElasticGroup
     /**
      * Create a nested group for filtering on nested document fields.
      *
-     * @param string $path The nested document path (e.g., 'comments', 'variants')
-     * @param string|null $alias Optional alias for the group (defaults to path)
+     * @param  string  $path  The nested document path (e.g., 'comments', 'variants')
+     * @param  string|null  $alias  Optional alias for the group (defaults to path)
      */
     public static function nested(string $path, ?string $alias = null): NestedGroup
     {
@@ -53,8 +52,8 @@ final class ElasticGroup
     /**
      * Create a bool group for logical groupings of filters.
      *
-     * @param string $scope Internal group scope name (NOT used as a URL filter key)
-     * @param string|null $alias Optional alias for the group
+     * @param  string  $scope  Internal group scope name (NOT used as a URL filter key)
+     * @param  string|null  $alias  Optional alias for the group
      */
     public static function bool(string $scope, ?string $alias = null): BoolGroup
     {

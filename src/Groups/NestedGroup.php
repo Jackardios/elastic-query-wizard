@@ -42,13 +42,13 @@ final class NestedGroup extends AbstractElasticGroup
 
     public static function make(string $path, ?string $alias = null): static
     {
-        return new static($path, $alias);
+        return new self($path, $alias);
     }
 
     /**
      * Set the score mode for nested hits aggregation.
      *
-     * @param string $mode One of: 'avg', 'max', 'min', 'sum', 'none'
+     * @param  string  $mode  One of: 'avg', 'max', 'min', 'sum', 'none'
      */
     public function scoreMode(string $mode): static
     {
@@ -80,7 +80,7 @@ final class NestedGroup extends AbstractElasticGroup
     /**
      * Enable inner_hits to retrieve matching nested documents.
      *
-     * @param array $options Options: name, size, from, sort, highlight, _source
+     * @param  array  $options  Options: name, size, from, sort, highlight, _source
      *
      * @example innerHits() // Enable with defaults
      * @example innerHits(['size' => 5, 'sort' => [['date' => 'desc']]])
@@ -117,7 +117,7 @@ final class NestedGroup extends AbstractElasticGroup
             return null;
         }
 
-        $innerBoolQuery = new BoolQuery();
+        $innerBoolQuery = new BoolQuery;
 
         $this->applyChildrenToQuery($innerBoolQuery, $childValues);
 

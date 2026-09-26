@@ -8,6 +8,7 @@ use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use Jackardios\QueryWizard\QueryParametersManager;
+use Jackardios\QueryWizard\Schema\ResourceSchemaInterface;
 use Mockery;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
@@ -22,13 +23,13 @@ class RequestScopeTest extends UnitTestCase
     public function wizard_created_without_parameters_resolves_from_container(): void
     {
         // First manager
-        $firstManager = new QueryParametersManager();
+        $firstManager = new QueryParametersManager;
         $this->app->instance(QueryParametersManager::class, $firstManager);
 
         $wizard = ElasticQueryWizard::for(TestModel::class);
 
         // Replace manager in container
-        $secondManager = new QueryParametersManager();
+        $secondManager = new QueryParametersManager;
         $this->app->instance(QueryParametersManager::class, $secondManager);
 
         // getParametersManager should return the fresh manager
@@ -40,12 +41,12 @@ class RequestScopeTest extends UnitTestCase
     #[Test]
     public function wizard_created_with_explicit_parameters_keeps_original(): void
     {
-        $explicitManager = new QueryParametersManager();
+        $explicitManager = new QueryParametersManager;
 
         $wizard = ElasticQueryWizard::for(TestModel::class, $explicitManager);
 
         // Replace manager in container
-        $containerManager = new QueryParametersManager();
+        $containerManager = new QueryParametersManager;
         $this->app->instance(QueryParametersManager::class, $containerManager);
 
         // getParametersManager should return the original explicit manager
@@ -56,14 +57,14 @@ class RequestScopeTest extends UnitTestCase
     }
 
     #[Test]
-    public function forSchema_wizard_resolves_manager_from_container_on_access(): void
+    public function for_schema_wizard_resolves_manager_from_container_on_access(): void
     {
         // First manager
-        $firstManager = new QueryParametersManager();
+        $firstManager = new QueryParametersManager;
         $this->app->instance(QueryParametersManager::class, $firstManager);
 
         // Create a simple schema mock
-        $schema = Mockery::mock(\Jackardios\QueryWizard\Schema\ResourceSchemaInterface::class);
+        $schema = Mockery::mock(ResourceSchemaInterface::class);
         $schema->shouldReceive('model')->andReturn(TestModel::class);
         $schema->shouldReceive('type')->andReturn('testModel');
         $schema->shouldReceive('filters')->andReturn([]);
@@ -80,7 +81,7 @@ class RequestScopeTest extends UnitTestCase
         $wizard = ElasticQueryWizard::forSchema($schema);
 
         // Replace manager in container after wizard creation
-        $secondManager = new QueryParametersManager();
+        $secondManager = new QueryParametersManager;
         $this->app->instance(QueryParametersManager::class, $secondManager);
 
         // getParametersManager should return the fresh container manager

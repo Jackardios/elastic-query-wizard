@@ -27,17 +27,18 @@ final class RandomSort extends AbstractElasticSort
 
     public static function make(string $property = '_random', ?string $alias = null): static
     {
-        return new static($property, $alias);
+        return new self($property, $alias);
     }
 
     /**
      * Set seed for reproducible random order.
      *
-     * @param int|string $seed Numeric seed or string identifier (e.g., session ID)
+     * @param  int|string  $seed  Numeric seed or string identifier (e.g., session ID)
      */
     public function seed(int|string $seed): static
     {
         $this->seed = $seed;
+
         return $this;
     }
 
@@ -47,11 +48,12 @@ final class RandomSort extends AbstractElasticSort
      * Required for seeded random in Elasticsearch 7.0+.
      * Defaults to '_seq_no' if seed is set but field is not.
      *
-     * @param string $field Usually '_seq_no', '_id', or a unique field
+     * @param  string  $field  Usually '_seq_no', '_id', or a unique field
      */
     public function field(string $field): static
     {
         $this->field = $field;
+
         return $this;
     }
 
@@ -78,7 +80,7 @@ final class RandomSort extends AbstractElasticSort
     protected function buildRandomScoreFunction(): array
     {
         if ($this->seed === null) {
-            return ['random_score' => new stdClass()];
+            return ['random_score' => new stdClass];
         }
 
         $randomScore = ['seed' => $this->seed];

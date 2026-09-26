@@ -8,9 +8,9 @@ use BadMethodCallException;
 use Jackardios\ElasticQueryWizard\ElasticQuery;
 use Jackardios\EsScoutDriver\Query\Compound\BoolQuery;
 use Jackardios\EsScoutDriver\Query\FullText\MatchQuery;
-use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
 
 #[Group('unit')]
 #[Group('factory')]

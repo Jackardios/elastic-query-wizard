@@ -10,10 +10,15 @@ use Jackardios\EsScoutDriver\Sort\Sort;
 final class GeoDistanceSort extends AbstractElasticSort
 {
     protected float $lat;
+
     protected float $lon;
+
     protected string $unit = 'km';
+
     protected ?string $mode = null;
+
     protected ?string $distanceType = null;
+
     protected ?bool $ignoreUnmapped = null;
 
     protected function __construct(
@@ -33,30 +38,34 @@ final class GeoDistanceSort extends AbstractElasticSort
         float $lon,
         ?string $alias = null
     ): static {
-        return new static($property, $lat, $lon, $alias);
+        return new self($property, $lat, $lon, $alias);
     }
 
     public function unit(string $unit): static
     {
         $this->unit = $unit;
+
         return $this;
     }
 
     public function mode(string $mode): static
     {
         $this->mode = $mode;
+
         return $this;
     }
 
     public function distanceType(string $distanceType): static
     {
         $this->distanceType = $distanceType;
+
         return $this;
     }
 
     public function ignoreUnmapped(bool $ignore = true): static
     {
         $this->ignoreUnmapped = $ignore;
+
         return $this;
     }
 

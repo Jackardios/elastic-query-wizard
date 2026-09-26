@@ -120,7 +120,7 @@ class NestedFilterTest extends TestCase
             ->createElasticWizardWithFilters(['active' => 'true'], NestedModel::class)
             ->allowedFilters(
                 NestedFilter::make('variants', 'active')
-                    ->innerQuery(fn($value) => Query::term('variants.active', $value === 'true'))
+                    ->innerQuery(fn ($value) => Query::term('variants.active', $value === 'true'))
             )
             ->build()
             ->execute()
@@ -140,7 +140,7 @@ class NestedFilterTest extends TestCase
             ->createElasticWizardWithFilters(['min_rating' => 4], NestedModel::class)
             ->allowedFilters(
                 NestedFilter::make('comments', 'min_rating')
-                    ->innerQuery(fn($value) => Query::range('comments.rating')->gte((int) $value))
+                    ->innerQuery(fn ($value) => Query::range('comments.rating')->gte((int) $value))
             )
             ->build()
             ->execute()
@@ -199,7 +199,7 @@ class NestedFilterTest extends TestCase
             ->createElasticWizardWithFilters(['max_price' => 120], NestedModel::class)
             ->allowedFilters(
                 NestedFilter::make('variants', 'max_price')
-                    ->innerQuery(fn($value) => Query::range('variants.price')->lte((float) $value))
+                    ->innerQuery(fn ($value) => Query::range('variants.price')->lte((float) $value))
             )
             ->build()
             ->execute()

@@ -42,7 +42,7 @@ class RangeFilterTest extends TestCase
             ->models();
 
         $this->assertCount(2, $modelsResult);
-        $this->assertEqualsCanonicalizing([3,4], $modelsResult->pluck('id')->all());
+        $this->assertEqualsCanonicalizing([3, 4], $modelsResult->pluck('id')->all());
     }
 
     #[Test]
@@ -73,7 +73,7 @@ class RangeFilterTest extends TestCase
             ->models();
 
         $this->assertCount(2, $modelsResult);
-        $this->assertEqualsCanonicalizing([2,3], $modelsResult->pluck('id')->all());
+        $this->assertEqualsCanonicalizing([2, 3], $modelsResult->pluck('id')->all());
     }
 
     #[Test]
@@ -94,7 +94,7 @@ class RangeFilterTest extends TestCase
             ->models();
 
         $this->assertCount(2, $modelsResult);
-        $this->assertEqualsCanonicalizing([4,5], $modelsResult->pluck('id')->all());
+        $this->assertEqualsCanonicalizing([4, 5], $modelsResult->pluck('id')->all());
     }
 
     #[Test]

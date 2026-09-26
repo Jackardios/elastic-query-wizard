@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Filters;
 
-use Jackardios\ElasticQueryWizard\Enums\BoolClause;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Query\Compound\BoolQuery;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
@@ -26,7 +25,7 @@ final class NullFilter extends AbstractElasticFilter
 
     public static function make(string $property, ?string $alias = null): static
     {
-        return new static($property, $alias);
+        return new self($property, $alias);
     }
 
     /**

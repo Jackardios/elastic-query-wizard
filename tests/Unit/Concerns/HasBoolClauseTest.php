@@ -6,9 +6,9 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Concerns;
 
 use Jackardios\ElasticQueryWizard\Concerns\HasBoolClause;
 use Jackardios\ElasticQueryWizard\Enums\BoolClause;
-use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
 
 #[Group('unit')]
 #[Group('concerns')]
@@ -86,14 +86,16 @@ class HasBoolClauseTest extends TestCase
 
     private function createObjectWithTrait(): object
     {
-        return new class {
+        return new class
+        {
             use HasBoolClause;
         };
     }
 
     private function createObjectWithCustomDefault(BoolClause $default): object
     {
-        return new class ($default) {
+        return new class($default)
+        {
             use HasBoolClause;
 
             private BoolClause $customDefault;

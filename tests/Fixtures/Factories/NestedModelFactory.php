@@ -34,11 +34,11 @@ class NestedModelFactory extends Factory
 
     public function withVariants(array $variants): static
     {
-        return $this->state(fn() => ['variants' => $variants]);
+        return $this->state(fn () => ['variants' => $variants]);
     }
 
     public function withComments(array $comments): static
     {
-        return $this->state(fn() => ['comments' => $comments]);
+        return $this->state(fn () => ['comments' => $comments]);
     }
 }

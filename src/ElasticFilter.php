@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard;
 
-use Jackardios\QueryWizard\Filters\CallbackFilter;
 use Jackardios\ElasticQueryWizard\Filters\DateRangeFilter;
 use Jackardios\ElasticQueryWizard\Filters\ExistsFilter;
 use Jackardios\ElasticQueryWizard\Filters\FuzzyFilter;
@@ -28,6 +27,7 @@ use Jackardios\ElasticQueryWizard\Filters\TermFilter;
 use Jackardios\ElasticQueryWizard\Filters\TrashedFilter;
 use Jackardios\ElasticQueryWizard\Filters\WildcardFilter;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
+use Jackardios\QueryWizard\Filters\CallbackFilter;
 use Jackardios\QueryWizard\Filters\PassthroughFilter;
 
 final class ElasticFilter
@@ -53,7 +53,7 @@ final class ElasticFilter
     }
 
     /**
-     * @param string[] $fields The Elasticsearch fields to search across
+     * @param  string[]  $fields  The Elasticsearch fields to search across
      */
     public static function multiMatch(array $fields, string $property, ?string $alias = null): MultiMatchFilter
     {
@@ -136,8 +136,8 @@ final class ElasticFilter
     }
 
     /**
-     * @param string $path The nested document path (e.g., 'comments', 'variants')
-     * @param string $property The field within the nested document to filter on
+     * @param  string  $path  The nested document path (e.g., 'comments', 'variants')
+     * @param  string  $property  The field within the nested document to filter on
      */
     public static function nested(string $path, string $property, ?string $alias = null): NestedFilter
     {
@@ -147,7 +147,7 @@ final class ElasticFilter
     /**
      * Find similar documents based on text analysis.
      *
-     * @param string[] $fields Fields to analyze for similarity
+     * @param  string[]  $fields  Fields to analyze for similarity
      */
     public static function moreLikeThis(array $fields, string $property, ?string $alias = null): MoreLikeThisFilter
     {
@@ -155,7 +155,7 @@ final class ElasticFilter
     }
 
     /**
-     * @param callable(SearchBuilder, mixed, string): mixed $callback
+     * @param  callable(SearchBuilder, mixed, string): mixed  $callback
      */
     public static function callback(string $name, callable $callback, ?string $alias = null): CallbackFilter
     {

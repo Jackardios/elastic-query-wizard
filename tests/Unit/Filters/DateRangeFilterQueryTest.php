@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Tests\Unit\Filters;
 
-use DateTimeImmutable;
 use Jackardios\ElasticQueryWizard\Filters\DateRangeFilter;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use Jackardios\QueryWizard\Exceptions\InvalidFilterQuery;

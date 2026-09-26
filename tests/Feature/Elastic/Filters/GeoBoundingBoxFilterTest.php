@@ -76,7 +76,7 @@ class GeoBoundingBoxFilterTest extends TestCase
         $this->assertCount(4, $modelsResult);
         $this->assertEqualsCanonicalizing(
             $modelsResult->pluck('id')->toArray(),
-            array_map(static fn($model) => $model->id, $expectedModels)
+            array_map(static fn ($model) => $model->id, $expectedModels)
         );
     }
 
@@ -93,7 +93,7 @@ class GeoBoundingBoxFilterTest extends TestCase
             ->createQueryFromFilterRequest([])
             ->allowedFilters(
                 (GeoBoundingBoxFilter::make('location', 'bbox'))
-                    ->default([29.8431393959961,59.70658123789505,30.76667760400391,60.12821910231846])
+                    ->default([29.8431393959961, 59.70658123789505, 30.76667760400391, 60.12821910231846])
             )
             ->build()
             ->execute()
@@ -102,7 +102,7 @@ class GeoBoundingBoxFilterTest extends TestCase
         $this->assertCount(4, $modelsResult);
         $this->assertEqualsCanonicalizing(
             $modelsResult->pluck('id')->toArray(),
-            array_map(static fn($model) => $model->id, $expectedModels)
+            array_map(static fn ($model) => $model->id, $expectedModels)
         );
     }
 
@@ -121,7 +121,7 @@ class GeoBoundingBoxFilterTest extends TestCase
             ])
             ->allowedFilters(
                 (GeoBoundingBoxFilter::make('location', 'bbox'))
-                    ->default([36.461995,55.105673,38.309071,56.056992])
+                    ->default([36.461995, 55.105673, 38.309071, 56.056992])
             )
             ->build()
             ->execute()
@@ -130,7 +130,7 @@ class GeoBoundingBoxFilterTest extends TestCase
         $this->assertCount(4, $modelsResult);
         $this->assertEqualsCanonicalizing(
             $modelsResult->pluck('id')->toArray(),
-            array_map(static fn($model) => $model->id, $expectedModels)
+            array_map(static fn ($model) => $model->id, $expectedModels)
         );
     }
 

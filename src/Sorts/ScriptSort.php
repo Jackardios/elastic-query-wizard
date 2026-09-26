@@ -18,8 +18,11 @@ use Jackardios\EsScoutDriver\Sort\Sort;
 final class ScriptSort extends AbstractElasticSort
 {
     protected string $scriptSource;
+
     protected string $type = 'number';
+
     protected array $params = [];
+
     protected ?string $mode = null;
 
     /** @var array<string, mixed>|null */
@@ -33,33 +36,37 @@ final class ScriptSort extends AbstractElasticSort
 
     public static function make(string $scriptSource, string $property, ?string $alias = null): static
     {
-        return new static($scriptSource, $property, $alias);
+        return new self($scriptSource, $property, $alias);
     }
 
     public function type(string $type): static
     {
         $this->type = $type;
+
         return $this;
     }
 
     public function params(array $params): static
     {
         $this->params = $params;
+
         return $this;
     }
 
     public function mode(string $mode): static
     {
         $this->mode = $mode;
+
         return $this;
     }
 
     /**
-     * @param array<string, mixed> $nested
+     * @param  array<string, mixed>  $nested
      */
     public function nested(array $nested): static
     {
         $this->nested = $nested;
+
         return $this;
     }
 

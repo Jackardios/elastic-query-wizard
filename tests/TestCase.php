@@ -6,6 +6,7 @@ namespace Jackardios\ElasticQueryWizard\Tests;
 
 use Elastic\Client\ServiceProvider as ElasticClientServiceProvider;
 use Elastic\Migrations\ServiceProvider as ElasticMigrationsServiceProvider;
+use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Jackardios\ElasticQueryWizard\Tests\Concerns\AssertsModels;
 use Jackardios\ElasticQueryWizard\Tests\Concerns\AssertsQueryLog;
@@ -17,15 +18,13 @@ use Orchestra\Testbench\TestCase as Orchestra;
 
 abstract class TestCase extends Orchestra
 {
-    use QueryWizardTestingHelpers;
-    use DatabaseMigrations;
-    use AssertsQueryLog;
     use AssertsModels;
+    use AssertsQueryLog;
+    use DatabaseMigrations;
+    use QueryWizardTestingHelpers;
 
     /**
-     * @param \Illuminate\Foundation\Application $app
-     *
-     * @return array
+     * @param  Application  $app
      */
     protected function getPackageProviders($app): array
     {
@@ -43,7 +42,7 @@ abstract class TestCase extends Orchestra
         parent::getEnvironmentSetUp($app);
 
         $app['config']->set('scout.driver', 'elastic');
-        $app['config']->set('elastic.migrations.storage.default_path', __DIR__ . '/Fixtures/data/elastic/migrations');
+        $app['config']->set('elastic.migrations.storage.default_path', __DIR__.'/Fixtures/data/elastic/migrations');
         $app['config']->set('elastic.scout.refresh_documents', true);
     }
 
@@ -51,7 +50,7 @@ abstract class TestCase extends Orchestra
     {
         parent::setUp();
 
-        $this->loadMigrationsFrom(__DIR__ . '/Fixtures/data/migrations');
+        $this->loadMigrationsFrom(__DIR__.'/Fixtures/data/migrations');
 
         $this->artisan('elastic:migrate')->run();
     }

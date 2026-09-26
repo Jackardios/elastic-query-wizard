@@ -15,8 +15,8 @@ use Orchestra\Testbench\TestCase as Orchestra;
 
 abstract class UnitTestCase extends Orchestra
 {
-    use QueryWizardTestingHelpers;
     use AssertsElasticQuery;
+    use QueryWizardTestingHelpers;
 
     protected function getPackageProviders($app): array
     {

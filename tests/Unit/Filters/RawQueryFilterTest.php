@@ -18,7 +18,8 @@ class RawQueryFilterTest extends UnitTestCase
     #[Test]
     public function it_applies_raw_query_from_custom_filter_at_root_level(): void
     {
-        $rawFilter = new class ('status', 'status') extends AbstractElasticFilter {
+        $rawFilter = new class('status', 'status') extends AbstractElasticFilter
+        {
             public function __construct(string $property, ?string $alias = null)
             {
                 parent::__construct($property, $alias);
@@ -56,7 +57,8 @@ class RawQueryFilterTest extends UnitTestCase
     #[Test]
     public function it_applies_raw_query_from_custom_filter_inside_group(): void
     {
-        $rawFilter = new class ('status', 'status') extends AbstractElasticFilter {
+        $rawFilter = new class('status', 'status') extends AbstractElasticFilter
+        {
             public function __construct(string $property, ?string $alias = null)
             {
                 parent::__construct($property, $alias);

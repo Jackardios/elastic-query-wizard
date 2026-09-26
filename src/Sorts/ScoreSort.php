@@ -11,7 +11,7 @@ final class ScoreSort extends AbstractElasticSort
 {
     public static function make(?string $alias = null): static
     {
-        return new static('_score', $alias);
+        return new self('_score', $alias);
     }
 
     public function getType(): string

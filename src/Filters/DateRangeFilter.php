@@ -22,24 +22,29 @@ final class DateRangeFilter extends AbstractElasticFilter
     use HasParameters;
 
     protected string $fromKey = 'from';
+
     protected string $toKey = 'to';
+
     protected ?string $dateFormat = null;
+
     protected ?string $timezone = null;
 
     public static function make(string $property, ?string $alias = null): static
     {
-        return new static($property, $alias);
+        return new self($property, $alias);
     }
 
     public function fromKey(string $key): static
     {
         $this->fromKey = $key;
+
         return $this;
     }
 
     public function toKey(string $key): static
     {
         $this->toKey = $key;
+
         return $this;
     }
 
@@ -51,12 +56,14 @@ final class DateRangeFilter extends AbstractElasticFilter
     public function dateFormat(string $format): static
     {
         $this->dateFormat = $format;
+
         return $this;
     }
 
     public function timezone(string $timezone): static
     {
         $this->timezone = $timezone;
+
         return $this;
     }
 
@@ -98,7 +105,7 @@ final class DateRangeFilter extends AbstractElasticFilter
 
     public function buildQuery(mixed $value): ?QueryInterface
     {
-        if (!is_array($value)) {
+        if (! is_array($value)) {
             return null;
         }
 
@@ -138,6 +145,7 @@ final class DateRangeFilter extends AbstractElasticFilter
         if (is_string($value) || is_int($value) || is_float($value)) {
             return $value;
         }
+
         return null;
     }
 }

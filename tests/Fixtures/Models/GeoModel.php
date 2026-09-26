@@ -7,8 +7,8 @@ namespace Jackardios\ElasticQueryWizard\Tests\Fixtures\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Factories\GeoModelFactory;
-use Jackardios\EsScoutDriver\Searchable;
 use Jackardios\EloquentSpatial\Objects\Point;
+use Jackardios\EsScoutDriver\Searchable;
 
 /**
  * @property Point $location

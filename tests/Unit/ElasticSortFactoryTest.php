@@ -12,9 +12,9 @@ use Jackardios\ElasticQueryWizard\Sorts\RandomSort;
 use Jackardios\ElasticQueryWizard\Sorts\ScoreSort;
 use Jackardios\ElasticQueryWizard\Sorts\ScriptSort;
 use Jackardios\QueryWizard\Sorts\CallbackSort;
-use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
 
 #[Group('unit')]
 #[Group('factory')]
@@ -33,7 +33,7 @@ class ElasticSortFactoryTest extends TestCase
     #[Test]
     public function callback_creates_callback_sort(): void
     {
-        $callback = fn() => null;
+        $callback = fn () => null;
         $sort = ElasticSort::callback('name', $callback, 'alias');
 
         $this->assertInstanceOf(CallbackSort::class, $sort);

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Jackardios\ElasticQueryWizard\Tests\Unit\Filters;
 
 use Jackardios\ElasticQueryWizard\Filters\TermFilter;
-use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use Jackardios\QueryWizard\Exceptions\InvalidFilterQuery;
 use PHPUnit\Framework\Attributes\Group;

@@ -13,7 +13,7 @@ namespace Jackardios\ElasticQueryWizard\Exceptions;
 class DuplicateGroupChildFilterNameException extends \InvalidArgumentException
 {
     /**
-     * @param array<int, string> $duplicates
+     * @param  array<int, string>  $duplicates
      */
     public function __construct(string $groupName, array $duplicates)
     {
@@ -21,12 +21,12 @@ class DuplicateGroupChildFilterNameException extends \InvalidArgumentException
 
         parent::__construct(
             "Group '{$groupName}' contains duplicate leaf filter names: {$names}. "
-            . 'Each filter alias inside a group tree must be unique.'
+            .'Each filter alias inside a group tree must be unique.'
         );
     }
 
     /**
-     * @param array<int, string> $duplicates
+     * @param  array<int, string>  $duplicates
      */
     public static function forGroup(string $groupName, array $duplicates): self
     {

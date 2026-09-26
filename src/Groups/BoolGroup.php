@@ -35,13 +35,13 @@ final class BoolGroup extends AbstractElasticGroup
 
     public static function make(string $scope, ?string $alias = null): static
     {
-        return new static($scope, $alias);
+        return new self($scope, $alias);
     }
 
     /**
      * Set minimum_should_match for the bool query.
      *
-     * @param int|string $value Number or percentage (e.g., 1, '30%', '2<75%')
+     * @param  int|string  $value  Number or percentage (e.g., 1, '30%', '2<75%')
      */
     public function minimumShouldMatch(int|string $value): static
     {
@@ -81,7 +81,7 @@ final class BoolGroup extends AbstractElasticGroup
             return null;
         }
 
-        $innerBoolQuery = new BoolQuery();
+        $innerBoolQuery = new BoolQuery;
 
         $this->applyChildrenToQuery($innerBoolQuery, $childValues);
 

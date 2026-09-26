@@ -51,11 +51,11 @@ use Jackardios\EsScoutDriver\Support\Query;
 final class ElasticQuery
 {
     /**
-     * @param array<int, mixed> $arguments
+     * @param  array<int, mixed>  $arguments
      */
     public static function __callStatic(string $name, array $arguments): mixed
     {
-        if (!method_exists(Query::class, $name)) {
+        if (! method_exists(Query::class, $name)) {
             throw new BadMethodCallException(sprintf('Method "%s::%s" does not exist.', self::class, $name));
         }
 

@@ -8,9 +8,9 @@ use Jackardios\ElasticQueryWizard\Exceptions\InvalidGeoBoundingBoxValue;
 use Jackardios\ElasticQueryWizard\Exceptions\InvalidGeoDistanceValue;
 use Jackardios\ElasticQueryWizard\Exceptions\InvalidRangeValue;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
-use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
 
 #[Group('unit')]
 class FilterValueSanitizerTest extends TestCase

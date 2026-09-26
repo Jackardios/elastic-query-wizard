@@ -6,9 +6,9 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Sorts;
 
 use Jackardios\ElasticQueryWizard\Sorts\AbstractElasticSort;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
-use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
 
 #[Group('unit')]
 #[Group('sort')]
@@ -18,7 +18,7 @@ class AbstractElasticSortTest extends TestCase
     public function apply_returns_subject_unchanged_for_non_search_builder(): void
     {
         $sort = $this->createSort();
-        $subject = new \stdClass();
+        $subject = new \stdClass;
 
         $result = $sort->apply($subject, 'asc');
 
@@ -28,8 +28,10 @@ class AbstractElasticSortTest extends TestCase
     #[Test]
     public function apply_calls_handle_when_subject_is_search_builder(): void
     {
-        $sort = new class ('property', 'alias') extends AbstractElasticSort {
+        $sort = new class('property', 'alias') extends AbstractElasticSort
+        {
             public bool $handleCalled = false;
+
             public ?string $capturedDirection = null;
 
             public function __construct(string $property, ?string $alias = null)
@@ -39,7 +41,7 @@ class AbstractElasticSortTest extends TestCase
 
             public static function make(string $property, ?string $alias = null): static
             {
-                return new static($property, $alias);
+                return new self($property, $alias);
             }
 
             public function getType(): string
@@ -89,7 +91,8 @@ class AbstractElasticSortTest extends TestCase
 
     private function createSort(): AbstractElasticSort
     {
-        return new class ('property', 'alias') extends AbstractElasticSort {
+        return new class('property', 'alias') extends AbstractElasticSort
+        {
             public function __construct(string $property, ?string $alias = null)
             {
                 parent::__construct($property, $alias);
@@ -97,7 +100,7 @@ class AbstractElasticSortTest extends TestCase
 
             public static function make(string $property, ?string $alias = null): static
             {
-                return new static($property, $alias);
+                return new self($property, $alias);
             }
 
             public function getType(): string

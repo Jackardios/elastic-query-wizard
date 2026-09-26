@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Tests\Unit\Filters;
 
-use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\Filters\TermFilter;
-use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;

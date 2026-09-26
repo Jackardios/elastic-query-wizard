@@ -10,7 +10,7 @@ use Jackardios\QueryWizard\Sorts\AbstractSort;
 abstract class AbstractElasticSort extends AbstractSort
 {
     /**
-     * @param 'asc'|'desc' $direction
+     * @param  'asc'|'desc'  $direction
      */
     abstract public function handle(SearchBuilder $builder, string $direction): void;
 

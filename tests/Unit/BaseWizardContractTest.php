@@ -8,6 +8,7 @@ use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\ElasticGroup;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use Jackardios\QueryWizard\Exceptions\InvalidFilterQuery;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -55,7 +56,7 @@ class BaseWizardContractTest extends UnitTestCase
     #[Test]
     public function filter_value_shape_is_validated_through_the_base_pipeline(): void
     {
-        $this->expectException(\Jackardios\QueryWizard\Exceptions\InvalidFilterQuery::class);
+        $this->expectException(InvalidFilterQuery::class);
 
         $this
             ->createElasticWizardWithFilters(['name' => ['deep' => ['a' => 'b']]])
@@ -66,7 +67,7 @@ class BaseWizardContractTest extends UnitTestCase
     #[Test]
     public function group_child_value_shape_is_validated_too(): void
     {
-        $this->expectException(\Jackardios\QueryWizard\Exceptions\InvalidFilterQuery::class);
+        $this->expectException(InvalidFilterQuery::class);
 
         $this
             ->createElasticWizardWithFilters(['status' => ['deep' => ['a' => 'b']]])

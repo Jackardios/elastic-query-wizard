@@ -21,7 +21,7 @@ class UnsupportedFilterInGroupException extends \RuntimeException
 
         parent::__construct(
             "Filter '{$filterName}' ({$filterClass}) cannot be used inside group '{$groupName}'. "
-            . 'Only AbstractElasticFilter subclasses and GroupInterface implementations are supported in groups.'
+            .'Only AbstractElasticFilter subclasses and GroupInterface implementations are supported in groups.'
         );
     }
 

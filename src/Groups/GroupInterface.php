@@ -19,14 +19,14 @@ interface GroupInterface extends FilterInterface
     /**
      * Build the group query from child filter values.
      *
-     * @param array<string, mixed> $childValues Map of child filter names to their values
+     * @param  array<string, mixed>  $childValues  Map of child filter names to their values
      */
     public function buildGroupQuery(array $childValues): ?QueryInterface;
 
     /**
      * Set the child filters for this group.
      *
-     * @param array<FilterInterface> $children
+     * @param  array<FilterInterface>  $children
      */
     public function children(array $children): static;
 

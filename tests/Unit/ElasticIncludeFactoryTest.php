@@ -9,9 +9,9 @@ use Jackardios\QueryWizard\Eloquent\Includes\CountInclude;
 use Jackardios\QueryWizard\Eloquent\Includes\ExistsInclude;
 use Jackardios\QueryWizard\Eloquent\Includes\RelationshipInclude;
 use Jackardios\QueryWizard\Includes\CallbackInclude;
-use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
 
 #[Group('unit')]
 #[Group('factory')]
@@ -40,7 +40,7 @@ class ElasticIncludeFactoryTest extends TestCase
     #[Test]
     public function callback_creates_callback_include(): void
     {
-        $callback = fn($subject) => $subject;
+        $callback = fn ($subject) => $subject;
         $include = ElasticInclude::callback('name', $callback, 'alias');
 
         $this->assertInstanceOf(CallbackInclude::class, $include);

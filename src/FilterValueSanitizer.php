@@ -14,10 +14,12 @@ class FilterValueSanitizer
     public const RANGE_OPERATORS = ['gt', 'gte', 'lt', 'lte'];
 
     public const LEGACY_RANGE_OPERATORS = ['from', 'to', 'include_lower', 'include_upper'];
+
     /**
-     * @param mixed $value raw filter value
-     * @param string $propertyName will be used to throw exception
+     * @param  mixed  $value  raw filter value
+     * @param  string  $propertyName  will be used to throw exception
      * @return array{0: float, 1: float, 2: float, 3: float}
+     *
      * @throws InvalidGeoBoundingBoxValue
      */
     public static function geoBoundingBoxValue(mixed $value, string $propertyName): array
@@ -97,9 +99,10 @@ class FilterValueSanitizer
     }
 
     /**
-     * @param mixed $value raw filter value
-     * @param string $propertyName will be used to throw exception
+     * @param  mixed  $value  raw filter value
+     * @param  string  $propertyName  will be used to throw exception
      * @return array{lat: float, lon: float, distance: string}
+     *
      * @throws InvalidGeoDistanceValue
      */
     public static function geoDistanceValue(mixed $value, string $propertyName): array
@@ -123,9 +126,10 @@ class FilterValueSanitizer
      * Only ES 9.x compatible operators are allowed: gt, gte, lt, lte.
      * Legacy operators (from, to, include_lower, include_upper) will throw InvalidRangeValue.
      *
-     * @param mixed $value raw filter value
-     * @param string $propertyName will be used to throw exception
+     * @param  mixed  $value  raw filter value
+     * @param  string  $propertyName  will be used to throw exception
      * @return array{gt?: string|int|float, gte?: string|int|float, lt?: string|int|float, lte?: string|int|float}
+     *
      * @throws InvalidRangeValue
      */
     public static function rangeFilterValue(mixed $value, string $propertyName): array
@@ -180,7 +184,7 @@ class FilterValueSanitizer
 
     public static function arrayWithOnlyFilledItems(array $array): array
     {
-        return array_filter($array, static fn($item) => static::isFilled($item));
+        return array_filter($array, static fn ($item) => static::isFilled($item));
     }
 
     public static function arrayToCommaSeparatedString(array $array): string
@@ -215,7 +219,7 @@ class FilterValueSanitizer
     {
         $items = self::toArray($value);
 
-        return array_values(array_filter($items, static fn($item) => is_scalar($item)));
+        return array_values(array_filter($items, static fn ($item) => is_scalar($item)));
     }
 
     /**
@@ -242,25 +246,26 @@ class FilterValueSanitizer
     /**
      * Validates and converts coordinates to float array format.
      *
-     * @param array<mixed> $coordinates
+     * @param  array<mixed>  $coordinates
      * @return array<int, array<int, float>>|null
      */
     public static function toCoordinatesArray(array $coordinates): ?array
     {
         $result = [];
         foreach ($coordinates as $point) {
-            if (!is_array($point)) {
+            if (! is_array($point)) {
                 return null;
             }
             $floats = [];
             foreach ($point as $coord) {
-                if (!is_numeric($coord)) {
+                if (! is_numeric($coord)) {
                     return null;
                 }
                 $floats[] = (float) $coord;
             }
             $result[] = $floats;
         }
+
         return $result;
     }
 }

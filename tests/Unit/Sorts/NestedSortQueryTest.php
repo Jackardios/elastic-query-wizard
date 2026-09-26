@@ -181,7 +181,7 @@ class NestedSortQueryTest extends UnitTestCase
             ->createElasticWizardWithSorts('price')
             ->allowedSorts(
                 NestedSort::make('offers', 'price', 'price')
-                    ->nestedFilter(fn() => Query::term('offers.active', true))
+                    ->nestedFilter(fn () => Query::term('offers.active', true))
             );
         $wizard->build();
 

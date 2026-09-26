@@ -24,6 +24,7 @@ class GeoDistanceSortTest extends TestCase
 
     // Moscow center coordinates
     protected float $centerLat = 55.7558;
+
     protected float $centerLon = 37.6173;
 
     protected function setUp(): void

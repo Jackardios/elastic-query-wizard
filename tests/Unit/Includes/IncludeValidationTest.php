@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace Jackardios\ElasticQueryWizard\Tests\Unit\Includes;
 
 use Jackardios\ElasticQueryWizard\ElasticInclude;
-use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
-use Jackardios\QueryWizard\Contracts\IncludeInterface;
 use Jackardios\QueryWizard\Exceptions\InvalidIncludeQuery;
-use ReflectionClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
+use ReflectionClass;
 
 #[Group('unit')]
 #[Group('include')]

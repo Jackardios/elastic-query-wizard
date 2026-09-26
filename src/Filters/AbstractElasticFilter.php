@@ -118,7 +118,7 @@ abstract class AbstractElasticFilter extends AbstractFilter
     /**
      * Add a query to the BoolQuery using the effective clause.
      *
-     * @param QueryInterface|array<string, mixed> $query
+     * @param  QueryInterface|array<string, mixed>  $query
      */
     protected function addQueryToBuilder(BoolQuery $boolQuery, QueryInterface|array $query): void
     {

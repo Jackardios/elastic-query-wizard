@@ -6,9 +6,9 @@ namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Config;
+use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
 use Jackardios\QueryWizard\Exceptions\InvalidFieldQuery;
-use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -75,7 +75,7 @@ class FieldsTest extends TestCase
             ->first();
 
         $expectedModel = TestModel::query()
-            ->select("name", "id")
+            ->select('name', 'id')
             ->first();
 
         $this->assertModelsAttributesEqual($model, $expectedModel);
@@ -94,7 +94,7 @@ class FieldsTest extends TestCase
             ->first();
 
         $expectedModel = TestModel::query()
-            ->select("name", "id")
+            ->select('name', 'id')
             ->first();
 
         $this->assertModelsAttributesEqual($model, $expectedModel);

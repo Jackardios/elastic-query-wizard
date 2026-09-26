@@ -16,7 +16,7 @@ final class QueryStringFilter extends AbstractElasticFilter
 
     public static function make(string $property, ?string $alias = null): static
     {
-        return new static($property, $alias);
+        return new self($property, $alias);
     }
 
     public function getType(): string

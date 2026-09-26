@@ -17,7 +17,7 @@ final class TrashedFilter extends AbstractElasticFilter
 
     public static function make(?string $alias = null): static
     {
-        return new static($alias);
+        return new self($alias);
     }
 
     public function getType(): string

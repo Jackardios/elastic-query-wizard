@@ -6,11 +6,11 @@ namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Filters;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use Jackardios\QueryWizard\Filters\CallbackFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Support\Query;
+use Jackardios\QueryWizard\Filters\CallbackFilter;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -31,7 +31,7 @@ class CallbackFilterTest extends TestCase
     #[Test]
     public function it_should_filter_by_closure(): void
     {
-        $expectedName = 'Some New Testing Name ' . Str::uuid()->toString();
+        $expectedName = 'Some New Testing Name '.Str::uuid()->toString();
         $expectedModel = TestModel::factory()->create(['name' => $expectedName]);
         $modelsResult = $this
             ->createElasticWizardWithFilters([
@@ -53,7 +53,7 @@ class CallbackFilterTest extends TestCase
     #[Test]
     public function it_should_filter_by_array_callback(): void
     {
-        $expectedName = 'Some New Testing Name ' . Str::uuid()->toString();
+        $expectedName = 'Some New Testing Name '.Str::uuid()->toString();
         $expectedModel = TestModel::factory()->create(['name' => $expectedName]);
         $modelsResult = $this
             ->createElasticWizardWithFilters([

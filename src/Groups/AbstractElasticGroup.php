@@ -66,14 +66,14 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
     /**
      * Build the group query from child filter values.
      *
-     * @param array<string, mixed> $childValues Map of child filter names to their values
+     * @param  array<string, mixed>  $childValues  Map of child filter names to their values
      */
     abstract public function buildGroupQuery(array $childValues): ?QueryInterface;
 
     /**
      * Apply child filters to an inner BoolQuery.
      *
-     * @param array<string, mixed> $childValues Map of child filter names to their values
+     * @param  array<string, mixed>  $childValues  Map of child filter names to their values
      *
      * @throws UnsupportedFilterInGroupException When an unsupported filter is used in group context
      */
@@ -119,7 +119,7 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
     /**
      * Collect values for a nested group's children from the parent value map.
      *
-     * @param array<string, mixed> $parentValues
+     * @param  array<string, mixed>  $parentValues
      * @return array<string, mixed>
      */
     protected function collectGroupChildValues(GroupInterface $group, array $parentValues): array
@@ -137,8 +137,6 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
 
     /**
      * Add a query to the inner BoolQuery using the filter's effective clause.
-     *
-     * @param QueryInterface $query
      */
     protected function addQueryToBoolQuery(BoolQuery $boolQuery, FilterInterface $filter, QueryInterface $query): void
     {
@@ -158,8 +156,6 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
 
     /**
      * Add the group query to the parent BoolQuery using this group's clause.
-     *
-     * @param QueryInterface $query
      */
     protected function addQueryToBuilder(BoolQuery $parentBoolQuery, QueryInterface $query): void
     {
@@ -178,8 +174,8 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
      *
      * The value is expected to be an array of child filter values.
      *
-     * @param mixed $subject SearchBuilder instance
-     * @param mixed $value Array of child filter values keyed by filter name
+     * @param  mixed  $subject  SearchBuilder instance
+     * @param  mixed  $value  Array of child filter values keyed by filter name
      */
     public function apply(mixed $subject, mixed $value): mixed
     {
@@ -205,7 +201,7 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
      * Group names are intentionally excluded. Group values are resolved by leaf
      * filter aliases only, so duplicate leaf names are ambiguous and forbidden.
      *
-     * @param array<FilterInterface> $children
+     * @param  array<FilterInterface>  $children
      */
     protected function assertUniqueLeafFilterNames(array $children): void
     {
@@ -222,7 +218,7 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
         }
 
         $nameCounts = array_count_values($leafNames);
-        $duplicates = array_keys(array_filter($nameCounts, static fn(int $count): bool => $count > 1));
+        $duplicates = array_keys(array_filter($nameCounts, static fn (int $count): bool => $count > 1));
 
         if ($duplicates !== []) {
             throw DuplicateGroupChildFilterNameException::forGroup($this->getName(), $duplicates);

@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Tests\Unit;
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Jackardios\ElasticQueryWizard\ElasticQuery;
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
 use Jackardios\ElasticQueryWizard\Filters\TermFilter;
 use Jackardios\ElasticQueryWizard\Sorts\FieldSort;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
+use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\QueryWizard\Enums\SortDirection;
 use Jackardios\QueryWizard\Values\Sort;
 use PHPUnit\Framework\Attributes\Group;
@@ -35,7 +37,7 @@ class ElasticQueryWizardTest extends UnitTestCase
     {
         $this->expectException(\InvalidArgumentException::class);
 
-        ElasticQueryWizard::for(\Illuminate\Database\Eloquent\Model::class);
+        ElasticQueryWizard::for(Model::class);
     }
 
     #[Test]
@@ -115,7 +117,7 @@ class ElasticQueryWizardTest extends UnitTestCase
     #[Test]
     public function it_creates_wizard_from_model_instance(): void
     {
-        $model = new TestModel();
+        $model = new TestModel;
         $wizard = ElasticQueryWizard::for($model);
 
         $this->assertInstanceOf(ElasticQueryWizard::class, $wizard);
@@ -126,7 +128,7 @@ class ElasticQueryWizardTest extends UnitTestCase
     {
         $wizard = ElasticQueryWizard::for(TestModel::class);
 
-        $this->assertInstanceOf(\Jackardios\EsScoutDriver\Search\SearchBuilder::class, $wizard->getSubject());
+        $this->assertInstanceOf(SearchBuilder::class, $wizard->getSubject());
     }
 
     #[Test]
@@ -184,7 +186,7 @@ class ElasticQueryWizardTest extends UnitTestCase
     public function it_applies_tap_search_builder_callback(): void
     {
         $wizard = ElasticQueryWizard::for(TestModel::class)
-            ->tapSearchBuilder(fn($builder) => $builder->minScore(0.75));
+            ->tapSearchBuilder(fn ($builder) => $builder->minScore(0.75));
 
         $wizard->build();
 

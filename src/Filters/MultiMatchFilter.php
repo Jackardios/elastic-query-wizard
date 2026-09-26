@@ -25,11 +25,11 @@ final class MultiMatchFilter extends AbstractElasticFilter
     }
 
     /**
-     * @param string[] $fields The Elasticsearch fields to search across
+     * @param  string[]  $fields  The Elasticsearch fields to search across
      */
     public static function make(array $fields, string $property, ?string $alias = null): static
     {
-        return new static($fields, $property, $alias);
+        return new self($fields, $property, $alias);
     }
 
     public function getType(): string

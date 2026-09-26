@@ -20,10 +20,13 @@ use Jackardios\EsScoutDriver\Sort\Sort;
 final class NestedSort extends AbstractElasticSort
 {
     protected string $path;
+
     protected string $nestedField;
 
     protected string|int|float|bool|null $missing = null;
+
     protected ?string $mode = null;
+
     protected ?string $unmappedType = null;
 
     /** @var QueryInterface|Closure(): QueryInterface|array<string, mixed>|null */
@@ -48,17 +51,18 @@ final class NestedSort extends AbstractElasticSort
         string $property,
         ?string $alias = null
     ): static {
-        return new static($path, $nestedField, $property, $alias);
+        return new self($path, $nestedField, $property, $alias);
     }
 
     /**
      * Value to use for documents missing the sort field.
      *
-     * @param string|int|float|bool $value Use '_first', '_last', or a specific value
+     * @param  string|int|float|bool  $value  Use '_first', '_last', or a specific value
      */
     public function missing(string|int|float|bool $value): static
     {
         $this->missing = $value;
+
         return $this;
     }
 
@@ -81,11 +85,12 @@ final class NestedSort extends AbstractElasticSort
     /**
      * Sort mode for multi-valued nested fields.
      *
-     * @param string $mode One of: 'min', 'max', 'avg', 'sum', 'median'
+     * @param  string  $mode  One of: 'min', 'max', 'avg', 'sum', 'median'
      */
     public function mode(string $mode): static
     {
         $this->mode = $mode;
+
         return $this;
     }
 
@@ -95,17 +100,19 @@ final class NestedSort extends AbstractElasticSort
     public function unmappedType(string $type): static
     {
         $this->unmappedType = $type;
+
         return $this;
     }
 
     /**
      * Filter to select which nested documents to sort by.
      *
-     * @param QueryInterface|Closure(): QueryInterface|array<string, mixed> $filter
+     * @param  QueryInterface|Closure(): QueryInterface|array<string, mixed>  $filter
      */
     public function nestedFilter(QueryInterface|Closure|array $filter): static
     {
         $this->nestedFilter = $filter;
+
         return $this;
     }
 
@@ -115,6 +122,7 @@ final class NestedSort extends AbstractElasticSort
     public function maxChildren(int $maxChildren): static
     {
         $this->maxChildren = $maxChildren;
+
         return $this;
     }
 
@@ -125,7 +133,7 @@ final class NestedSort extends AbstractElasticSort
 
     public function handle(SearchBuilder $builder, string $direction): void
     {
-        $fullField = $this->path . '.' . $this->nestedField;
+        $fullField = $this->path.'.'.$this->nestedField;
 
         $sort = Sort::field($fullField)->order($direction);
 

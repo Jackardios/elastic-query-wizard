@@ -7,9 +7,9 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit;
 use BadMethodCallException;
 use Jackardios\ElasticQueryWizard\ElasticAggregation;
 use Jackardios\EsScoutDriver\Aggregations\Bucket\TermsAggregation;
-use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
 
 #[Group('unit')]
 #[Group('factory')]

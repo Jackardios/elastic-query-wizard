@@ -6,11 +6,13 @@ namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Filters;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Jackardios\ElasticQueryWizard\Enums\BoolClause;
 use Jackardios\ElasticQueryWizard\Filters\AbstractElasticFilter;
 use Jackardios\ElasticQueryWizard\Filters\MatchFilter;
 use Jackardios\ElasticQueryWizard\Filters\TermFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
+use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Support\Query;
 use Jackardios\QueryWizard\Exceptions\InvalidFilterQuery;
 use PHPUnit\Framework\Attributes\Group;
@@ -120,13 +122,13 @@ class FilterTest extends TestCase
      * They expect Eloquent\Builder but ElasticQueryWizard uses SearchBuilder.
      * Use Elastic-specific filters (TermFilter, MatchFilter, etc.) instead.
      */
-
     #[Test]
     public function it_can_filter_results_by_a_custom_filter_class(): void
     {
         $testModel = $this->models->first();
 
-        $filterClass = new class ('custom_name') extends AbstractElasticFilter {
+        $filterClass = new class('custom_name') extends AbstractElasticFilter
+        {
             public function __construct(string $property, ?string $alias = null)
             {
                 parent::__construct($property, $alias);
@@ -134,7 +136,7 @@ class FilterTest extends TestCase
 
             public static function make(string $property, ?string $alias = null): static
             {
-                return new static($property, $alias);
+                return new self($property, $alias);
             }
 
             public function getType(): string
@@ -142,12 +144,12 @@ class FilterTest extends TestCase
                 return 'custom';
             }
 
-            protected function getDefaultClause(): \Jackardios\ElasticQueryWizard\Enums\BoolClause
+            protected function getDefaultClause(): BoolClause
             {
-                return \Jackardios\ElasticQueryWizard\Enums\BoolClause::MUST;
+                return BoolClause::MUST;
             }
 
-            public function buildQuery(mixed $value): ?\Jackardios\EsScoutDriver\Query\QueryInterface
+            public function buildQuery(mixed $value): ?QueryInterface
             {
                 return Query::match('name', $value);
             }
@@ -235,7 +237,8 @@ class FilterTest extends TestCase
     #[Test]
     public function it_can_create_a_custom_filter_with_an_instantiated_filter(): void
     {
-        $customFilter = new class ('*') extends AbstractElasticFilter {
+        $customFilter = new class('*') extends AbstractElasticFilter
+        {
             public function __construct(string $property, ?string $alias = null)
             {
                 parent::__construct($property, $alias);
@@ -243,7 +246,7 @@ class FilterTest extends TestCase
 
             public static function make(string $property, ?string $alias = null): static
             {
-                return new static($property, $alias);
+                return new self($property, $alias);
             }
 
             public function getType(): string
@@ -251,7 +254,7 @@ class FilterTest extends TestCase
                 return 'custom';
             }
 
-            public function buildQuery(mixed $value): ?\Jackardios\EsScoutDriver\Query\QueryInterface
+            public function buildQuery(mixed $value): ?QueryInterface
             {
                 return null;
             }

@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Jackardios\ElasticQueryWizard\Tests\Unit\Sorts;
 
 use Jackardios\ElasticQueryWizard\Sorts\FieldSort;
-use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
 
 #[Group('unit')]
 #[Group('sort')]

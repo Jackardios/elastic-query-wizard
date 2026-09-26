@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Tests\Unit\Fields;
 
-use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use Jackardios\QueryWizard\Exceptions\InvalidFieldQuery;
 use PHPUnit\Framework\Attributes\Group;

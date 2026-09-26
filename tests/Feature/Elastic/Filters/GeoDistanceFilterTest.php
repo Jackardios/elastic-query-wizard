@@ -92,7 +92,7 @@ class GeoDistanceFilterTest extends TestCase
         $this->assertCount(3, $modelsResult);
         $this->assertEqualsCanonicalizing(
             $modelsResult->pluck('id')->toArray(),
-            array_map(static fn($model) => $model->id, $expectedModels)
+            array_map(static fn ($model) => $model->id, $expectedModels)
         );
     }
 
@@ -121,7 +121,7 @@ class GeoDistanceFilterTest extends TestCase
         $this->assertCount(3, $modelsResult);
         $this->assertEqualsCanonicalizing(
             $modelsResult->pluck('id')->toArray(),
-            array_map(static fn($model) => $model->id, $expectedModels)
+            array_map(static fn ($model) => $model->id, $expectedModels)
         );
     }
 
@@ -156,7 +156,7 @@ class GeoDistanceFilterTest extends TestCase
         $this->assertCount(3, $modelsResult);
         $this->assertEqualsCanonicalizing(
             $modelsResult->pluck('id')->toArray(),
-            array_map(static fn($model) => $model->id, $expectedModels)
+            array_map(static fn ($model) => $model->id, $expectedModels)
         );
     }
 

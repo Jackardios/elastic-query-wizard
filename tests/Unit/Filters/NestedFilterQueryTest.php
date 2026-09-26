@@ -111,7 +111,7 @@ class NestedFilterQueryTest extends UnitTestCase
             ->createElasticWizardWithFilters(['min_rating' => 4])
             ->allowedFilters(
                 NestedFilter::make('reviews', 'min_rating')
-                    ->innerQuery(fn($value) => Query::range('reviews.rating')->gte($value))
+                    ->innerQuery(fn ($value) => Query::range('reviews.rating')->gte($value))
             );
         $wizard->build();
 

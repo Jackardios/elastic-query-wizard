@@ -16,7 +16,7 @@ use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\AppendModel;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\SoftDeleteModel;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
-use Jackardios\QueryWizard\Eloquent\Includes\RelationshipInclude;
+use Jackardios\EsScoutDriver\Query\Compound\BoolQuery;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -81,7 +81,7 @@ class ElasticQueryWizardTest extends TestCase
 
         $this->assertCount(2, $models);
         $this->assertSortedAscending($models, 'name');
-        $this->assertTrue($models->every(fn($m) => $m->category === 'test-category'));
+        $this->assertTrue($models->every(fn ($m) => $m->category === 'test-category'));
     }
 
     #[Test]
@@ -208,6 +208,7 @@ class ElasticQueryWizardTest extends TestCase
         $models = ElasticQueryWizard::for(TestModel::class)
             ->modifyModels(function (Collection $collection) use (&$callbackExecuted) {
                 $callbackExecuted = true;
+
                 return $collection;
             })
             ->build()
@@ -227,10 +228,12 @@ class ElasticQueryWizardTest extends TestCase
         ElasticQueryWizard::for(TestModel::class)
             ->modifyModels(function (Collection $collection) use (&$order) {
                 $order[] = 'first';
+
                 return $collection;
             })
             ->modifyModels(function (Collection $collection) use (&$order) {
                 $order[] = 'second';
+
                 return $collection;
             })
             ->build()
@@ -301,7 +304,7 @@ class ElasticQueryWizardTest extends TestCase
         $boolQuery = $wizard->boolQuery();
 
         $this->assertNotNull($boolQuery);
-        $this->assertInstanceOf(\Jackardios\EsScoutDriver\Query\Compound\BoolQuery::class, $boolQuery);
+        $this->assertInstanceOf(BoolQuery::class, $boolQuery);
     }
 
     // === Helper methods ===

@@ -9,16 +9,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Jackardios\ElasticQueryWizard\Includes\AbstractElasticInclude;
-use Jackardios\QueryWizard\Eloquent\Includes\CountInclude;
-use Jackardios\QueryWizard\Eloquent\Includes\RelationshipInclude;
-use Jackardios\QueryWizard\Contracts\IncludeInterface;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\MorphModel;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
+use Jackardios\QueryWizard\Eloquent\Includes\CountInclude;
+use Jackardios\QueryWizard\Eloquent\Includes\RelationshipInclude;
 use Jackardios\QueryWizard\Exceptions\InvalidIncludeQuery;
-use ReflectionClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
+use ReflectionClass;
 
 #[Group('elastic')]
 #[Group('include')]
@@ -351,7 +350,7 @@ class IncludeTest extends TestCase
 
         // allowedIncludes contains the raw string/object values before normalization
         $includeNames = array_map(
-            fn($include) => is_string($include) ? $include : $include->getName(),
+            fn ($include) => is_string($include) ? $include : $include->getName(),
             $rawValues
         );
 
@@ -387,7 +386,7 @@ class IncludeTest extends TestCase
 
         // Based on the following query: TestModel::with('relatedThroughPivotModels')->get();
         // Without where-clause as that differs per Laravel version
-        //dump(DB::getQueryLog());
+        // dump(DB::getQueryLog());
         $this->assertQueryLogContains('select `related_through_pivot_models`.*, `pivot_models`.`test_model_id` as `pivot_test_model_id`, `pivot_models`.`related_through_pivot_model_id` as `pivot_related_through_pivot_model_id` from `related_through_pivot_models` inner join `pivot_models` on `related_through_pivot_models`.`id` = `pivot_models`.`related_through_pivot_model_id` where `pivot_models`.`test_model_id` in (1, 2, 3, 4, 5)');
     }
 
@@ -436,7 +435,8 @@ class IncludeTest extends TestCase
     #[Test]
     public function it_can_include_custom_include_class(): void
     {
-        $includeClass = new class ('relatedModels') extends AbstractElasticInclude {
+        $includeClass = new class('relatedModels') extends AbstractElasticInclude
+        {
             public function __construct(string $relation, ?string $alias = null)
             {
                 parent::__construct($relation, $alias);
@@ -444,7 +444,7 @@ class IncludeTest extends TestCase
 
             public static function make(string $relation, ?string $alias = null): static
             {
-                return new static($relation, $alias);
+                return new self($relation, $alias);
             }
 
             public function getType(): string
@@ -472,7 +472,8 @@ class IncludeTest extends TestCase
     #[Test]
     public function it_can_include_custom_include_class_by_alias(): void
     {
-        $includeClass = (new class ('relatedModels') extends AbstractElasticInclude {
+        $includeClass = (new class('relatedModels') extends AbstractElasticInclude
+        {
             public function __construct(string $relation, ?string $alias = null)
             {
                 parent::__construct($relation, $alias);
@@ -480,7 +481,7 @@ class IncludeTest extends TestCase
 
             public static function make(string $relation, ?string $alias = null): static
             {
-                return new static($relation, $alias);
+                return new self($relation, $alias);
             }
 
             public function getType(): string

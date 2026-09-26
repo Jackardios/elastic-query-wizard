@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Jackardios\ElasticQueryWizard\Tests\Unit;
 
 use Jackardios\ElasticQueryWizard\ElasticFilter;
-use Jackardios\QueryWizard\Filters\CallbackFilter;
 use Jackardios\ElasticQueryWizard\Filters\DateRangeFilter;
 use Jackardios\ElasticQueryWizard\Filters\ExistsFilter;
 use Jackardios\ElasticQueryWizard\Filters\FuzzyFilter;
@@ -28,10 +27,11 @@ use Jackardios\ElasticQueryWizard\Filters\SimpleQueryStringFilter;
 use Jackardios\ElasticQueryWizard\Filters\TermFilter;
 use Jackardios\ElasticQueryWizard\Filters\TrashedFilter;
 use Jackardios\ElasticQueryWizard\Filters\WildcardFilter;
+use Jackardios\QueryWizard\Filters\CallbackFilter;
 use Jackardios\QueryWizard\Filters\PassthroughFilter;
-use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
 
 #[Group('unit')]
 #[Group('factory')]
@@ -210,7 +210,7 @@ class ElasticFilterFactoryTest extends TestCase
     #[Test]
     public function callback_creates_callback_filter(): void
     {
-        $callback = fn() => null;
+        $callback = fn () => null;
         $filter = ElasticFilter::callback('name', $callback, 'alias');
 
         $this->assertInstanceOf(CallbackFilter::class, $filter);

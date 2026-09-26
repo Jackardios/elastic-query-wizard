@@ -7,7 +7,6 @@ namespace Jackardios\ElasticQueryWizard\Tests\Concerns;
 use Jackardios\EsScoutDriver\Query\Compound\BoolQuery;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
-use ReflectionClass;
 
 trait AssertsElasticQuery
 {
@@ -37,13 +36,12 @@ trait AssertsElasticQuery
     }
 
     /**
-     * @param array<int|string, QueryInterface|array> $clauses
-     * @return array
+     * @param  array<int|string, QueryInterface|array>  $clauses
      */
     private function clausesToArray(array $clauses): array
     {
         return array_values(array_map(
-            fn($query) => $query instanceof QueryInterface ? $query->toArray() : $query,
+            fn ($query) => $query instanceof QueryInterface ? $query->toArray() : $query,
             $clauses
         ));
     }

@@ -49,9 +49,9 @@ final class ElasticSort
     /**
      * Sort by a field within nested documents.
      *
-     * @param string $path The nested document path (e.g., 'variants', 'offers')
-     * @param string $nestedField The field within the nested document
-     * @param string $property The sort property name
+     * @param  string  $path  The nested document path (e.g., 'variants', 'offers')
+     * @param  string  $nestedField  The field within the nested document
+     * @param  string  $property  The sort property name
      */
     public static function nested(
         string $path,
@@ -65,7 +65,7 @@ final class ElasticSort
     /**
      * Random/shuffle sorting.
      *
-     * @param string $property The sort property name (default: '_random')
+     * @param  string  $property  The sort property name (default: '_random')
      */
     public static function random(string $property = '_random', ?string $alias = null): RandomSort
     {

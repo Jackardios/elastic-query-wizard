@@ -28,11 +28,11 @@ use Jackardios\EsScoutDriver\Aggregations\Agg;
 final class ElasticAggregation
 {
     /**
-     * @param array<int, mixed> $arguments
+     * @param  array<int, mixed>  $arguments
      */
     public static function __callStatic(string $name, array $arguments): mixed
     {
-        if (!method_exists(Agg::class, $name)) {
+        if (! method_exists(Agg::class, $name)) {
             throw new BadMethodCallException(sprintf('Method "%s::%s" does not exist.', self::class, $name));
         }
 

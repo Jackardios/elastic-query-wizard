@@ -28,17 +28,18 @@ final class GeoShapeFilter extends AbstractElasticFilter
 
     public static function make(string $property, ?string $alias = null): static
     {
-        return new static($property, $alias);
+        return new self($property, $alias);
     }
 
     /**
      * Set the spatial relation for the query.
      *
-     * @param string $relation One of: 'intersects', 'disjoint', 'within', 'contains'
+     * @param  string  $relation  One of: 'intersects', 'disjoint', 'within', 'contains'
      */
     public function relation(string $relation): static
     {
         $this->relation = $relation;
+
         return $this;
     }
 
@@ -48,6 +49,7 @@ final class GeoShapeFilter extends AbstractElasticFilter
     public function ignoreUnmapped(bool $ignore = true): static
     {
         $this->ignoreUnmapped = $ignore;
+
         return $this;
     }
 
@@ -58,7 +60,7 @@ final class GeoShapeFilter extends AbstractElasticFilter
 
     public function buildQuery(mixed $value): ?QueryInterface
     {
-        if (empty($value) || !is_array($value)) {
+        if (empty($value) || ! is_array($value)) {
             return null;
         }
 
@@ -81,7 +83,7 @@ final class GeoShapeFilter extends AbstractElasticFilter
     }
 
     /**
-     * @param array<string, mixed> $value
+     * @param  array<string, mixed>  $value
      */
     protected function applyShape(GeoShapeQuery $query, array $value): void
     {
@@ -98,13 +100,13 @@ final class GeoShapeFilter extends AbstractElasticFilter
     }
 
     /**
-     * @param array<string, mixed> $value
+     * @param  array<string, mixed>  $value
      */
     protected function applyEnvelope(GeoShapeQuery $query, array $value): void
     {
         $coordinates = $value['coordinates'] ?? null;
 
-        if (!is_array($coordinates) || count($coordinates) !== 2) {
+        if (! is_array($coordinates) || count($coordinates) !== 2) {
             throw InvalidGeoShapeValue::invalidEnvelope($this->property);
         }
 
@@ -118,13 +120,13 @@ final class GeoShapeFilter extends AbstractElasticFilter
     }
 
     /**
-     * @param array<string, mixed> $value
+     * @param  array<string, mixed>  $value
      */
     protected function applyPolygon(GeoShapeQuery $query, array $value): void
     {
         $coordinates = $value['coordinates'] ?? null;
 
-        if (!is_array($coordinates) || $coordinates === []) {
+        if (! is_array($coordinates) || $coordinates === []) {
             throw InvalidGeoShapeValue::invalidPolygon($this->property);
         }
 
@@ -133,7 +135,7 @@ final class GeoShapeFilter extends AbstractElasticFilter
         // and wraps it internally, so we pass only the first ring
         $outerRing = $coordinates[0] ?? null;
 
-        if (!is_array($outerRing) || count($outerRing) < 4) {
+        if (! is_array($outerRing) || count($outerRing) < 4) {
             throw InvalidGeoShapeValue::invalidPolygon($this->property);
         }
 
@@ -147,20 +149,20 @@ final class GeoShapeFilter extends AbstractElasticFilter
     }
 
     /**
-     * @param array<string, mixed> $value
+     * @param  array<string, mixed>  $value
      */
     protected function applyPoint(GeoShapeQuery $query, array $value): void
     {
         $coordinates = $value['coordinates'] ?? null;
 
-        if (!is_array($coordinates) || count($coordinates) !== 2) {
+        if (! is_array($coordinates) || count($coordinates) !== 2) {
             throw InvalidGeoShapeValue::invalidPoint($this->property);
         }
 
         $lon = $coordinates[0] ?? null;
         $lat = $coordinates[1] ?? null;
 
-        if (!is_numeric($lon) || !is_numeric($lat)) {
+        if (! is_numeric($lon) || ! is_numeric($lat)) {
             throw InvalidGeoShapeValue::invalidPoint($this->property);
         }
 
@@ -171,7 +173,7 @@ final class GeoShapeFilter extends AbstractElasticFilter
     }
 
     /**
-     * @param array<string, mixed> $value
+     * @param  array<string, mixed>  $value
      */
     protected function applyIndexedShape(GeoShapeQuery $query, array $value): void
     {
@@ -180,7 +182,7 @@ final class GeoShapeFilter extends AbstractElasticFilter
         $rawPath = $value['path'] ?? null;
         $path = is_string($rawPath) ? $rawPath : 'shape';
 
-        if (!is_string($index) || !is_string($id)) {
+        if (! is_string($index) || ! is_string($id)) {
             throw InvalidGeoShapeValue::invalidIndexedShape($this->property);
         }
 

@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic;
 
-use Jackardios\ElasticQueryWizard\Tests\TestCase;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
-use Jackardios\QueryWizard\Exceptions\InvalidAppendQuery;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\AppendModel;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
+use Jackardios\ElasticQueryWizard\Tests\TestCase;
+use Jackardios\QueryWizard\Exceptions\InvalidAppendQuery;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -177,8 +177,7 @@ class AppendTest extends TestCase
     }
 
     /**
-     * @param LengthAwarePaginator|Paginator|CursorPaginator $collection
-     * @param string $attribute
+     * @param  LengthAwarePaginator|Paginator|CursorPaginator  $collection
      */
     protected function assertPaginateAttributeLoaded($collection, string $attribute): void
     {
@@ -332,7 +331,7 @@ class AppendTest extends TestCase
     {
         $testModels = TestModel::factory()->count(3)->create();
         $testModels->each(function (TestModel $model) {
-            $model->relatedModels()->create(['name' => 'Related-' . $model->id]);
+            $model->relatedModels()->create(['name' => 'Related-'.$model->id]);
         });
 
         $results = $this

@@ -12,7 +12,8 @@ final class InvalidGeoShapeValue extends InvalidQuery
     public static function unknownType(string $propertyName, ?string $type): self
     {
         $typeStr = $type ?? 'null';
-        return new static(
+
+        return new self(
             Response::HTTP_UNPROCESSABLE_ENTITY,
             "`$propertyName` has unknown shape type `$typeStr`. Supported: envelope, polygon, point, indexed_shape"
         );
@@ -20,7 +21,7 @@ final class InvalidGeoShapeValue extends InvalidQuery
 
     public static function invalidEnvelope(string $propertyName): self
     {
-        return new static(
+        return new self(
             Response::HTTP_UNPROCESSABLE_ENTITY,
             "`$propertyName` envelope requires coordinates as [[minLon, maxLat], [maxLon, minLat]]"
         );
@@ -28,7 +29,7 @@ final class InvalidGeoShapeValue extends InvalidQuery
 
     public static function invalidPolygon(string $propertyName): self
     {
-        return new static(
+        return new self(
             Response::HTTP_UNPROCESSABLE_ENTITY,
             "`$propertyName` polygon requires coordinates as array of [lon, lat] pairs"
         );
@@ -36,7 +37,7 @@ final class InvalidGeoShapeValue extends InvalidQuery
 
     public static function invalidPoint(string $propertyName): self
     {
-        return new static(
+        return new self(
             Response::HTTP_UNPROCESSABLE_ENTITY,
             "`$propertyName` point requires coordinates as [lon, lat]"
         );
@@ -44,7 +45,7 @@ final class InvalidGeoShapeValue extends InvalidQuery
 
     public static function invalidIndexedShape(string $propertyName): self
     {
-        return new static(
+        return new self(
             Response::HTTP_UNPROCESSABLE_ENTITY,
             "`$propertyName` indexed_shape requires `index` and `id` as strings"
         );

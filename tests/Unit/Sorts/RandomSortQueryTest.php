@@ -7,9 +7,9 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Sorts;
 use Jackardios\ElasticQueryWizard\Sorts\RandomSort;
 use Jackardios\ElasticQueryWizard\Sorts\ScoreSort;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
-use stdClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
+use stdClass;
 
 #[Group('unit')]
 #[Group('sort')]
@@ -29,7 +29,7 @@ class RandomSortQueryTest extends UnitTestCase
         $this->assertEquals([
             'function_score' => [
                 'functions' => [
-                    ['random_score' => new stdClass()],
+                    ['random_score' => new stdClass],
                 ],
                 'boost_mode' => 'replace',
             ],

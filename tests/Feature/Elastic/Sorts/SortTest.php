@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Sorts;
 
-use Illuminate\Http\Request;
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
 use Jackardios\ElasticQueryWizard\Sorts\FieldSort;
 use Jackardios\ElasticQueryWizard\Tests\Concerns\AssertsCollectionSorting;
@@ -33,7 +32,7 @@ class SortTest extends TestCase
             ->allowedSorts('name')
             ->build();
 
-        $this->assertEquals([["name" => "asc"]], $this->getSorts($searchBuilder));
+        $this->assertEquals([['name' => 'asc']], $this->getSorts($searchBuilder));
     }
 
     #[Test]
@@ -44,7 +43,7 @@ class SortTest extends TestCase
             ->allowedSorts('name')
             ->build();
 
-        $this->assertEquals([["name" => "desc"]], $this->getSorts($searchBuilder));
+        $this->assertEquals([['name' => 'desc']], $this->getSorts($searchBuilder));
     }
 
     #[Test]
@@ -55,7 +54,7 @@ class SortTest extends TestCase
             ->allowedSorts([FieldSort::make('name', 'name-alias')])
             ->build();
 
-        $this->assertEquals([["name" => "asc"]], $this->getSorts($searchBuilder));
+        $this->assertEquals([['name' => 'asc']], $this->getSorts($searchBuilder));
     }
 
     #[Test]
@@ -66,7 +65,7 @@ class SortTest extends TestCase
             ->allowedSorts('-name')
             ->build();
 
-        $this->assertEquals([["name" => "asc"]], $this->getSorts($searchBuilder));
+        $this->assertEquals([['name' => 'asc']], $this->getSorts($searchBuilder));
     }
 
     #[Test]
@@ -77,7 +76,7 @@ class SortTest extends TestCase
             ->allowedSorts(FieldSort::make('name', 'sketchy<>sort'))
             ->build();
 
-        $this->assertEquals([["name" => "desc"]], $this->getSorts($searchBuilder));
+        $this->assertEquals([['name' => 'desc']], $this->getSorts($searchBuilder));
     }
 
     #[Test]
@@ -109,7 +108,7 @@ class SortTest extends TestCase
             ->defaultSorts('name')
             ->build();
 
-        $this->assertEquals([["name" => "asc"]], $this->getSorts($searchBuilder));
+        $this->assertEquals([['name' => 'asc']], $this->getSorts($searchBuilder));
     }
 
     #[Test]
@@ -120,7 +119,7 @@ class SortTest extends TestCase
             ->defaultSorts('name')
             ->build();
 
-        $this->assertEquals([["id" => "asc"]], $this->getSorts($searchBuilder));
+        $this->assertEquals([['id' => 'asc']], $this->getSorts($searchBuilder));
     }
 
     #[Test]
@@ -133,7 +132,7 @@ class SortTest extends TestCase
             ->defaultSorts(new Sort('custom_name'))
             ->build();
 
-        $this->assertEquals([["name" => "asc"]], $this->getSorts($searchBuilder));
+        $this->assertEquals([['name' => 'asc']], $this->getSorts($searchBuilder));
     }
 
     #[Test]
@@ -144,7 +143,7 @@ class SortTest extends TestCase
             ->defaultSorts('-name')
             ->build();
 
-        $this->assertEquals([["name" => "desc"]], $this->getSorts($searchBuilder));
+        $this->assertEquals([['name' => 'desc']], $this->getSorts($searchBuilder));
     }
 
     #[Test]
@@ -158,8 +157,8 @@ class SortTest extends TestCase
             ->build();
 
         $this->assertEquals([
-            ["name" => "asc"],
-            ["id" => "desc"],
+            ['name' => 'asc'],
+            ['id' => 'desc'],
         ], $this->getSorts($searchBuilder));
     }
 
@@ -171,7 +170,7 @@ class SortTest extends TestCase
             ->allowedSorts('id', 'name')
             ->build();
 
-        $this->assertEquals([["name" => "asc"]], $this->getSorts($searchBuilder));
+        $this->assertEquals([['name' => 'asc']], $this->getSorts($searchBuilder));
     }
 
     #[Test]
@@ -182,7 +181,7 @@ class SortTest extends TestCase
             ->allowedSorts(['id', 'name'])
             ->build();
 
-        $this->assertEquals([["name" => "asc"]], $this->getSorts($searchBuilder));
+        $this->assertEquals([['name' => 'asc']], $this->getSorts($searchBuilder));
     }
 
     #[Test]
@@ -194,8 +193,8 @@ class SortTest extends TestCase
             ->build();
 
         $this->assertEquals([
-            ["name" => "asc"],
-            ["id" => "desc"],
+            ['name' => 'asc'],
+            ['id' => 'desc'],
         ], $this->getSorts($searchBuilder));
     }
 
@@ -209,7 +208,7 @@ class SortTest extends TestCase
             ->allowedSorts($sortClass)
             ->build();
 
-        $this->assertEquals([["name" => "asc"]], $this->getSorts($searchBuilder));
+        $this->assertEquals([['name' => 'asc']], $this->getSorts($searchBuilder));
     }
 
     #[Test]
@@ -222,7 +221,7 @@ class SortTest extends TestCase
             ->allowedSorts($sort)
             ->build();
 
-        $this->assertEquals([["name" => "asc"]], $this->getSorts($searchBuilder));
+        $this->assertEquals([['name' => 'asc']], $this->getSorts($searchBuilder));
     }
 
     #[Test]
@@ -232,7 +231,7 @@ class SortTest extends TestCase
             ->allowedSorts(FieldSort::make('name', 'exposed_property_name'))
             ->build();
 
-        $this->assertEquals([["name" => "desc"]], $this->getSorts($searchBuilder));
+        $this->assertEquals([['name' => 'desc']], $this->getSorts($searchBuilder));
     }
 
     #[Test]
@@ -243,7 +242,7 @@ class SortTest extends TestCase
             ->defaultSorts('name', '-name')
             ->build();
 
-        $this->assertEquals([["name" => "asc"]], $this->getSorts($searchBuilder));
+        $this->assertEquals([['name' => 'asc']], $this->getSorts($searchBuilder));
     }
 
     #[Test]
@@ -254,7 +253,7 @@ class SortTest extends TestCase
             ->allowedSorts(FieldSort::make('created_at', 'joined'))
             ->build();
 
-        $this->assertEquals([["created_at" => "desc"]], $this->getSorts($searchBuilder));
+        $this->assertEquals([['created_at' => 'desc']], $this->getSorts($searchBuilder));
     }
 
     #[Test]
@@ -267,12 +266,13 @@ class SortTest extends TestCase
             ->defaultSorts('-custom_name')
             ->build();
 
-        $this->assertEquals([["name" => "desc"]], $this->getSorts($searchBuilder));
+        $this->assertEquals([['name' => 'desc']], $this->getSorts($searchBuilder));
     }
 
     private function createCustomSort(): AbstractSort
     {
-        return new class ('custom_name') extends AbstractSort {
+        return new class('custom_name') extends AbstractSort
+        {
             public function __construct(string $property, ?string $alias = null)
             {
                 parent::__construct($property, $alias);
@@ -280,7 +280,7 @@ class SortTest extends TestCase
 
             public static function make(string $property, ?string $alias = null): static
             {
-                return new static($property, $alias);
+                return new self($property, $alias);
             }
 
             public function getType(): string

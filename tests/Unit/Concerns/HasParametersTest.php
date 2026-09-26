@@ -6,9 +6,9 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Concerns;
 
 use BadMethodCallException;
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
-use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
 
 #[Group('unit')]
 class HasParametersTest extends TestCase
@@ -19,19 +19,23 @@ class HasParametersTest extends TestCase
         $trait = $this->createTraitUser();
         $trait->withParameters(['boost' => 1.5, 'fuzziness' => 'AUTO']);
 
-        $mockBuilder = new class {
+        $mockBuilder = new class
+        {
             public float $boost = 0;
+
             public string $fuzziness = '';
 
             public function boost(float $value): self
             {
                 $this->boost = $value;
+
                 return $this;
             }
 
             public function fuzziness(string $value): self
             {
                 $this->fuzziness = $value;
+
                 return $this;
             }
         };
@@ -64,19 +68,23 @@ class HasParametersTest extends TestCase
         $trait->withParameters(['boost' => 1.5]);
         $trait->withParameters(['fuzziness' => 'AUTO']);
 
-        $mockBuilder = new class {
+        $mockBuilder = new class
+        {
             public float $boost = 0;
+
             public string $fuzziness = '';
 
             public function boost(float $value): self
             {
                 $this->boost = $value;
+
                 return $this;
             }
 
             public function fuzziness(string $value): self
             {
                 $this->fuzziness = $value;
+
                 return $this;
             }
         };
@@ -93,12 +101,14 @@ class HasParametersTest extends TestCase
         $trait = $this->createTraitUser();
         $trait->withParameters(['max_expansions' => 50]);
 
-        $mockBuilder = new class {
+        $mockBuilder = new class
+        {
             public int $maxExpansions = 0;
 
             public function maxExpansions(int $value): self
             {
                 $this->maxExpansions = $value;
+
                 return $this;
             }
         };
@@ -119,7 +129,8 @@ class HasParametersTest extends TestCase
 
     private function createTraitUser(): object
     {
-        return new class {
+        return new class
+        {
             use HasParameters;
         };
     }

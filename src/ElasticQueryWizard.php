@@ -38,6 +38,7 @@ use Jackardios\QueryWizard\Schema\ResourceSchemaInterface;
  * - Don't use histogram aggregation on boolean fields (use terms aggregation instead)
  *
  * Query execution methods (delegated to SearchBuilder):
+ *
  * @method SearchResult execute() Execute query and get full SearchResult (hits, models, documents, aggregations, suggestions)
  * @method \Jackardios\EsScoutDriver\Search\Paginator paginate(int $perPage = 15, string $pageName = 'page', ?int $page = null) Paginate results (call ->withModels() or ->withDocuments() on result)
  * @method \Jackardios\EsScoutDriver\Search\Hit|null first() Get first hit (use ->model() to get Model)
@@ -46,14 +47,15 @@ use Jackardios\QueryWizard\Schema\ResourceSchemaInterface;
  * @method array raw() Get raw Elasticsearch response array
  *
  * @extends BaseQueryWizard<SearchBuilder>
+ *
  * @phpstan-consistent-constructor
  *
  * @mixin SearchBuilder
  */
 class ElasticQueryWizard extends BaseQueryWizard
 {
-    use HandlesSafeRelationSelect;
     use HandlesRelationPostProcessing;
+    use HandlesSafeRelationSelect;
 
     /** @var SearchBuilder */
     protected mixed $subject;
@@ -155,7 +157,7 @@ class ElasticQueryWizard extends BaseQueryWizard
     /**
      * Apply custom SearchBuilder mutations declaratively (before/after build).
      *
-     * @param Closure(SearchBuilder): mixed $callback Return value is ignored.
+     * @param  Closure(SearchBuilder): mixed  $callback  Return value is ignored.
      */
     public function tapSearchBuilder(Closure $callback): static
     {
@@ -165,7 +167,7 @@ class ElasticQueryWizard extends BaseQueryWizard
     /**
      * Add a callback to modify the Eloquent query before loading models.
      *
-     * @param Closure(Builder, array): mixed $callback Return value is ignored.
+     * @param  Closure(Builder, array): mixed  $callback  Return value is ignored.
      */
     public function modifyQuery(Closure $callback): static
     {
@@ -178,7 +180,7 @@ class ElasticQueryWizard extends BaseQueryWizard
     /**
      * Add a callback to modify the loaded Eloquent collection.
      *
-     * @param Closure(Collection): Collection $callback
+     * @param  Closure(Collection): Collection  $callback
      */
     public function modifyModels(Closure $callback): static
     {
@@ -224,7 +226,7 @@ class ElasticQueryWizard extends BaseQueryWizard
         $this->safeRootHiddenFields = array_values(array_diff($fields, $requestedFields));
 
         /** @var Model $model */
-        $model = new $this->modelClass();
+        $model = new $this->modelClass;
         $keyName = $model->getKeyName();
         $scoutKeyName = $model->getScoutKeyName();
 
@@ -293,7 +295,7 @@ class ElasticQueryWizard extends BaseQueryWizard
                         ...$firstModel->getHidden(),
                         ...array_diff(array_keys($firstModel->getAttributes()), $rootFields),
                     ]));
-                    $results->each(fn(Model $model) => $model->setHidden($newHidden));
+                    $results->each(fn (Model $model) => $model->setHidden($newHidden));
                 }
             }
         }
@@ -458,7 +460,7 @@ class ElasticQueryWizard extends BaseQueryWizard
         }
 
         /** @var Model $model */
-        $model = new $this->modelClass();
+        $model = new $this->modelClass;
         $this->prepareSafeRelationSelectPlan($model, $relationshipPaths);
 
         if (! empty($otherIncludes)) {
@@ -488,6 +490,7 @@ class ElasticQueryWizard extends BaseQueryWizard
 
                         if ($columns === null) {
                             $include->apply($builder);
+
                             continue;
                         }
 
@@ -527,7 +530,7 @@ class ElasticQueryWizard extends BaseQueryWizard
         if ($this->proxyModified) {
             throw new \LogicException(
                 'Cannot modify query wizard configuration after calling query builder methods. '
-                . 'Call all configuration methods (allowedFilters, allowedSorts, etc.) before query builder methods.'
+                .'Call all configuration methods (allowedFilters, allowedSorts, etc.) before query builder methods.'
             );
         }
 
@@ -606,7 +609,7 @@ class ElasticQueryWizard extends BaseQueryWizard
     }
 
     /**
-     * @param Closure(Builder, SearchResult): mixed $callback
+     * @param  Closure(Builder, SearchResult): mixed  $callback
      */
     protected function addBuildQueryModifier(Closure $callback): void
     {
@@ -614,7 +617,7 @@ class ElasticQueryWizard extends BaseQueryWizard
     }
 
     /**
-     * @param Closure(SearchBuilder): mixed $callback
+     * @param  Closure(SearchBuilder): mixed  $callback
      */
     protected function queueSearchBuilderMutation(Closure $callback): static
     {
@@ -629,13 +632,13 @@ class ElasticQueryWizard extends BaseQueryWizard
     }
 
     /**
-     * @param array<int, mixed> $arguments
+     * @param  array<int, mixed>  $arguments
      */
     public function __call(string $name, array $arguments): mixed
     {
         if ($this->isSearchBuilderFluentMethod($name)) {
             return $this->queueSearchBuilderMutation(
-                fn(SearchBuilder $builder) => $builder->{$name}(...$arguments)
+                fn (SearchBuilder $builder) => $builder->{$name}(...$arguments)
             );
         }
 

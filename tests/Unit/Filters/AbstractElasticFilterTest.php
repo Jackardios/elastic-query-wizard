@@ -7,9 +7,9 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Filters;
 use Jackardios\ElasticQueryWizard\Filters\AbstractElasticFilter;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
-use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
 
 #[Group('unit')]
 #[Group('filter')]
@@ -19,7 +19,7 @@ class AbstractElasticFilterTest extends TestCase
     public function apply_returns_subject_unchanged_for_non_search_builder(): void
     {
         $filter = $this->createFilter();
-        $subject = new \stdClass();
+        $subject = new \stdClass;
 
         $result = $filter->apply($subject, 'value');
 
@@ -32,8 +32,10 @@ class AbstractElasticFilterTest extends TestCase
         $handleCalled = false;
         $capturedValue = null;
 
-        $filter = new class ('property', 'alias') extends AbstractElasticFilter {
+        $filter = new class('property', 'alias') extends AbstractElasticFilter
+        {
             public bool $handleCalled = false;
+
             public mixed $capturedValue = null;
 
             public function __construct(string $property, ?string $alias = null)
@@ -43,7 +45,7 @@ class AbstractElasticFilterTest extends TestCase
 
             public static function make(string $property, ?string $alias = null): static
             {
-                return new static($property, $alias);
+                return new self($property, $alias);
             }
 
             public function getType(): string
@@ -99,7 +101,8 @@ class AbstractElasticFilterTest extends TestCase
     #[Test]
     public function get_name_returns_property_when_no_alias(): void
     {
-        $filter = new class ('property') extends AbstractElasticFilter {
+        $filter = new class('property') extends AbstractElasticFilter
+        {
             public function __construct(string $property, ?string $alias = null)
             {
                 parent::__construct($property, $alias);
@@ -107,7 +110,7 @@ class AbstractElasticFilterTest extends TestCase
 
             public static function make(string $property, ?string $alias = null): static
             {
-                return new static($property, $alias);
+                return new self($property, $alias);
             }
 
             public function getType(): string
@@ -131,7 +134,8 @@ class AbstractElasticFilterTest extends TestCase
 
     private function createFilter(): AbstractElasticFilter
     {
-        return new class ('property', 'alias') extends AbstractElasticFilter {
+        return new class('property', 'alias') extends AbstractElasticFilter
+        {
             public function __construct(string $property, ?string $alias = null)
             {
                 parent::__construct($property, $alias);
@@ -139,7 +143,7 @@ class AbstractElasticFilterTest extends TestCase
 
             public static function make(string $property, ?string $alias = null): static
             {
-                return new static($property, $alias);
+                return new self($property, $alias);
             }
 
             public function getType(): string

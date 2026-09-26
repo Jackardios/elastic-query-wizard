@@ -7,10 +7,8 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
-    /**
-     * @return void
-     */
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::create('geo_models', static function (Blueprint $table) {
@@ -26,9 +24,6 @@ return new class extends Migration {
         });
     }
 
-    /**
-     * @return void
-     */
     public function down(): void
     {
         Schema::dropIfExists('geo_models');
