@@ -21,6 +21,7 @@ final class ScriptSort extends AbstractElasticSort
 
     protected string $type = 'number';
 
+    /** @var array<string, mixed> */
     protected array $params = [];
 
     protected ?string $mode = null;
@@ -46,6 +47,9 @@ final class ScriptSort extends AbstractElasticSort
         return $this;
     }
 
+    /**
+     * @param  array<string, mixed>  $params
+     */
     public function params(array $params): static
     {
         $this->params = $params;

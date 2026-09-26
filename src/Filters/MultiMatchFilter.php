@@ -17,6 +17,9 @@ final class MultiMatchFilter extends AbstractElasticFilter
     /** @var string[] */
     protected array $fields;
 
+    /**
+     * @param  string[]  $fields
+     */
     protected function __construct(array $fields, string $property, ?string $alias = null)
     {
         parent::__construct($property, $alias);

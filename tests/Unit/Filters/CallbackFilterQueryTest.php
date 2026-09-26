@@ -34,6 +34,17 @@ class CallbackFilterQueryTest extends UnitTestCase
     }
 
     #[Test]
+    public function it_refuses_a_subject_that_is_not_a_search_builder(): void
+    {
+        $filter = ElasticFilter::callback('search', fn (SearchBuilder $builder) => null);
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Elastic callback filter "search" expects a '.SearchBuilder::class.'.');
+
+        $filter->apply(new \stdClass, 'test');
+    }
+
+    #[Test]
     public function it_passes_the_property_name_to_the_callback(): void
     {
         $receivedProperty = null;

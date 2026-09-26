@@ -32,6 +32,7 @@ final class NestedGroup extends AbstractElasticGroup
 
     protected ?bool $ignoreUnmapped = null;
 
+    /** @var array<string, mixed>|null */
     protected ?array $innerHits = null;
 
     protected function __construct(string $path, ?string $alias = null)
@@ -80,7 +81,7 @@ final class NestedGroup extends AbstractElasticGroup
     /**
      * Enable inner_hits to retrieve matching nested documents.
      *
-     * @param  array  $options  Options: name, size, from, sort, highlight, _source
+     * @param  array<string, mixed>  $options  Options: name, size, from, sort, highlight, _source
      *
      * @example innerHits() // Enable with defaults
      * @example innerHits(['size' => 5, 'sort' => [['date' => 'desc']]])
@@ -93,6 +94,9 @@ final class NestedGroup extends AbstractElasticGroup
         return $this;
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     public function getInnerHits(): ?array
     {
         return $this->innerHits;

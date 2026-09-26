@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jackardios\ElasticQueryWizard\Includes;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Jackardios\EsScoutDriver\Search\SearchResult;
 use Jackardios\QueryWizard\Includes\AbstractInclude;
 
@@ -24,6 +25,9 @@ abstract class AbstractElasticInclude extends AbstractInclude
         return $this->searchResult;
     }
 
+    /**
+     * @param  Builder<Model>  $eloquentBuilder
+     */
     abstract public function handleEloquent(Builder $eloquentBuilder): void;
 
     public function apply(mixed $subject): mixed

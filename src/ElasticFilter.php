@@ -159,7 +159,19 @@ final class ElasticFilter
      */
     public static function callback(string $name, callable $callback, ?string $alias = null): CallbackFilter
     {
-        return CallbackFilter::make($name, $callback, $alias);
+        $callback = $callback(...);
+
+        return CallbackFilter::make(
+            $name,
+            static function (mixed $builder, mixed $value, string $property) use ($callback): mixed {
+                if (! $builder instanceof SearchBuilder) {
+                    throw new \LogicException(sprintf('Elastic callback filter "%s" expects a %s.', $property, SearchBuilder::class));
+                }
+
+                return $callback($builder, $value, $property);
+            },
+            $alias
+        );
     }
 
     /**

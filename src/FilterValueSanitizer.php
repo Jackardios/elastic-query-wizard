@@ -182,14 +182,32 @@ class FilterValueSanitizer
         return ! static::isBlank($value);
     }
 
+    /**
+     * @template TKey of array-key
+     * @template TValue
+     *
+     * @param  array<TKey, TValue>  $array
+     * @return array<TKey, TValue>
+     */
     public static function arrayWithOnlyFilledItems(array $array): array
     {
         return array_filter($array, static fn ($item) => static::isFilled($item));
     }
 
+    /**
+     * @param  array<mixed>  $array
+     */
     public static function arrayToCommaSeparatedString(array $array): string
     {
-        return implode(',', static::arrayWithOnlyFilledItems($array));
+        $items = [];
+
+        foreach (static::arrayWithOnlyFilledItems($array) as $item) {
+            if (is_scalar($item) || $item instanceof \Stringable) {
+                $items[] = (string) $item;
+            }
+        }
+
+        return implode(',', $items);
     }
 
     /**

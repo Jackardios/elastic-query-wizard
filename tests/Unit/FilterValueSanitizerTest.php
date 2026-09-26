@@ -217,6 +217,13 @@ class FilterValueSanitizerTest extends TestCase
     }
 
     #[Test]
+    public function array_to_comma_separated_string_skips_items_that_are_not_scalars(): void
+    {
+        $result = FilterValueSanitizer::arrayToCommaSeparatedString(['a', ['nested'], 1, 2.5, true, new \stdClass]);
+        $this->assertSame('a,1,2.5,1', $result);
+    }
+
+    #[Test]
     public function to_string_returns_string_for_string_input(): void
     {
         $this->assertEquals('hello', FilterValueSanitizer::toString('hello'));

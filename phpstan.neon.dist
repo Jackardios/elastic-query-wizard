@@ -3,23 +3,10 @@ parameters:
   paths:
     - src
   ignoreErrors:
-    # Level 6 array/generic typing - too verbose to add PHPDoc everywhere
-    - identifier: missingType.iterableValue
-    - identifier: missingType.generics
-    - identifier: argument.templateType
-
-    # Scout Searchable trait methods (not visible to PHPStan)
+    # laravel-query-wizard types EloquentShape::applyTo() as Builder<Model>, which a builder of a
+    # specific model does not match (Builder is invariant in TModel)
     -
-      message: '#Call to an undefined static method Illuminate\\Database\\Eloquent\\Model::searchQuery\(\)#'
-      identifier: staticMethod.notFound
-    -
-      message: '#Call to an undefined method Illuminate\\Database\\Eloquent\\Model::getScoutKeyName\(\)#'
-      identifier: method.notFound
-
-    # Callback filter contravariance - SearchBuilder is narrower than expected mixed
-    # This is a design limitation of the parent package's CallbackFilter
-    -
-      message: '#Parameter \#2 \$callback of static method.*CallbackFilter::make\(\) expects#'
-      identifier: argument.type
-      path: src/ElasticFilter.php
-
+      identifier: argument.templateType
+      message: '#EloquentShape::applyTo\(\)#'
+      path: src/ElasticQueryWizard.php
+      count: 1

@@ -36,6 +36,7 @@ trait HasParameters
     }
 
     /**
+     * @param  array<string, mixed>  $parameters  Query builder setter name, in snake or camel case => value
      * @return $this
      */
     public function withParameters(array $parameters): static

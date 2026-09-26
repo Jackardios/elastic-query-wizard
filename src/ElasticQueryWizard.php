@@ -43,7 +43,7 @@ use Jackardios\QueryWizard\Schema\ResourceSchemaInterface;
  * @method \Jackardios\EsScoutDriver\Search\Hit|null first() Get first hit (use ->model() to get Model)
  * @method \Jackardios\EsScoutDriver\Search\Hit firstOrFail() Get first hit or throw ModelNotFoundException
  * @method int count() Get total count without loading models
- * @method array raw() Get raw Elasticsearch response array
+ * @method array<string, mixed> raw() Get raw Elasticsearch response array
  *
  * @extends BaseQueryWizard<SearchBuilder>
  *
@@ -56,10 +56,10 @@ class ElasticQueryWizard extends BaseQueryWizard
     /** @var SearchBuilder */
     protected mixed $subject;
 
-    /** @var array<int, Closure(Builder, array): mixed> */
+    /** @var array<int, Closure(Builder<Model>, array<string, mixed>): mixed> */
     protected array $queryModifiers = [];
 
-    /** @var array<int, Closure(Collection): Collection> */
+    /** @var array<int, Closure(Collection<int, Model>): Collection<int, Model>> */
     protected array $modelModifiers = [];
 
     /** @var array<int, Closure(SearchBuilder): mixed> */
@@ -91,15 +91,15 @@ class ElasticQueryWizard extends BaseQueryWizard
         ?QueryWizardConfig $config = null,
         ?ResourceSchemaInterface $schema = null,
     ) {
-        if (! (is_subclass_of($subject, Model::class) && method_exists($subject, 'searchQuery'))) {
+        $modelClass = is_string($subject) ? $subject : $subject::class;
+
+        if (! (is_subclass_of($modelClass, Model::class) && method_exists($modelClass, 'searchQuery'))) {
             throw new \InvalidArgumentException('$subject must be a model that uses `Jackardios\EsScoutDriver\Searchable` trait');
         }
 
-        $this->modelClass = is_string($subject) ? $subject : $subject::class;
-        /** @var SearchBuilder $searchBuilder */
-        $searchBuilder = $this->modelClass::searchQuery();
+        $this->modelClass = $modelClass;
 
-        parent::__construct($searchBuilder, $parameters, $config, $schema);
+        parent::__construct($modelClass::searchQuery(), $parameters, $config, $schema);
     }
 
     public static function for(Model|string $subject, ?QueryParametersManager $parameters = null): static
@@ -150,7 +150,7 @@ class ElasticQueryWizard extends BaseQueryWizard
     /**
      * Add a callback to modify the Eloquent query before loading models.
      *
-     * @param  Closure(Builder, array): mixed  $callback  Return value is ignored.
+     * @param  Closure(Builder<Model>, array<string, mixed>): mixed  $callback  Return value is ignored.
      */
     public function modifyQuery(Closure $callback): static
     {
@@ -163,7 +163,7 @@ class ElasticQueryWizard extends BaseQueryWizard
     /**
      * Add a callback to modify the loaded Eloquent collection.
      *
-     * @param  Closure(Collection): Collection  $callback
+     * @param  Closure(Collection<int, Model>): Collection<int, Model>  $callback
      */
     public function modifyModels(Closure $callback): static
     {
@@ -397,10 +397,11 @@ class ElasticQueryWizard extends BaseQueryWizard
     protected function finalizeBuild(): void
     {
         $model = $this->resourceModel();
+        $scoutKeyName = method_exists($model, 'getScoutKeyName') ? $model->getScoutKeyName() : null;
         $shape = $this->shape = $this->resolveEloquentShape(
             $this->shapeIncludes,
             $this->shapeRootFields,
-            array_values(array_unique([$model->getKeyName(), $model->getScoutKeyName()])),
+            array_values(array_unique(array_filter([$model->getKeyName(), $scoutKeyName], is_string(...)))),
         );
         $elasticIncludes = array_values(array_filter(
             $this->shapeIncludes,
@@ -409,29 +410,39 @@ class ElasticQueryWizard extends BaseQueryWizard
         $queryModifiers = $this->queryModifiers;
         $modelModifiers = $this->modelModifiers;
 
-        $this->subject
-            ->modifyQuery(static function (Builder $builder, array $rawResult) use ($queryModifiers, $elasticIncludes, $shape): void {
-                foreach ($queryModifiers as $callback) {
-                    $callback($builder, $rawResult);
+        /**
+         * @param  Builder<Model>  $builder
+         * @param  array<string, mixed>  $rawResult
+         */
+        $modifyQuery = static function (Builder $builder, array $rawResult) use ($queryModifiers, $elasticIncludes, $shape): void {
+            foreach ($queryModifiers as $callback) {
+                $callback($builder, $rawResult);
+            }
+
+            if ($elasticIncludes !== []) {
+                $searchResult = new SearchResult($rawResult);
+
+                foreach ($elasticIncludes as $include) {
+                    $include->setSearchResult($searchResult);
                 }
+            }
 
-                if ($elasticIncludes !== []) {
-                    $searchResult = new SearchResult($rawResult);
+            $shape->applyTo($builder);
+        };
 
-                    foreach ($elasticIncludes as $include) {
-                        $include->setSearchResult($searchResult);
-                    }
-                }
+        /**
+         * @param  Collection<int, Model>  $collection
+         * @return Collection<int, Model>
+         */
+        $modifyModels = static function (Collection $collection) use ($modelModifiers, $shape): Collection {
+            foreach ($modelModifiers as $callback) {
+                $collection = $callback($collection);
+            }
 
-                $shape->applyTo($builder);
-            })
-            ->modifyModels(static function (Collection $collection) use ($modelModifiers, $shape): Collection {
-                foreach ($modelModifiers as $callback) {
-                    $collection = $callback($collection);
-                }
+            return $shape->postProcess($collection);
+        };
 
-                return $shape->postProcess($collection);
-            });
+        $this->subject->modifyQuery($modifyQuery)->modifyModels($modifyModels);
     }
 
     protected function invalidateBuild(): void
