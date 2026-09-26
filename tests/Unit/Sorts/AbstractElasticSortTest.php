@@ -56,7 +56,7 @@ class AbstractElasticSortTest extends TestCase
             }
         };
 
-        $searchBuilder = $this->createMock(SearchBuilder::class);
+        $searchBuilder = $this->createStub(SearchBuilder::class);
 
         $result = $sort->apply($searchBuilder, 'desc');
 

@@ -65,7 +65,7 @@ class AbstractElasticFilterTest extends TestCase
             }
         };
 
-        $searchBuilder = $this->createMock(SearchBuilder::class);
+        $searchBuilder = $this->createStub(SearchBuilder::class);
 
         $result = $filter->apply($searchBuilder, 'test_value');
 

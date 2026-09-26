@@ -74,7 +74,7 @@ class AbstractElasticIncludeTest extends TestCase
             }
         };
 
-        $builder = $this->createMock(Builder::class);
+        $builder = $this->createStub(Builder::class);
 
         $result = $include->apply($builder);
 
