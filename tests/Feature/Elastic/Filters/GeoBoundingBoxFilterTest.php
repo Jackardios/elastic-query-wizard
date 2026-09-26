@@ -10,7 +10,6 @@ use Jackardios\ElasticQueryWizard\Exceptions\InvalidGeoBoundingBoxValue;
 use Jackardios\ElasticQueryWizard\Filters\GeoBoundingBoxFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\GeoModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
-use Jackardios\EloquentSpatial\Objects\Point;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -58,11 +57,11 @@ class GeoBoundingBoxFilterTest extends TestCase
     #[Test]
     public function it_can_filter_results(): void
     {
-        $expectedModels[] = GeoModel::factory()->create(['location' => new Point(30.3694531, 59.933237)]);
-        $expectedModels[] = GeoModel::factory()->create(['location' => new Point(30.5493402, 59.973454)]);
-        $expectedModels[] = GeoModel::factory()->create(['location' => new Point(30.1243467, 59.706582)]);
-        $expectedModels[] = GeoModel::factory()->create(['location' => new Point(29.8745233, 60.103454)]);
-        GeoModel::factory()->create(['location' => new Point(30.5493402, 61.973454)]);
+        $expectedModels[] = GeoModel::factory()->create(['lat' => 59.933237, 'lon' => 30.3694531]);
+        $expectedModels[] = GeoModel::factory()->create(['lat' => 59.973454, 'lon' => 30.5493402]);
+        $expectedModels[] = GeoModel::factory()->create(['lat' => 59.706582, 'lon' => 30.1243467]);
+        $expectedModels[] = GeoModel::factory()->create(['lat' => 60.103454, 'lon' => 29.8745233]);
+        GeoModel::factory()->create(['lat' => 61.973454, 'lon' => 30.5493402]);
 
         $modelsResult = $this
             ->createQueryFromFilterRequest([
@@ -83,11 +82,11 @@ class GeoBoundingBoxFilterTest extends TestCase
     #[Test]
     public function it_should_apply_a_default_filter_value_if_nothing_in_request(): void
     {
-        $expectedModels[] = GeoModel::factory()->create(['location' => new Point(30.3694531, 59.933237)]);
-        $expectedModels[] = GeoModel::factory()->create(['location' => new Point(30.5493402, 59.973454)]);
-        $expectedModels[] = GeoModel::factory()->create(['location' => new Point(30.1243467, 59.706582)]);
-        $expectedModels[] = GeoModel::factory()->create(['location' => new Point(29.8745233, 60.103454)]);
-        GeoModel::factory()->create(['location' => new Point(30.5493402, 61.973454)]);
+        $expectedModels[] = GeoModel::factory()->create(['lat' => 59.933237, 'lon' => 30.3694531]);
+        $expectedModels[] = GeoModel::factory()->create(['lat' => 59.973454, 'lon' => 30.5493402]);
+        $expectedModels[] = GeoModel::factory()->create(['lat' => 59.706582, 'lon' => 30.1243467]);
+        $expectedModels[] = GeoModel::factory()->create(['lat' => 60.103454, 'lon' => 29.8745233]);
+        GeoModel::factory()->create(['lat' => 61.973454, 'lon' => 30.5493402]);
 
         $modelsResult = $this
             ->createQueryFromFilterRequest([])
@@ -109,11 +108,11 @@ class GeoBoundingBoxFilterTest extends TestCase
     #[Test]
     public function it_does_not_apply_default_filter_when_filter_exists_and_default_is_set(): void
     {
-        $expectedModels[] = GeoModel::factory()->create(['location' => new Point(30.3694531, 59.933237)]);
-        $expectedModels[] = GeoModel::factory()->create(['location' => new Point(30.5493402, 59.973454)]);
-        $expectedModels[] = GeoModel::factory()->create(['location' => new Point(30.1243467, 59.706582)]);
-        $expectedModels[] = GeoModel::factory()->create(['location' => new Point(29.8745233, 60.103454)]);
-        GeoModel::factory()->create(['location' => new Point(30.5493402, 61.973454)]);
+        $expectedModels[] = GeoModel::factory()->create(['lat' => 59.933237, 'lon' => 30.3694531]);
+        $expectedModels[] = GeoModel::factory()->create(['lat' => 59.973454, 'lon' => 30.5493402]);
+        $expectedModels[] = GeoModel::factory()->create(['lat' => 59.706582, 'lon' => 30.1243467]);
+        $expectedModels[] = GeoModel::factory()->create(['lat' => 60.103454, 'lon' => 29.8745233]);
+        GeoModel::factory()->create(['lat' => 61.973454, 'lon' => 30.5493402]);
 
         $modelsResult = $this
             ->createQueryFromFilterRequest([
@@ -137,9 +136,9 @@ class GeoBoundingBoxFilterTest extends TestCase
     #[Test]
     public function it_can_filter_results_with_antimeridian_crossing_bbox(): void
     {
-        $insideLeft = GeoModel::factory()->create(['location' => new Point(179.5, 0.0)]);
-        $insideRight = GeoModel::factory()->create(['location' => new Point(-179.5, 0.0)]);
-        GeoModel::factory()->create(['location' => new Point(-160.0, 0.0)]);
+        $insideLeft = GeoModel::factory()->create(['lat' => 0.0, 'lon' => 179.5]);
+        $insideRight = GeoModel::factory()->create(['lat' => 0.0, 'lon' => -179.5]);
+        GeoModel::factory()->create(['lat' => 0.0, 'lon' => -160.0]);
 
         $modelsResult = $this
             ->createQueryFromFilterRequest([

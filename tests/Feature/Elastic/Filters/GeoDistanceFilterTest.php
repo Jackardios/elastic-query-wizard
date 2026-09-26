@@ -10,7 +10,6 @@ use Jackardios\ElasticQueryWizard\Exceptions\InvalidGeoDistanceValue;
 use Jackardios\ElasticQueryWizard\Filters\GeoDistanceFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\GeoModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
-use Jackardios\EloquentSpatial\Objects\Point;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -71,10 +70,10 @@ class GeoDistanceFilterTest extends TestCase
     #[Test]
     public function it_can_filter_results(): void
     {
-        $expectedModels[] = GeoModel::factory()->create(['location' => new Point(30.328443362817065, 59.939403630916246)]);
-        $expectedModels[] = GeoModel::factory()->create(['location' => new Point(30.346954797823454, 59.9319304942638)]);
-        $expectedModels[] = GeoModel::factory()->create(['location' => new Point(30.353005861360433, 59.93296431053539)]);
-        GeoModel::factory()->create(['location' => new Point(30.35564044552315, 59.93290463173133)]);
+        $expectedModels[] = GeoModel::factory()->create(['lat' => 59.939403630916246, 'lon' => 30.328443362817065]);
+        $expectedModels[] = GeoModel::factory()->create(['lat' => 59.9319304942638, 'lon' => 30.346954797823454]);
+        $expectedModels[] = GeoModel::factory()->create(['lat' => 59.93296431053539, 'lon' => 30.353005861360433]);
+        GeoModel::factory()->create(['lat' => 59.93290463173133, 'lon' => 30.35564044552315]);
 
         $modelsResult = $this
             ->createQueryFromFilterRequest([
@@ -99,10 +98,10 @@ class GeoDistanceFilterTest extends TestCase
     #[Test]
     public function it_should_apply_a_default_filter_value_if_nothing_in_request(): void
     {
-        $expectedModels[] = GeoModel::factory()->create(['location' => new Point(30.328443362817065, 59.939403630916246)]);
-        $expectedModels[] = GeoModel::factory()->create(['location' => new Point(30.346954797823454, 59.9319304942638)]);
-        $expectedModels[] = GeoModel::factory()->create(['location' => new Point(30.353005861360433, 59.93296431053539)]);
-        GeoModel::factory()->create(['location' => new Point(30.35564044552315, 59.93290463173133)]);
+        $expectedModels[] = GeoModel::factory()->create(['lat' => 59.939403630916246, 'lon' => 30.328443362817065]);
+        $expectedModels[] = GeoModel::factory()->create(['lat' => 59.9319304942638, 'lon' => 30.346954797823454]);
+        $expectedModels[] = GeoModel::factory()->create(['lat' => 59.93296431053539, 'lon' => 30.353005861360433]);
+        GeoModel::factory()->create(['lat' => 59.93290463173133, 'lon' => 30.35564044552315]);
 
         $modelsResult = $this
             ->createQueryFromFilterRequest([])
@@ -128,10 +127,10 @@ class GeoDistanceFilterTest extends TestCase
     #[Test]
     public function it_does_not_apply_default_filter_when_filter_exists_and_default_is_set(): void
     {
-        $expectedModels[] = GeoModel::factory()->create(['location' => new Point(30.328443362817065, 59.939403630916246)]);
-        $expectedModels[] = GeoModel::factory()->create(['location' => new Point(30.346954797823454, 59.9319304942638)]);
-        $expectedModels[] = GeoModel::factory()->create(['location' => new Point(30.353005861360433, 59.93296431053539)]);
-        GeoModel::factory()->create(['location' => new Point(30.35564044552315, 59.93290463173133)]);
+        $expectedModels[] = GeoModel::factory()->create(['lat' => 59.939403630916246, 'lon' => 30.328443362817065]);
+        $expectedModels[] = GeoModel::factory()->create(['lat' => 59.9319304942638, 'lon' => 30.346954797823454]);
+        $expectedModels[] = GeoModel::factory()->create(['lat' => 59.93296431053539, 'lon' => 30.353005861360433]);
+        GeoModel::factory()->create(['lat' => 59.93290463173133, 'lon' => 30.35564044552315]);
 
         $modelsResult = $this
             ->createQueryFromFilterRequest([

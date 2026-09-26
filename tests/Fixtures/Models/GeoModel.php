@@ -7,11 +7,11 @@ namespace Jackardios\ElasticQueryWizard\Tests\Fixtures\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Factories\GeoModelFactory;
-use Jackardios\EloquentSpatial\Objects\Point;
 use Jackardios\EsScoutDriver\Searchable;
 
 /**
- * @property Point $location
+ * @property float $lat
+ * @property float $lon
  * @property array|null $boundary
  */
 class GeoModel extends Model
@@ -27,15 +27,17 @@ class GeoModel extends Model
     protected $guarded = [];
 
     protected $casts = [
-        'location' => Point::class,
+        'lat' => 'float',
+        'lon' => 'float',
         'boundary' => 'array',
     ];
 
     public function toSearchableArray(): array
     {
         $searchableArray = $this->toArray();
+        unset($searchableArray['lat'], $searchableArray['lon']);
 
-        $searchableArray['location'] = $this->location->getCoordinates();
+        $searchableArray['location'] = ['lat' => $this->lat, 'lon' => $this->lon];
 
         if ($this->boundary !== null) {
             $searchableArray['boundary'] = $this->boundary;

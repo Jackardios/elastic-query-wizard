@@ -7,7 +7,6 @@ namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Includes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Jackardios\ElasticQueryWizard\Includes\AbstractElasticInclude;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\MorphModel;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
@@ -375,19 +374,20 @@ class IncludeTest extends TestCase
     #[Test]
     public function it_can_query_included_many_to_many_relationships(): void
     {
-        DB::enableQueryLog();
-
-        $this
+        $models = $this
             ->createElasticWizardWithIncludes('relatedThroughPivotModels')
             ->allowedIncludes('relatedThroughPivotModels')
             ->build()
             ->execute()
             ->models();
 
-        // Based on the following query: TestModel::with('relatedThroughPivotModels')->get();
-        // Without where-clause as that differs per Laravel version
-        // dump(DB::getQueryLog());
-        $this->assertQueryLogContains('select `related_through_pivot_models`.*, `pivot_models`.`test_model_id` as `pivot_test_model_id`, `pivot_models`.`related_through_pivot_model_id` as `pivot_related_through_pivot_model_id` from `related_through_pivot_models` inner join `pivot_models` on `related_through_pivot_models`.`id` = `pivot_models`.`related_through_pivot_model_id` where `pivot_models`.`test_model_id` in (1, 2, 3, 4, 5)');
+        $this->assertRelationLoaded($models, 'relatedThroughPivotModels');
+
+        foreach ($models as $model) {
+            foreach ($model->relatedThroughPivotModels as $related) {
+                $this->assertEquals($model->id, $related->pivot->test_model_id);
+            }
+        }
     }
 
     #[Test]

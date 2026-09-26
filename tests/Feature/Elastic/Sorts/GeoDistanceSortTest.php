@@ -9,7 +9,6 @@ use Jackardios\ElasticQueryWizard\Sorts\GeoDistanceSort;
 use Jackardios\ElasticQueryWizard\Tests\Concerns\AssertsCollectionSorting;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\GeoModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
-use Jackardios\EloquentSpatial\Objects\Point;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -35,17 +34,17 @@ class GeoDistanceSortTest extends TestCase
             // ~10km from center
             GeoModel::factory()->create([
                 'name' => 'Near Location',
-                'location' => new Point(37.6273, 55.8558),
+                'lat' => 55.8558, 'lon' => 37.6273,
             ]),
             // ~30km from center
             GeoModel::factory()->create([
                 'name' => 'Medium Location',
-                'location' => new Point(37.8173, 55.9558),
+                'lat' => 55.9558, 'lon' => 37.8173,
             ]),
             // ~50km from center
             GeoModel::factory()->create([
                 'name' => 'Far Location',
-                'location' => new Point(38.0173, 56.1558),
+                'lat' => 56.1558, 'lon' => 38.0173,
             ]),
         ]);
     }

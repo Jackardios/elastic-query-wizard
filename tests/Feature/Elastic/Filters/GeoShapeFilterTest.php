@@ -9,7 +9,6 @@ use Jackardios\ElasticQueryWizard\Exceptions\InvalidGeoShapeValue;
 use Jackardios\ElasticQueryWizard\Filters\GeoShapeFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\GeoModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
-use Jackardios\EloquentSpatial\Objects\Point;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -28,7 +27,7 @@ class GeoShapeFilterTest extends TestCase
             // Moscow center area
             GeoModel::factory()->create([
                 'name' => 'Moscow Center',
-                'location' => new Point(37.6173, 55.7558),
+                'lat' => 55.7558, 'lon' => 37.6173,
                 'boundary' => [
                     'type' => 'envelope',
                     'coordinates' => [[37.5, 55.8], [37.7, 55.7]],
@@ -37,7 +36,7 @@ class GeoShapeFilterTest extends TestCase
             // Moscow North area
             GeoModel::factory()->create([
                 'name' => 'Moscow North',
-                'location' => new Point(37.6173, 55.9),
+                'lat' => 55.9, 'lon' => 37.6173,
                 'boundary' => [
                     'type' => 'envelope',
                     'coordinates' => [[37.5, 56.0], [37.7, 55.85]],
@@ -46,7 +45,7 @@ class GeoShapeFilterTest extends TestCase
             // Saint Petersburg area
             GeoModel::factory()->create([
                 'name' => 'Saint Petersburg',
-                'location' => new Point(30.3351, 59.9343),
+                'lat' => 59.9343, 'lon' => 30.3351,
                 'boundary' => [
                     'type' => 'envelope',
                     'coordinates' => [[30.2, 60.0], [30.5, 59.9]],
