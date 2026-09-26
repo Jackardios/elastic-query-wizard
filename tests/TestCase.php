@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jackardios\ElasticQueryWizard\Tests;
 
 use Elastic\Client\ServiceProvider as ElasticClientServiceProvider;
+use Elastic\Elasticsearch\Client;
 use Elastic\Migrations\ServiceProvider as ElasticMigrationsServiceProvider;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
@@ -22,6 +23,21 @@ abstract class TestCase extends Orchestra
     use AssertsQueryLog;
     use DatabaseMigrations;
     use QueryWizardTestingHelpers;
+
+    /**
+     * Indices the Elasticsearch migrations of the fixtures create.
+     */
+    private const INDICES = [
+        'append_models',
+        'geo_models',
+        'morph_models',
+        'nested_models',
+        'scope_models',
+        'soft_delete_models',
+        'test_models',
+    ];
+
+    private static bool $indicesCreated = false;
 
     /**
      * @param  Application  $app
@@ -52,13 +68,31 @@ abstract class TestCase extends Orchestra
 
         $this->loadMigrationsFrom(__DIR__.'/Fixtures/data/migrations');
 
-        $this->artisan('elastic:migrate')->run();
+        $this->prepareIndices();
     }
 
-    protected function tearDown(): void
+    /**
+     * Create the indices once per process and empty them before every other test:
+     * recreating them for each test made up most of the suite's run time.
+     */
+    private function prepareIndices(): void
     {
-        $this->artisan('elastic:migrate:reset')->run();
+        $client = $this->app->make(Client::class);
+        $indices = implode(',', self::INDICES);
 
-        parent::tearDown();
+        if (self::$indicesCreated) {
+            $client->deleteByQuery([
+                'index' => $indices,
+                'refresh' => true,
+                'conflicts' => 'proceed',
+                'body' => ['query' => ['match_all' => new \stdClass]],
+            ]);
+
+            return;
+        }
+
+        $client->indices()->delete(['index' => $indices, 'ignore_unavailable' => true]);
+        $this->artisan('elastic:migrate')->run();
+        self::$indicesCreated = true;
     }
 }
