@@ -29,15 +29,27 @@ class FilterParametersTest extends UnitTestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('has no boost() setter');
 
-        ElasticFilter::prefix('name')->withParameters(['boost' => 2]);
+        ElasticFilter::matchPhrase('name')->withParameters(['boost' => 2]);
     }
 
     #[Test]
-    public function an_exists_filter_takes_no_parameters(): void
+    public function prefix_and_exists_filters_take_a_boost(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $wizard = $this
+            ->createElasticWizardWithFilters(['name' => 'jo', 'has_email' => 'true'])
+            ->allowedFilters(
+                ElasticFilter::prefix('name')->withParameters(['boost' => 2]),
+                ElasticFilter::exists('email', 'has_email')->withParameters(['boost' => 3]),
+            );
+        $wizard->build();
 
-        ElasticFilter::exists('name')->withParameters(['boost' => 2]);
+        $this->assertSame(
+            [
+                ['prefix' => ['name' => ['value' => 'jo', 'boost' => 2.0]]],
+                ['exists' => ['field' => 'email', 'boost' => 3.0]],
+            ],
+            $this->getFilterQueries($wizard->boolQuery())
+        );
     }
 
     #[Test]

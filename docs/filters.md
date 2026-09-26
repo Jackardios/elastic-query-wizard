@@ -1295,7 +1295,7 @@ ElasticFilter::passthrough('custom_param')
 
 ## Additional Parameters
 
-Every filter except geoShape, nested, moreLikeThis, null, trashed, passthrough and callback supports the `withParameters()` method for passing additional parameters to the Elasticsearch query (geoShape, nested and moreLikeThis have their own setters; the exists query has no options, so exists accepts none):
+Every filter except geoShape, nested, moreLikeThis, null, trashed, passthrough and callback supports the `withParameters()` method for passing additional parameters to the Elasticsearch query (geoShape, nested and moreLikeThis have their own setters):
 
 ```php
 ElasticFilter::match('title')->withParameters([
@@ -1307,7 +1307,7 @@ ElasticFilter::match('title')->withParameters([
 
 Parameter names correspond to the parameters of the respective Elasticsearch queries. The method automatically converts snake_case to camelCase for builder method calls.
 
-`withParameters()` checks each name against the es-scout-driver query the filter builds and throws `InvalidArgumentException` for a name the query has no setter for, so a typo fails when the filter is configured rather than as a 500 on the first request that uses it. The exists filter's query has no setters, so it accepts no parameters. A custom filter that uses the `HasParameters` trait can opt into the same check by returning its query classes from `parameterQueryClasses()`.
+`withParameters()` checks each name against the es-scout-driver query the filter builds and throws `InvalidArgumentException` for a name the query has no setter for, so a typo fails when the filter is configured rather than as a 500 on the first request that uses it. The parameters a filter takes are the setters of its query, such as `boost` for exists and prefix. A custom filter that uses the `HasParameters` trait can opt into the same check by returning its query classes from `parameterQueryClasses()`.
 
 ---
 

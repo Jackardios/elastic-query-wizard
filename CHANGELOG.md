@@ -49,6 +49,7 @@ made since those snapshots.
 
 - `GeoShapeFilter::indexedShapes()`.
 - `DateRangeFilter::esFormat()`.
+- `withParameters(['boost' => …])` on prefix and exists filters (their `es-scout-driver` queries gained `boost()`).
 - `maxLength()` on the text and pattern filters; a longer value is a 400. `regexp` defaults to 1000 characters,
   Elasticsearch's `index.max_regex_length`.
 - Geo bounding boxes take named edges (`left`, `bottom`, `right`, `top`); geo shape polygons keep their holes and are
