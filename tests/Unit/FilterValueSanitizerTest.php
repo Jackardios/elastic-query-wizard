@@ -34,17 +34,17 @@ class FilterValueSanitizerTest extends TestCase
     }
 
     #[Test]
-    public function to_array_splits_comma_separated_string(): void
+    public function to_array_keeps_a_string_with_commas_whole(): void
     {
-        $this->assertEquals(['a', 'b', 'c'], FilterValueSanitizer::toArray('a,b,c'));
-        $this->assertEquals(['foo', 'bar'], FilterValueSanitizer::toArray('foo,bar'));
+        $this->assertEquals(['a,b,c'], FilterValueSanitizer::toArray('a,b,c'));
+        $this->assertEquals(['Smith, John'], FilterValueSanitizer::toArray('Smith, John'));
     }
 
     #[Test]
-    public function to_array_filters_out_blank_items_from_comma_separated(): void
+    public function to_array_filters_out_blank_items_from_a_split_value(): void
     {
-        $this->assertEquals(['a', 'c'], FilterValueSanitizer::toArray('a,,c'));
-        $this->assertEquals(['foo'], FilterValueSanitizer::toArray('foo,  ,'));
+        $this->assertEquals(['a', 'c'], FilterValueSanitizer::toArray(['a', '', 'c']));
+        $this->assertEquals(['foo'], FilterValueSanitizer::toArray(['foo', '  ']));
     }
 
     #[Test]
@@ -275,10 +275,9 @@ class FilterValueSanitizerTest extends TestCase
     }
 
     #[Test]
-    public function to_scalar_array_handles_comma_separated_string(): void
+    public function to_scalar_array_keeps_a_string_with_commas_whole(): void
     {
-        $result = FilterValueSanitizer::toScalarArray('a,b,c');
-        $this->assertEquals(['a', 'b', 'c'], $result);
+        $this->assertEquals(['a,b,c'], FilterValueSanitizer::toScalarArray('a,b,c'));
     }
 
     #[Test]

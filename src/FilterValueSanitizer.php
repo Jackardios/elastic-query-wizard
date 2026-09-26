@@ -211,7 +211,10 @@ class FilterValueSanitizer
     }
 
     /**
-     * Converts a value to an array, handling comma-separated strings.
+     * Converts a value to a list without blank items.
+     *
+     * A string is one item: laravel-query-wizard has already split the request
+     * value by the configured separator, unless the filter keeps it whole.
      *
      * @return array<int, mixed>
      */
@@ -219,10 +222,6 @@ class FilterValueSanitizer
     {
         if (is_array($value)) {
             return array_values(static::arrayWithOnlyFilledItems($value));
-        }
-
-        if (is_string($value) && str_contains($value, ',')) {
-            return array_values(static::arrayWithOnlyFilledItems(explode(',', $value)));
         }
 
         return static::isFilled($value) ? [$value] : [];

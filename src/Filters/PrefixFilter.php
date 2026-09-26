@@ -13,6 +13,12 @@ final class PrefixFilter extends AbstractElasticFilter
 {
     use HasParameters;
 
+    /**
+     * The value is one pattern, which may contain the separator; call
+     * withValueSplitting() to accept a list.
+     */
+    protected bool $splitValues = false;
+
     public static function make(string $property, ?string $alias = null): static
     {
         return new self($property, $alias);

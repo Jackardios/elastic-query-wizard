@@ -14,6 +14,12 @@ final class MultiMatchFilter extends AbstractElasticFilter
 {
     use HasParameters;
 
+    /**
+     * The value is one text, which may contain the separator; call
+     * withValueSplitting() to accept a list.
+     */
+    protected bool $splitValues = false;
+
     /** @var string[] */
     protected array $fields;
 

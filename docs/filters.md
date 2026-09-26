@@ -129,6 +129,16 @@ ElasticFilter::match('title')  // ?filter[title]=laravel
 
 **Rule of thumb:** Use `term` for structured data (e.g., `status`, `category_id`), `match` for free-text fields (e.g., `title`, `body`).
 
+### Value Splitting
+
+laravel-query-wizard splits a request value by the filter separator (`,` by default, `separators.filters` in the config),
+so `?filter[status]=published,draft` gives `term` and `ids` a list. The value is split once: with another separator or
+`withoutValueSplitting()`, `Smith, John` stays one term.
+
+Filters whose value is one pattern or text don't split it: `prefix`, `wildcard`, `regexp`, `fuzzy`, `match`,
+`matchPhrase`, `matchPhrasePrefix`, `multiMatch`, `queryString` and `simpleQueryString`, so `a{1,3}` and `red, blue`
+reach Elasticsearch as sent. Call `withValueSplitting()` on one of them to split again.
+
 ### Bool Clauses (inFilter / inMust / inShould / inMustNot)
 
 Elasticsearch bool queries have four clause types. Each filter is placed into one of these:
