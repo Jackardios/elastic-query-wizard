@@ -6,6 +6,7 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Filters;
 
 use Jackardios\ElasticQueryWizard\Filters\MoreLikeThisFilter;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use Jackardios\QueryWizard\Exceptions\InvalidFilterValue;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -38,7 +39,6 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithFilters([
                 'similar' => [
-                    '_index' => 'articles',
                     '_id' => '123',
                 ],
             ])
@@ -52,7 +52,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
             'more_like_this' => [
                 'fields' => ['title', 'body'],
                 'like' => [
-                    ['_index' => 'articles', '_id' => '123'],
+                    ['_id' => '123'],
                 ],
             ],
         ], $queries[0]);
@@ -446,5 +446,32 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
                 'boost_terms' => 2.0,
             ],
         ], $queries[0]);
+    }
+
+    #[Test]
+    public function a_text_with_the_separator_is_one_text_and_several_texts_come_as_a_list(): void
+    {
+        $like = fn (mixed $value): mixed => $this->getMustQueries(
+            tap($this->createElasticWizardWithFilters(['similar' => $value])
+                ->allowedFilters(MoreLikeThisFilter::make(['title'], 'similar')))->build()->boolQuery()
+        )[0]['more_like_this']['like'];
+
+        $this->assertSame('red, blue', $like('red, blue'));
+        $this->assertSame(['red', 'blue', ['_id' => '7']], $like(['red', ' ', 'blue', ['_id' => '7']]));
+    }
+
+    #[Test]
+    public function a_document_reference_takes_only_an_id(): void
+    {
+        foreach ([['_index' => 'users', '_id' => '1'], [['_id' => '1', '_routing' => 'x']], ['_id' => ['1']], ['_id' => '1', 'x' => '']] as $value) {
+            try {
+                $this->createElasticWizardWithFilters(['similar' => $value])
+                    ->allowedFilters(MoreLikeThisFilter::make(['title'], 'similar'))
+                    ->build();
+                $this->fail('The reference was accepted: '.json_encode($value));
+            } catch (InvalidFilterValue $exception) {
+                $this->assertStringContainsString('A document reference takes only an `_id`', $exception->getMessage());
+            }
+        }
     }
 }

@@ -9,6 +9,7 @@ use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Query\Specialized\MoreLikeThisQuery;
 use Jackardios\EsScoutDriver\Support\Query;
+use Jackardios\QueryWizard\Exceptions\InvalidFilterValue;
 
 /**
  * Find documents similar to provided text or documents.
@@ -17,8 +18,21 @@ use Jackardios\EsScoutDriver\Support\Query;
  *
  * @see https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-mlt-query.html
  */
+/**
+ * Finds documents like the given texts or documents of the searched index.
+ *
+ * The value is one text, a list of texts, or `_id` references to documents
+ * (`filter[similar][_id]=5`, `filter[similar][][_id]=5`). A reference takes
+ * only an `_id`: the document is read from the index being searched.
+ */
 final class MoreLikeThisFilter extends AbstractElasticFilter
 {
+    /**
+     * A text is one value, which may contain the separator; several texts
+     * come as a list.
+     */
+    protected bool $splitValues = false;
+
     /** @var string[] */
     protected array $fields;
 
@@ -44,6 +58,8 @@ final class MoreLikeThisFilter extends AbstractElasticFilter
 
     protected ?float $boostTerms = null;
 
+    private const EXPECTED = 'Expected a text, a list of texts or `_id` references.';
+
     /**
      * @param  string[]  $fields  Fields to analyze for similarity
      */
@@ -52,8 +68,6 @@ final class MoreLikeThisFilter extends AbstractElasticFilter
         parent::__construct($property, $alias);
         $this->fields = $fields;
 
-        // `like` legitimately accepts document references ({_index, _id}) and
-        // mixed lists of them, so raw structured input must stay allowed.
         $this->allowStructuredInput();
     }
 
@@ -203,37 +217,59 @@ final class MoreLikeThisFilter extends AbstractElasticFilter
     }
 
     /**
-     * @return string|array<int, string|array<string, mixed>>|null
+     * @return string|list<string|array{_id: string}>|null
+     *
+     * @throws InvalidFilterValue
      */
     protected function prepareLikeValue(mixed $value): string|array|null
     {
-        if (is_string($value)) {
-            $trimmed = trim($value);
-
-            return FilterValueSanitizer::isBlank($trimmed) ? null : $trimmed;
+        if (FilterValueSanitizer::isBlank($value)) {
+            return null;
         }
 
-        if (is_array($value)) {
-            // Document reference: {_index, _id}
-            if (isset($value['_index'], $value['_id'])) {
-                /** @var array{_index: string, _id: string} $docRef */
-                $docRef = $value;
+        if (! is_array($value)) {
+            return $this->likeText($value) ?? throw InvalidFilterValue::make($value, $this, self::EXPECTED);
+        }
 
-                return [$docRef];
+        if (! array_is_list($value)) {
+            return [$this->documentReference($value, $value)];
+        }
+
+        $like = [];
+
+        foreach ($value as $item) {
+            if (FilterValueSanitizer::isBlank($item)) {
+                continue;
             }
 
-            // Array of mixed values - filter to strings and document refs
-            /** @var array<int, string|array<string, mixed>> $filtered */
-            $filtered = array_values(array_filter(
-                $value,
-                static fn ($item): bool => is_string($item) && ! FilterValueSanitizer::isBlank($item)
-                || (is_array($item) && isset($item['_index'], $item['_id']))
-            ));
-
-            return $filtered === [] ? null : $filtered;
+            $like[] = is_array($item)
+                ? $this->documentReference($item, $value)
+                : ($this->likeText($item) ?? throw InvalidFilterValue::make($value, $this, self::EXPECTED));
         }
 
-        return null;
+        return $like;
+    }
+
+    private function likeText(mixed $item): ?string
+    {
+        return is_string($item) || is_int($item) || is_float($item) ? trim((string) $item) : null;
+    }
+
+    /**
+     * @param  array<mixed>  $reference
+     * @return array{_id: string}
+     *
+     * @throws InvalidFilterValue
+     */
+    private function documentReference(array $reference, mixed $value): array
+    {
+        $id = $reference['_id'] ?? null;
+
+        if (array_keys($reference) !== ['_id'] || ! (is_string($id) || is_int($id)) || trim((string) $id) === '') {
+            throw InvalidFilterValue::make($value, $this, 'A document reference takes only an `_id`.');
+        }
+
+        return ['_id' => trim((string) $id)];
     }
 
     protected function applyParameters(MoreLikeThisQuery $query): void

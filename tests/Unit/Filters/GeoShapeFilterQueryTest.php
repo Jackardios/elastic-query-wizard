@@ -110,12 +110,10 @@ class GeoShapeFilterQueryTest extends UnitTestCase
             ->createElasticWizardWithFilters([
                 'boundary' => [
                     'type' => 'indexed_shape',
-                    'index' => 'shapes',
                     'id' => 'region_123',
-                    'path' => 'location',
                 ],
             ])
-            ->allowedFilters(GeoShapeFilter::make('boundary'));
+            ->allowedFilters(GeoShapeFilter::make('boundary')->indexedShapes('shapes', 'location'));
         $wizard->build();
 
         $queries = $this->getFilterQueries($wizard->boolQuery());
@@ -141,11 +139,10 @@ class GeoShapeFilterQueryTest extends UnitTestCase
             ->createElasticWizardWithFilters([
                 'boundary' => [
                     'type' => 'indexed_shape',
-                    'index' => 'shapes',
                     'id' => 'region_123',
                 ],
             ])
-            ->allowedFilters(GeoShapeFilter::make('boundary'));
+            ->allowedFilters(GeoShapeFilter::make('boundary')->indexedShapes('shapes'));
         $wizard->build();
 
         $queries = $this->getFilterQueries($wizard->boolQuery());
@@ -227,7 +224,7 @@ class GeoShapeFilterQueryTest extends UnitTestCase
     public function it_throws_for_unknown_type(): void
     {
         $this->expectException(InvalidGeoShapeValue::class);
-        $this->expectExceptionMessage('Unknown shape type');
+        $this->expectExceptionMessage('Unsupported shape type `unknown_shape`');
 
         $wizard = $this
             ->createElasticWizardWithFilters([
@@ -244,7 +241,7 @@ class GeoShapeFilterQueryTest extends UnitTestCase
     public function it_throws_for_missing_type(): void
     {
         $this->expectException(InvalidGeoShapeValue::class);
-        $this->expectExceptionMessage('Unknown shape type `null`');
+        $this->expectExceptionMessage('Expected a shape `type`');
 
         $wizard = $this
             ->createElasticWizardWithFilters([
@@ -317,11 +314,9 @@ class GeoShapeFilterQueryTest extends UnitTestCase
             ->createElasticWizardWithFilters([
                 'boundary' => [
                     'type' => 'indexed_shape',
-                    'index' => 'shapes',
-                    // Missing 'id'
                 ],
             ])
-            ->allowedFilters(GeoShapeFilter::make('boundary'));
+            ->allowedFilters(GeoShapeFilter::make('boundary')->indexedShapes('shapes'));
         $wizard->build();
     }
 
@@ -352,16 +347,43 @@ class GeoShapeFilterQueryTest extends UnitTestCase
     }
 
     #[Test]
-    public function it_does_not_add_query_for_non_array_value(): void
+    public function it_rejects_a_value_that_is_not_a_shape(): void
     {
-        $wizard = $this
+        $this->expectException(InvalidGeoShapeValue::class);
+        $this->expectExceptionMessage('Expected a shape `type`');
+
+        $this
             ->createElasticWizardWithFilters(['boundary' => 'invalid'])
-            ->allowedFilters(GeoShapeFilter::make('boundary'));
-        $wizard->build();
+            ->allowedFilters(GeoShapeFilter::make('boundary'))
+            ->build();
+    }
 
-        $queries = $this->getFilterQueries($wizard->boolQuery());
+    #[Test]
+    public function an_indexed_shape_is_refused_unless_the_filter_enables_indexed_shapes(): void
+    {
+        $this->expectException(InvalidGeoShapeValue::class);
+        $this->expectExceptionMessage('Unsupported shape type `indexed_shape`');
 
-        $this->assertEmpty($queries);
+        $this
+            ->createElasticWizardWithFilters(['boundary' => ['type' => 'indexed_shape', 'id' => 'region_123']])
+            ->allowedFilters(GeoShapeFilter::make('boundary'))
+            ->build();
+    }
+
+    #[Test]
+    public function the_client_cannot_choose_the_index_or_path_of_an_indexed_shape(): void
+    {
+        foreach (['index' => 'users', 'path' => 'email'] as $key => $keyValue) {
+            try {
+                $this
+                    ->createElasticWizardWithFilters(['boundary' => ['type' => 'indexed_shape', 'id' => '1', $key => $keyValue]])
+                    ->allowedFilters(GeoShapeFilter::make('boundary')->indexedShapes('shapes'))
+                    ->build();
+                $this->fail("`{$key}` was accepted.");
+            } catch (InvalidGeoShapeValue $exception) {
+                $this->assertStringContainsString('An indexed shape expects only an `id`', $exception->getMessage());
+            }
+        }
     }
 
     #[Test]

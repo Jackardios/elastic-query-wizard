@@ -137,7 +137,7 @@ so `?filter[status]=published,draft` gives `term` and `ids` a list. The value is
 `withoutValueSplitting()`, `Smith, John` stays one term.
 
 Filters whose value is one pattern or text don't split it: `prefix`, `wildcard`, `regexp`, `fuzzy`, `match`,
-`matchPhrase`, `matchPhrasePrefix`, `multiMatch`, `queryString` and `simpleQueryString`, so `a{1,3}` and `red, blue`
+`matchPhrase`, `matchPhrasePrefix`, `multiMatch`, `queryString`, `simpleQueryString` and `moreLikeThis`, so `a{1,3}` and `red, blue`
 reach Elasticsearch as sent. Call `withValueSplitting()` on one of them to split again.
 
 ### Bool Clauses (inFilter / inMust / inShould / inMustNot)
@@ -866,7 +866,7 @@ GET /areas?filter[boundary][type]=envelope&filter[boundary][coordinates][0][0]=-
 GET /areas?filter[boundary][type]=point&filter[boundary][coordinates][0]=37.62&filter[boundary][coordinates][1]=55.75
 
 # Indexed shape (reference to another document)
-GET /areas?filter[boundary][type]=indexed_shape&filter[boundary][index]=shapes&filter[boundary][id]=region_123
+GET /areas?filter[boundary][type]=indexed_shape&filter[boundary][id]=region_123
 ```
 
 ### Supported Shape Types
@@ -876,11 +876,18 @@ GET /areas?filter[boundary][type]=indexed_shape&filter[boundary][index]=shapes&f
 | `envelope` | Bounding box defined by two corner points |
 | `polygon` | GeoJSON polygon: an outer ring followed by optional holes |
 | `point` | Single geographic point |
-| `indexed_shape` | Reference to a shape stored in another document |
+| `indexed_shape` | Reference to a shape stored in another document; enabled with `indexedShapes()` |
 
 Each polygon ring is a list of `[lon, lat]` points. A ring whose last point differs from its first is closed for you, and a ring must have at least four points once closed. Rings after the first are holes: documents inside a hole do not match.
 
 Coordinates must be finite numbers; a value such as `1e999` returns 400.
+
+`indexed_shape` values are refused (400) unless the filter names the index and field that hold the shapes; the client
+chooses only the document:
+
+```php
+ElasticFilter::geoShape('boundary')->indexedShapes('shapes', 'geometry') // index, field (default `shape`)
+```
 
 > **Note:** Circle type is not supported as an inline shape in geo_shape queries (ES 8.x/9.x). For radius-based filtering, use [Geo Distance Filter](#geo-distance-filter) instead.
 
@@ -1000,12 +1007,21 @@ ElasticFilter::moreLikeThis(['title', 'body'], 'similar')
 ### Query Parameters
 
 ```
-# Text-based similarity
-GET /articles?filter[similar]=elasticsearch distributed search
+# Text-based similarity (a comma does not split the text)
+GET /articles?filter[similar]=elasticsearch, distributed search
 
-# Document reference
-GET /articles?filter[similar][_index]=articles&filter[similar][_id]=123
+# Several texts
+GET /articles?filter[similar][]=elasticsearch&filter[similar][]=distributed search
+
+# Document of the searched index
+GET /articles?filter[similar][_id]=123
+
+# Texts and documents
+GET /articles?filter[similar][0]=elasticsearch&filter[similar][1][_id]=123
 ```
+
+A document reference takes only an `_id`: the document is read from the index being searched, so a client cannot read
+documents of another index. Any other key (`_index`, `_routing`, …) returns 400 (`InvalidFilterValue`).
 
 ### Elasticsearch Query
 

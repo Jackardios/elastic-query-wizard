@@ -464,6 +464,11 @@ The request is parsed by `laravel-query-wizard` v3, whose stricter rules apply t
   the parameter name). Set `fields` (or `default_field` for `queryString`) with `withParameters()` to search others.
   `queryString` also sends `allow_leading_wildcard: false` and answers a term starting with `*` or `?` with 400;
   `withParameters(['allow_leading_wildcard' => true])` restores the v2 behavior.
+- **Other indices are out of the client's reach.** A more-like-this document reference takes only an `_id` and is
+  read from the searched index (v2 let the client set `_index` and any other key). A geo shape `indexed_shape` needs
+  `->indexedShapes($index, $path)` on the filter and takes only an `id` from the client (v2 let the client set `index`
+  and `path`, so it could read any index, and a `path` naming a plain field echoed its value in the error).
+- **More like this** keeps a text whole instead of splitting it on the separator; send several texts as a list.
 - **Values.** A range bound left empty is no bound. A geo bounding box also takes named edges (`left`, `bottom`,
   `right`, `top`). A geo shape polygon keeps its holes and is closed when its last point differs from its first.
   Coordinates that overflow to infinity (`1e999`) are rejected instead of failing the JSON encoding with a 500.

@@ -26,6 +26,10 @@ final class GeoShapeFilter extends AbstractElasticFilter
 
     protected ?bool $ignoreUnmapped = null;
 
+    protected ?string $indexedShapeIndex = null;
+
+    protected string $indexedShapePath = 'shape';
+
     public static function make(string $property, ?string $alias = null): static
     {
         return new self($property, $alias);
@@ -53,6 +57,19 @@ final class GeoShapeFilter extends AbstractElasticFilter
         return $this;
     }
 
+    /**
+     * Accept `indexed_shape` values, which name a document of the given index
+     * by `id`; the shape is read from the document's `path` field. The client
+     * chooses only the document.
+     */
+    public function indexedShapes(string $index, string $path = 'shape'): static
+    {
+        $this->indexedShapeIndex = $index;
+        $this->indexedShapePath = $path;
+
+        return $this;
+    }
+
     public function getType(): string
     {
         return 'geo_shape';
@@ -60,8 +77,12 @@ final class GeoShapeFilter extends AbstractElasticFilter
 
     public function buildQuery(mixed $value): ?QueryInterface
     {
-        if (empty($value) || ! is_array($value)) {
+        if (FilterValueSanitizer::isBlank($value)) {
             return null;
+        }
+
+        if (! is_array($value)) {
+            throw InvalidGeoShapeValue::unknownType($value, $this, null);
         }
 
         /** @var array<string, mixed> $shapeValue */
@@ -186,15 +207,16 @@ final class GeoShapeFilter extends AbstractElasticFilter
      */
     protected function applyIndexedShape(GeoShapeQuery $query, array $value): void
     {
-        $index = $value['index'] ?? null;
-        $id = $value['id'] ?? null;
-        $rawPath = $value['path'] ?? null;
-        $path = is_string($rawPath) ? $rawPath : 'shape';
+        if ($this->indexedShapeIndex === null) {
+            throw InvalidGeoShapeValue::unknownType($value, $this, 'indexed_shape');
+        }
 
-        if (! is_string($index) || ! is_string($id)) {
+        $id = $value['id'] ?? null;
+
+        if (array_diff(array_keys($value), ['type', 'id']) !== [] || ! (is_string($id) || is_int($id)) || trim((string) $id) === '') {
             throw InvalidGeoShapeValue::invalidIndexedShape($value, $this);
         }
 
-        $query->indexedShape($index, $id, $path);
+        $query->indexedShape($this->indexedShapeIndex, trim((string) $id), $this->indexedShapePath);
     }
 }

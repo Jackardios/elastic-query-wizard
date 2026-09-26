@@ -14,12 +14,12 @@ final class InvalidGeoShapeValue extends InvalidFilterValue
 {
     public static function unknownType(mixed $value, string|FilterInterface $filter, ?string $type): self
     {
-        $typeString = $type ?? 'null';
+        $expected = 'envelope, polygon, point or indexed_shape (when the filter enables indexed shapes)';
 
         return self::make(
             $value,
             $filter,
-            "Unknown shape type `{$typeString}`. Supported: envelope, polygon, point, indexed_shape."
+            $type === null ? "Expected a shape `type`: {$expected}." : "Unsupported shape type `{$type}`. Expected {$expected}."
         );
     }
 
@@ -44,6 +44,6 @@ final class InvalidGeoShapeValue extends InvalidFilterValue
 
     public static function invalidIndexedShape(mixed $value, string|FilterInterface $filter): self
     {
-        return self::make($value, $filter, 'An indexed shape expects an `id` string.');
+        return self::make($value, $filter, 'An indexed shape expects only an `id`.');
     }
 }
