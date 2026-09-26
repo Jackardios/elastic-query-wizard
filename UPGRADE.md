@@ -459,6 +459,11 @@ The request is parsed by `laravel-query-wizard` v3, whose stricter rules apply t
   geo distance that is not a positive number with a unit, and coordinates out of range. Exists and null filters reject
   a value that is not a boolean, and the trashed filter one that is not `with`, `only`, `without`, `true` or `false`
   (`1` and `0` included); v2 ignored them.
+- **Query string filters** search their property: `queryString('body', 'q')` and `simpleQueryString('body', 'q')`
+  send `fields: ["body"]` (v2 left `fields` out, so Elasticsearch searched every field, and the property served only as
+  the parameter name). Set `fields` (or `default_field` for `queryString`) with `withParameters()` to search others.
+  `queryString` also sends `allow_leading_wildcard: false` and answers a term starting with `*` or `?` with 400;
+  `withParameters(['allow_leading_wildcard' => true])` restores the v2 behavior.
 - **Values.** A range bound left empty is no bound. A geo bounding box also takes named edges (`left`, `bottom`,
   `right`, `top`). A geo shape polygon keeps its holes and is closed when its last point differs from its first.
   Coordinates that overflow to infinity (`1e999`) are rejected instead of failing the JSON encoding with a 500.

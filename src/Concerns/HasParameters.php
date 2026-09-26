@@ -55,6 +55,23 @@ trait HasParameters
     }
 
     /**
+     * Whether withParameters() set any of the named parameters, in snake or
+     * camel case.
+     */
+    protected function hasQueryParameter(string ...$names): bool
+    {
+        $setters = array_map(static fn (string $name): string => Str::camel($name), array_keys($this->queryParameters));
+
+        foreach ($names as $name) {
+            if (in_array(Str::camel($name), $setters, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * The query classes the filter may build. withParameters() accepts only
      * the setters every one of them has; an empty list leaves the check to
      * applyParametersOnQuery().

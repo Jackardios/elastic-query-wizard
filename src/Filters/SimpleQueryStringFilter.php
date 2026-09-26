@@ -11,6 +11,11 @@ use Jackardios\EsScoutDriver\Query\FullText\SimpleQueryStringQuery;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Support\Query;
 
+/**
+ * Elasticsearch simple query-string syntax, which has no field-qualified terms.
+ *
+ * Searches the property unless withParameters() sets `fields`.
+ */
 final class SimpleQueryStringFilter extends AbstractElasticFilter
 {
     use HasParameters;
@@ -60,6 +65,10 @@ final class SimpleQueryStringFilter extends AbstractElasticFilter
         }
 
         $query = Query::simpleQueryString($prepared);
+
+        if (! $this->hasQueryParameter('fields')) {
+            $query->fields([$this->property]);
+        }
 
         return $this->applyParametersOnQuery($query);
     }

@@ -80,8 +80,8 @@ class ValueSplittingTest extends UnitTestCase
         yield 'match phrase' => [ElasticFilter::matchPhrase('title'), 'Hello, world', ['match_phrase' => ['title' => ['query' => 'Hello, world']]]];
         yield 'match phrase prefix' => [ElasticFilter::matchPhrasePrefix('title'), 'Hello, wor', ['match_phrase_prefix' => ['title' => ['query' => 'Hello, wor']]]];
         yield 'multi match' => [ElasticFilter::multiMatch(['title', 'body'], 'title'), 'red, blue', ['multi_match' => ['fields' => ['title', 'body'], 'query' => 'red, blue']]];
-        yield 'query string' => [ElasticFilter::queryString('title'), 'a, b', ['query_string' => ['query' => 'a, b']]];
-        yield 'simple query string' => [ElasticFilter::simpleQueryString('title'), 'a, b', ['simple_query_string' => ['query' => 'a, b']]];
+        yield 'query string' => [ElasticFilter::queryString('title'), 'a, b', ['query_string' => ['query' => 'a, b', 'fields' => ['title'], 'allow_leading_wildcard' => false]]];
+        yield 'simple query string' => [ElasticFilter::simpleQueryString('title'), 'a, b', ['simple_query_string' => ['query' => 'a, b', 'fields' => ['title']]]];
     }
 
     /**

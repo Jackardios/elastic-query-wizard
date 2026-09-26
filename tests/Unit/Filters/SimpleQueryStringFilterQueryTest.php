@@ -24,7 +24,7 @@ class SimpleQueryStringFilterQueryTest extends UnitTestCase
         $queries = $this->getMustQueries($wizard->boolQuery());
 
         $this->assertCount(1, $queries);
-        $this->assertEquals(['simple_query_string' => ['query' => 'quick +brown -fox']], $queries[0]);
+        $this->assertEquals(['simple_query_string' => ['query' => 'quick +brown -fox', 'fields' => ['search']]], $queries[0]);
     }
 
     #[Test]
@@ -51,7 +51,7 @@ class SimpleQueryStringFilterQueryTest extends UnitTestCase
         $queries = $this->getMustQueries($wizard->boolQuery());
 
         $this->assertCount(1, $queries);
-        $this->assertEquals(['simple_query_string' => ['query' => 'quick +brown']], $queries[0]);
+        $this->assertEquals(['simple_query_string' => ['query' => 'quick +brown', 'fields' => ['search']]], $queries[0]);
     }
 
     #[Test]
@@ -90,6 +90,6 @@ class SimpleQueryStringFilterQueryTest extends UnitTestCase
         $queries = $this->getMustQueries($wizard->boolQuery());
 
         $this->assertCount(1, $queries);
-        $this->assertEquals(['simple_query_string' => ['query' => 'quick,+brown']], $queries[0]);
+        $this->assertEquals(['simple_query_string' => ['query' => 'quick,+brown', 'fields' => ['search']]], $queries[0]);
     }
 }

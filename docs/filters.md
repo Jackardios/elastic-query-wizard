@@ -54,8 +54,8 @@ Filters allow you to limit Elasticsearch query results based on query parameters
 | `regexp` | Regular expression matching — see [warning](#regexp-filter) | `ElasticFilter::regexp('slug')` |
 | `matchPhrase` | Exact phrase match | `ElasticFilter::matchPhrase('title')` |
 | `matchPhrasePrefix` | Phrase prefix (autocomplete) | `ElasticFilter::matchPhrasePrefix('title')` |
-| `queryString` | Raw query string syntax — see [warning](#query-string-filter) | `ElasticFilter::queryString('search')` |
-| `simpleQueryString` | Safe query string syntax | `ElasticFilter::simpleQueryString('search')` |
+| `queryString` | Raw query string syntax, trusted input only — see [warning](#query-string-filter) | `ElasticFilter::queryString('body', 'q')` |
+| `simpleQueryString` | Safe query string syntax | `ElasticFilter::simpleQueryString('body', 'q')` |
 | `geoDistance` | Distance from point | `ElasticFilter::geoDistance('location')` |
 | `geoBoundingBox` | Rectangle on map | `ElasticFilter::geoBoundingBox('location')` |
 | `geoShape` | Geographic shape queries | `ElasticFilter::geoShape('boundary')` |
@@ -685,24 +685,38 @@ GET /posts?filter[autocomplete]=laravel que
 
 ## Query String Filter
 
-Raw query-string syntax with operators and field-qualified terms.
+Raw query-string syntax with operators and field-qualified terms. Use it only for trusted input, such as an admin
+panel.
 
 ### Usage
 
 ```php
-ElasticFilter::queryString('search')
+// Searches the `body` field; the request parameter is `q`
+ElasticFilter::queryString('body', 'q')
+
+// Several fields
+ElasticFilter::queryString('body', 'q')->withParameters(['fields' => ['title^2', 'body']])
 ```
+
+The filter searches its property (`fields: ["body"]`) unless `withParameters()` sets `fields` or `default_field`.
 
 ### Query Parameters
 
 ```
-GET /posts?filter[search]=title:laravel AND status:published
+GET /posts?filter[q]=laravel AND (wizard OR builder)
 ```
 
-> **Warning:** The value is parsed as Elasticsearch query-string syntax, so the caller is not confined to the field you
-> configured — `other_field:value` queries a different field, and `*` or `field:*` scans the whole index. Anything the
-> document holds but the resource does not expose can be probed this way. Use `simpleQueryString` for untrusted input:
-> it has no field-qualified terms and ignores invalid operators instead of erroring.
+> **Warning:** The value is parsed as Elasticsearch query-string syntax, so the caller is not confined to the fields you
+> configured — `other_field:value` queries a different field, and `_exists_:other_field` probes one. Anything the
+> document holds but the resource does not expose can be probed this way, and Elasticsearch has no option to turn the
+> syntax off. Use `simpleQueryString` for untrusted input: it has no field-qualified terms and ignores invalid operators
+> instead of erroring.
+
+A term that starts with `*` or `?` (`*son`, `title:?ob`) scans every term of the field. The filter sets
+`allow_leading_wildcard: false` and answers such a value with 400 (`InvalidFilterValue`) instead of letting
+Elasticsearch fail the search; `->withParameters(['allow_leading_wildcard' => true])` allows them. A lone `*`, a
+wildcard inside a quoted phrase and an open range bound (`[* TO 5]`) are not leading wildcards. Other syntax errors,
+such as an unbalanced `(`, still fail in Elasticsearch.
 
 ---
 
@@ -713,13 +727,19 @@ Safer query-string syntax that ignores invalid operators.
 ### Usage
 
 ```php
-ElasticFilter::simpleQueryString('search')
+// Searches the `body` field; the request parameter is `q`
+ElasticFilter::simpleQueryString('body', 'q')
+
+// Several fields
+ElasticFilter::simpleQueryString('body', 'q')->withParameters(['fields' => ['title^2', 'body']])
 ```
+
+The filter searches its property (`fields: ["body"]`) unless `withParameters()` sets `fields`.
 
 ### Query Parameters
 
 ```
-GET /posts?filter[search]=laravel +wizard -draft
+GET /posts?filter[q]=laravel +wizard -draft
 ```
 
 ---
