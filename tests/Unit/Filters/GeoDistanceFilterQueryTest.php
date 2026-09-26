@@ -98,4 +98,17 @@ class GeoDistanceFilterQueryTest extends UnitTestCase
             ->allowedFilters(GeoDistanceFilter::make('location'))
             ->build();
     }
+
+    #[Test]
+    public function an_infinite_coordinate_is_refused(): void
+    {
+        $this->expectException(InvalidGeoDistanceValue::class);
+
+        $this
+            ->createElasticWizardWithFilters([
+                'location' => ['lat' => '1e999', 'lon' => '37.62', 'distance' => '10km'],
+            ], GeoModel::class)
+            ->allowedFilters(GeoDistanceFilter::make('location'))
+            ->build();
+    }
 }

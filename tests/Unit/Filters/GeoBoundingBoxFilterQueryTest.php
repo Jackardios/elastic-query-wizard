@@ -95,4 +95,33 @@ class GeoBoundingBoxFilterQueryTest extends UnitTestCase
         $this->assertSame(10.0, $topLeft['lat']);
         $this->assertSame(-10.0, $bottomRight['lat']);
     }
+
+    #[Test]
+    public function named_edges_are_read_by_name_in_any_order(): void
+    {
+        $wizard = $this
+            ->createElasticWizardWithFilters([
+                'location' => ['top' => '50', 'left' => '10', 'bottom' => '40', 'right' => '20'],
+            ], GeoModel::class)
+            ->allowedFilters(GeoBoundingBoxFilter::make('location'));
+        $wizard->build();
+
+        $this->assertEquals(
+            ['top_left' => ['lat' => 50.0, 'lon' => 10.0], 'bottom_right' => ['lat' => 40.0, 'lon' => 20.0]],
+            $this->getFilterQueries($wizard->boolQuery())[0]['geo_bounding_box']['location']
+        );
+    }
+
+    #[Test]
+    public function unknown_edge_names_are_refused(): void
+    {
+        $this->expectException(InvalidGeoBoundingBoxValue::class);
+
+        $this
+            ->createElasticWizardWithFilters([
+                'location' => ['north' => '50', 'left' => '10', 'bottom' => '40', 'right' => '20'],
+            ], GeoModel::class)
+            ->allowedFilters(GeoBoundingBoxFilter::make('location'))
+            ->build();
+    }
 }

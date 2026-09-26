@@ -286,6 +286,8 @@ GET /products?filter[price][lt]=1000
 GET /posts?filter[created_at][gte]=2024-01-01&filter[created_at][lte]=2024-12-31
 ```
 
+An empty bound (`filter[price][gte]=&filter[price][lte]=500`) is skipped, so a form can send every field; a range with only empty bounds applies no condition. Unknown operators still return 400.
+
 ### Supported Operators
 
 | Operator | Description |
@@ -788,7 +790,12 @@ Format: `[left, bottom, right, top]` (minLon, minLat, maxLon, maxLat)
 
 ```
 GET /places?filter[bbox][]=36.0&filter[bbox][]=55.0&filter[bbox][]=38.0&filter[bbox][]=56.0
+
+# Named edges, in any order
+GET /places?filter[bbox][top]=56.0&filter[bbox][left]=36.0&filter[bbox][bottom]=55.0&filter[bbox][right]=38.0
 ```
+
+Named edges must be exactly `left`, `bottom`, `right` and `top`; any other key returns 400.
 
 Antimeridian is officially supported: keep longitude order as-is.
 For dateline-crossing boxes, pass `left > right` (for example `170,-10,-170,10`).
@@ -843,9 +850,13 @@ GET /areas?filter[boundary][type]=indexed_shape&filter[boundary][index]=shapes&f
 | Type | Description |
 |------|-------------|
 | `envelope` | Bounding box defined by two corner points |
-| `polygon` | Closed polygon defined by coordinate array |
+| `polygon` | GeoJSON polygon: an outer ring followed by optional holes |
 | `point` | Single geographic point |
 | `indexed_shape` | Reference to a shape stored in another document |
+
+Each polygon ring is a list of `[lon, lat]` points. A ring whose last point differs from its first is closed for you, and a ring must have at least four points once closed. Rings after the first are holes: documents inside a hole do not match.
+
+Coordinates must be finite numbers; a value such as `1e999` returns 400.
 
 > **Note:** Circle type is not supported as an inline shape in geo_shape queries (ES 8.x/9.x). For radius-based filtering, use [Geo Distance Filter](#geo-distance-filter) instead.
 

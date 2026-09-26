@@ -28,11 +28,7 @@ class FilterValueSanitizer
         $arrayValue = self::normalizeGeoBoundingBoxInput($value);
 
         foreach ($arrayValue as $item) {
-            if (! is_numeric($item)) {
-                throw InvalidGeoBoundingBoxValue::make($propertyName);
-            }
-
-            $bbox[] = floatval($item);
+            $bbox[] = self::finiteFloat($item) ?? throw InvalidGeoBoundingBoxValue::make($propertyName);
         }
 
         if (count($bbox) !== 4) {
@@ -56,12 +52,25 @@ class FilterValueSanitizer
     }
 
     /**
+     * The edges in left, bottom, right, top order: a list is taken in that
+     * order, named edges by name.
+     *
      * @return array<int, mixed>
      */
     private static function normalizeGeoBoundingBoxInput(mixed $value): array
     {
         if (is_array($value)) {
-            return array_values($value);
+            if (array_is_list($value)) {
+                return $value;
+            }
+
+            $edges = ['left', 'bottom', 'right', 'top'];
+
+            if (count($value) !== 4 || array_diff(array_keys($value), $edges) !== []) {
+                return [];
+            }
+
+            return array_map(static fn (string $edge): mixed => $value[$edge], $edges);
         }
 
         if (is_string($value)) {
@@ -108,8 +117,8 @@ class FilterValueSanitizer
     public static function geoDistanceValue(mixed $value, string $propertyName): array
     {
         $value = is_array($value) ? $value : [];
-        $lat = is_numeric($value['lat'] ?? null) ? floatval($value['lat']) : null;
-        $lon = is_numeric($value['lon'] ?? null) ? floatval($value['lon']) : null;
+        $lat = self::finiteFloat($value['lat'] ?? null);
+        $lon = self::finiteFloat($value['lon'] ?? null);
         $rawDistance = $value['distance'] ?? null;
         $distance = (is_string($rawDistance) || is_numeric($rawDistance)) ? trim((string) $rawDistance) : null;
 
@@ -144,13 +153,19 @@ class FilterValueSanitizer
                 throw InvalidRangeValue::legacyOperator($propertyName, $itemKey);
             }
 
-            if (! in_array($itemKey, self::RANGE_OPERATORS, true) || ! (is_string($itemValue) || is_numeric($itemValue))) {
+            if (! in_array($itemKey, self::RANGE_OPERATORS, true)) {
                 throw InvalidRangeValue::make($propertyName);
             }
 
-            if (static::isFilled($itemValue)) {
-                $prepared[$itemKey] = $itemValue;
+            if (static::isBlank($itemValue)) {
+                continue;
             }
+
+            if (! is_string($itemValue) && ! is_numeric($itemValue)) {
+                throw InvalidRangeValue::make($propertyName);
+            }
+
+            $prepared[$itemKey] = $itemValue;
         }
 
         return $prepared;
@@ -275,14 +290,32 @@ class FilterValueSanitizer
             }
             $floats = [];
             foreach ($point as $coord) {
-                if (! is_numeric($coord)) {
+                $float = self::finiteFloat($coord);
+
+                if ($float === null) {
                     return null;
                 }
-                $floats[] = (float) $coord;
+
+                $floats[] = $float;
             }
             $result[] = $floats;
         }
 
         return $result;
+    }
+
+    /**
+     * A number as a float, or null when the value is not a number or overflows
+     * to infinity (e.g. "1e999"), which JSON can't encode.
+     */
+    public static function finiteFloat(mixed $value): ?float
+    {
+        if (! is_numeric($value)) {
+            return null;
+        }
+
+        $float = (float) $value;
+
+        return is_finite($float) ? $float : null;
     }
 }

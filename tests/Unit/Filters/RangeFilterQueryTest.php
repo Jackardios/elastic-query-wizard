@@ -124,4 +124,26 @@ class RangeFilterQueryTest extends UnitTestCase
             ->allowedFilters(RangeFilter::make('age'))
             ->build();
     }
+
+    #[Test]
+    public function an_empty_bound_is_no_bound(): void
+    {
+        $wizard = $this
+            ->createElasticWizardWithFilters(['price' => ['gte' => '', 'lte' => '5']])
+            ->allowedFilters(RangeFilter::make('price'));
+        $wizard->build();
+
+        $this->assertEquals([['range' => ['price' => ['lte' => '5']]]], $this->getFilterQueries($wizard->boolQuery()));
+    }
+
+    #[Test]
+    public function only_empty_bounds_apply_no_range(): void
+    {
+        $wizard = $this
+            ->createElasticWizardWithFilters(['price' => ['gte' => '', 'lte' => ' ']])
+            ->allowedFilters(RangeFilter::make('price'));
+        $wizard->build();
+
+        $this->assertSame([], $this->getFilterQueries($wizard->boolQuery()));
+    }
 }

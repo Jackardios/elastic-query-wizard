@@ -126,26 +126,38 @@ final class GeoShapeFilter extends AbstractElasticFilter
     {
         $coordinates = $value['coordinates'] ?? null;
 
-        if (! is_array($coordinates) || $coordinates === []) {
+        if (! is_array($coordinates) || $coordinates === [] || ! array_is_list($coordinates)) {
             throw InvalidGeoShapeValue::invalidPolygon($this->property);
         }
 
-        // GeoJSON polygon format: coordinates = [outer_ring, hole1, hole2, ...]
-        // es-scout-driver polygon() expects just the outer ring (array of [lon, lat] pairs)
-        // and wraps it internally, so we pass only the first ring
-        $outerRing = $coordinates[0] ?? null;
+        $rings = [];
 
-        if (! is_array($outerRing) || count($outerRing) < 4) {
-            throw InvalidGeoShapeValue::invalidPolygon($this->property);
+        foreach ($coordinates as $ring) {
+            $rings[] = $this->closedRing($ring) ?? throw InvalidGeoShapeValue::invalidPolygon($this->property);
         }
 
-        $validated = FilterValueSanitizer::toCoordinatesArray($outerRing);
+        $query->shape(['type' => 'polygon', 'coordinates' => $rings]);
+    }
 
-        if ($validated === null) {
-            throw InvalidGeoShapeValue::invalidPolygon($this->property);
+    /**
+     * A GeoJSON linear ring, closed if its last point is not its first, or null
+     * when it is not one: Elasticsearch requires four points once closed.
+     *
+     * @return array<int, array<int, float>>|null
+     */
+    private function closedRing(mixed $ring): ?array
+    {
+        $points = is_array($ring) ? FilterValueSanitizer::toCoordinatesArray($ring) : null;
+
+        if ($points === null || $points === []) {
+            return null;
         }
 
-        $query->polygon($validated);
+        if ($points[0] !== $points[count($points) - 1]) {
+            $points[] = $points[0];
+        }
+
+        return count($points) >= 4 ? $points : null;
     }
 
     /**
@@ -159,17 +171,14 @@ final class GeoShapeFilter extends AbstractElasticFilter
             throw InvalidGeoShapeValue::invalidPoint($this->property);
         }
 
-        $lon = $coordinates[0] ?? null;
-        $lat = $coordinates[1] ?? null;
+        $lon = FilterValueSanitizer::finiteFloat($coordinates[0] ?? null);
+        $lat = FilterValueSanitizer::finiteFloat($coordinates[1] ?? null);
 
-        if (! is_numeric($lon) || ! is_numeric($lat)) {
+        if ($lon === null || $lat === null) {
             throw InvalidGeoShapeValue::invalidPoint($this->property);
         }
 
-        /** @var array{0: float, 1: float} $validated */
-        $validated = [(float) $lon, (float) $lat];
-
-        $query->point($validated);
+        $query->point([$lon, $lat]);
     }
 
     /**

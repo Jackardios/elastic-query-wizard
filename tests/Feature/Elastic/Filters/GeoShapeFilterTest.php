@@ -246,4 +246,25 @@ class GeoShapeFilterTest extends TestCase
 
         $this->assertCount(1, $result);
     }
+
+    #[Test]
+    public function a_polygon_hole_excludes_the_shapes_inside_it(): void
+    {
+        $result = $this
+            ->createElasticWizardWithFilters([
+                'boundary' => [
+                    'type' => 'polygon',
+                    'coordinates' => [
+                        [[37.0, 55.0], [38.5, 55.0], [38.5, 56.5], [37.0, 56.5], [37.0, 55.0]],
+                        [[37.45, 55.65], [37.75, 55.65], [37.75, 55.83], [37.45, 55.83], [37.45, 55.65]],
+                    ],
+                ],
+            ], GeoModel::class)
+            ->allowedFilters(GeoShapeFilter::make('boundary'))
+            ->build()
+            ->execute()
+            ->models();
+
+        $this->assertSame([$this->models[1]->id], $result->pluck('id')->all());
+    }
 }

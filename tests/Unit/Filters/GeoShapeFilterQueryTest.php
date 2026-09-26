@@ -426,4 +426,66 @@ class GeoShapeFilterQueryTest extends UnitTestCase
             ],
         ], $queries[0]);
     }
+
+    #[Test]
+    public function a_polygon_keeps_its_holes(): void
+    {
+        $outer = [[0.0, 0.0], [10.0, 0.0], [10.0, 10.0], [0.0, 10.0], [0.0, 0.0]];
+        $hole = [[4.0, 4.0], [6.0, 4.0], [6.0, 6.0], [4.0, 6.0], [4.0, 4.0]];
+
+        $this->assertSame(['type' => 'polygon', 'coordinates' => [$outer, $hole]], $this->shapeOf(['type' => 'polygon', 'coordinates' => [$outer, $hole]]));
+    }
+
+    #[Test]
+    public function an_open_ring_is_closed(): void
+    {
+        $this->assertSame(
+            ['type' => 'polygon', 'coordinates' => [[[0.0, 0.0], [10.0, 0.0], [10.0, 10.0], [0.0, 0.0]]]],
+            $this->shapeOf(['type' => 'polygon', 'coordinates' => [[[0, 0], [10, 0], [10, 10]]]])
+        );
+    }
+
+    #[Test]
+    public function a_ring_of_fewer_than_four_points_after_closing_is_refused(): void
+    {
+        $this->expectException(InvalidGeoShapeValue::class);
+
+        $this->shapeOf(['type' => 'polygon', 'coordinates' => [[[0, 0], [10, 0]]]]);
+    }
+
+    #[Test]
+    public function an_invalid_hole_is_refused(): void
+    {
+        $this->expectException(InvalidGeoShapeValue::class);
+
+        $this->shapeOf(['type' => 'polygon', 'coordinates' => [[[0, 0], [10, 0], [10, 10], [0, 0]], [[4, 4], ['x', 4]]]]);
+    }
+
+    #[Test]
+    public function an_infinite_envelope_coordinate_is_refused(): void
+    {
+        $this->expectException(InvalidGeoShapeValue::class);
+
+        $this->shapeOf(['type' => 'envelope', 'coordinates' => [['1e999', '50'], ['10', '40']]]);
+    }
+
+    #[Test]
+    public function an_infinite_point_coordinate_is_refused(): void
+    {
+        $this->expectException(InvalidGeoShapeValue::class);
+
+        $this->shapeOf(['type' => 'point', 'coordinates' => ['1e999', '50']]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $value
+     * @return array<string, mixed>
+     */
+    private function shapeOf(array $value): array
+    {
+        $wizard = $this->createElasticWizardWithFilters(['boundary' => $value])->allowedFilters(GeoShapeFilter::make('boundary'));
+        $wizard->build();
+
+        return $this->getFilterQueries($wizard->boolQuery())[0]['geo_shape']['boundary']['shape'];
+    }
 }
