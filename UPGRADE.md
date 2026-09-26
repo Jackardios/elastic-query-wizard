@@ -410,6 +410,13 @@ $wizard->boolQuery()->withTrashed();
 $wizard->withTrashed();   // also onlyTrashed(), excludeTrashed()
 ```
 
+### Filter Parameters
+
+`withParameters()` now checks each name when the filter is configured and throws `InvalidArgumentException` for a
+name the filter's query has no setter for; v2 threw `BadMethodCallException` on the first request that used the filter.
+A term filter no longer accepts `case_insensitive`: its multi-value `terms` query does not support it, and
+Elasticsearch rejected such a request.
+
 ### New Methods in v3
 
 ```php

@@ -62,6 +62,14 @@ class HasParametersTest extends TestCase
     }
 
     #[Test]
+    public function without_query_classes_any_name_is_accepted_when_configured(): void
+    {
+        $trait = $this->createTraitUser();
+
+        $this->assertSame($trait, $trait->withParameters(['nonExistentMethod' => 'value']));
+    }
+
+    #[Test]
     public function it_merges_parameters(): void
     {
         $trait = $this->createTraitUser();

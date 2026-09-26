@@ -7,6 +7,7 @@ namespace Jackardios\ElasticQueryWizard\Filters;
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
+use Jackardios\EsScoutDriver\Query\Term\RangeQuery;
 use Jackardios\EsScoutDriver\Support\Query;
 
 /**
@@ -31,6 +32,12 @@ final class RangeFilter extends AbstractElasticFilter
     public function getType(): string
     {
         return 'range';
+    }
+
+    /** @return list<class-string> */
+    protected function parameterQueryClasses(): array
+    {
+        return [RangeQuery::class];
     }
 
     public function buildQuery(mixed $value): ?QueryInterface

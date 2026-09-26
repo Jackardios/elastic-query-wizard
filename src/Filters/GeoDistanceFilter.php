@@ -6,6 +6,7 @@ namespace Jackardios\ElasticQueryWizard\Filters;
 
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
+use Jackardios\EsScoutDriver\Query\Geo\GeoDistanceQuery;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Support\Query;
 
@@ -21,6 +22,12 @@ final class GeoDistanceFilter extends AbstractElasticFilter
     public function getType(): string
     {
         return 'geo_distance';
+    }
+
+    /** @return list<class-string> */
+    protected function parameterQueryClasses(): array
+    {
+        return [GeoDistanceQuery::class];
     }
 
     public function buildQuery(mixed $value): ?QueryInterface

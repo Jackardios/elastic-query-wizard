@@ -7,6 +7,7 @@ namespace Jackardios\ElasticQueryWizard\Filters;
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
 use Jackardios\ElasticQueryWizard\Enums\BoolClause;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
+use Jackardios\EsScoutDriver\Query\FullText\QueryStringQuery;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Support\Query;
 
@@ -28,6 +29,12 @@ final class QueryStringFilter extends AbstractElasticFilter
     public function getType(): string
     {
         return 'query_string';
+    }
+
+    /** @return list<class-string> */
+    protected function parameterQueryClasses(): array
+    {
+        return [QueryStringQuery::class];
     }
 
     public function validateValueShape(mixed $value): ?string

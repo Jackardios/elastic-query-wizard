@@ -7,6 +7,7 @@ namespace Jackardios\ElasticQueryWizard\Filters;
 use DateTimeInterface;
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
+use Jackardios\EsScoutDriver\Query\Term\RangeQuery;
 use Jackardios\EsScoutDriver\Support\Query;
 
 /**
@@ -70,6 +71,12 @@ final class DateRangeFilter extends AbstractElasticFilter
     public function getType(): string
     {
         return 'date_range';
+    }
+
+    /** @return list<class-string> */
+    protected function parameterQueryClasses(): array
+    {
+        return [RangeQuery::class];
     }
 
     /**

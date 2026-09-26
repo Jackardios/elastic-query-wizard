@@ -6,6 +6,7 @@ namespace Jackardios\ElasticQueryWizard\Filters;
 
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
+use Jackardios\EsScoutDriver\Query\Geo\GeoBoundingBoxQuery;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Support\Query;
 
@@ -21,6 +22,12 @@ final class GeoBoundingBoxFilter extends AbstractElasticFilter
     public function getType(): string
     {
         return 'geo_bounding_box';
+    }
+
+    /** @return list<class-string> */
+    protected function parameterQueryClasses(): array
+    {
+        return [GeoBoundingBoxQuery::class];
     }
 
     public function buildQuery(mixed $value): ?QueryInterface

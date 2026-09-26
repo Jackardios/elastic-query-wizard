@@ -9,6 +9,7 @@ use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Query\Compound\BoolQuery;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
+use Jackardios\EsScoutDriver\Query\Term\ExistsQuery;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Support\Query;
 
@@ -25,6 +26,12 @@ final class ExistsFilter extends AbstractElasticFilter
     public function getType(): string
     {
         return 'exists';
+    }
+
+    /** @return list<class-string> */
+    protected function parameterQueryClasses(): array
+    {
+        return [ExistsQuery::class];
     }
 
     public function validateValueShape(mixed $value): ?string

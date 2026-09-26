@@ -7,6 +7,7 @@ namespace Jackardios\ElasticQueryWizard\Filters;
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
+use Jackardios\EsScoutDriver\Query\Term\RegexpQuery;
 use Jackardios\EsScoutDriver\Support\Query;
 
 final class RegexpFilter extends AbstractElasticFilter
@@ -27,6 +28,12 @@ final class RegexpFilter extends AbstractElasticFilter
     public function getType(): string
     {
         return 'regexp';
+    }
+
+    /** @return list<class-string> */
+    protected function parameterQueryClasses(): array
+    {
+        return [RegexpQuery::class];
     }
 
     public function validateValueShape(mixed $value): ?string

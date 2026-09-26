@@ -8,6 +8,7 @@ use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
 use Jackardios\ElasticQueryWizard\Enums\BoolClause;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
+use Jackardios\EsScoutDriver\Query\Term\FuzzyQuery;
 use Jackardios\EsScoutDriver\Support\Query;
 
 final class FuzzyFilter extends AbstractElasticFilter
@@ -28,6 +29,12 @@ final class FuzzyFilter extends AbstractElasticFilter
     public function getType(): string
     {
         return 'fuzzy';
+    }
+
+    /** @return list<class-string> */
+    protected function parameterQueryClasses(): array
+    {
+        return [FuzzyQuery::class];
     }
 
     public function validateValueShape(mixed $value): ?string

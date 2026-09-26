@@ -208,9 +208,10 @@ GET /posts?filter[status]=published,draft
 ```php
 ElasticFilter::term('status')->withParameters([
     'boost' => 2.0,
-    'case_insensitive' => true,
 ])
 ```
+
+A term filter builds a `terms` query for several values, and `terms` has no `case_insensitive` option, so `withParameters()` refuses it; for case-insensitive matching, index the field as a `keyword` with a lowercase normalizer.
 
 ---
 
@@ -1241,6 +1242,8 @@ ElasticFilter::match('title')->withParameters([
 ```
 
 Parameter names correspond to the parameters of the respective Elasticsearch queries. The method automatically converts snake_case to camelCase for builder method calls.
+
+`withParameters()` checks each name against the es-scout-driver query the filter builds and throws `InvalidArgumentException` for a name the query has no setter for, so a typo fails when the filter is configured rather than as a 500 on the first request that uses it. The exists filter's query has no setters, so it accepts no parameters. A custom filter that uses the `HasParameters` trait can opt into the same check by returning its query classes from `parameterQueryClasses()`.
 
 ---
 

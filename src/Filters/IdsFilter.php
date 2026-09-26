@@ -7,6 +7,7 @@ namespace Jackardios\ElasticQueryWizard\Filters;
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
+use Jackardios\EsScoutDriver\Query\Term\IdsQuery;
 use Jackardios\EsScoutDriver\Support\Query;
 
 final class IdsFilter extends AbstractElasticFilter
@@ -21,6 +22,12 @@ final class IdsFilter extends AbstractElasticFilter
     public function getType(): string
     {
         return 'ids';
+    }
+
+    /** @return list<class-string> */
+    protected function parameterQueryClasses(): array
+    {
+        return [IdsQuery::class];
     }
 
     public function validateValueShape(mixed $value): ?string

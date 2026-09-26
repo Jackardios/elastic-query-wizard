@@ -7,6 +7,7 @@ namespace Jackardios\ElasticQueryWizard\Filters;
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
+use Jackardios\EsScoutDriver\Query\Term\PrefixQuery;
 use Jackardios\EsScoutDriver\Support\Query;
 
 final class PrefixFilter extends AbstractElasticFilter
@@ -27,6 +28,12 @@ final class PrefixFilter extends AbstractElasticFilter
     public function getType(): string
     {
         return 'prefix';
+    }
+
+    /** @return list<class-string> */
+    protected function parameterQueryClasses(): array
+    {
+        return [PrefixQuery::class];
     }
 
     public function validateValueShape(mixed $value): ?string
