@@ -1,4 +1,4 @@
-.PHONY: up up-mysql up-es down down-mysql down-es wait wait-mysql wait-es test unit-test feature-test coverage lint format-check format static-analysis ci ci-full test-es8 test-es9 test-matrix test-full-matrix install update clean help build-images
+.PHONY: up up-es down down-es wait wait-es test unit-test feature-test coverage lint format-check format static-analysis ci ci-full test-es8 test-es9 test-matrix test-full-matrix install update clean help build-images
 
 .DEFAULT_GOAL := help
 
@@ -9,24 +9,16 @@ RED    := \033[91m
 CYAN   := \033[36m
 RESET  := \033[0m
 
-# MySQL config
-MYSQL_VERSION ?= 8.0
-MYSQL_CONTAINER_NAME := elastic-query-wizard-mysql
-MYSQL_HOST_PORT := 23306
-MYSQL_DATABASE := test
-MYSQL_USER := test
-MYSQL_PASSWORD := test
-
 # Elasticsearch config
-ES_VERSION ?= 9.3.0
+ES_VERSION ?= 9.5.3
 ES_CONTAINER_NAME := elastic-query-wizard-elasticsearch
 ES_HOST_PORT := 29200
 ES_IMAGE := elasticsearch
 
 # Supported versions for matrix testing
-ES_VERSIONS := 8.19.11 9.3.0
-PHP_VERSIONS := 8.1 8.2 8.3 8.4
-LARAVEL_VERSIONS := 10 11 12
+ES_VERSIONS := 8.19.22 9.5.3
+PHP_VERSIONS := 8.2 8.3 8.4 8.5
+LARAVEL_VERSIONS := 12 13
 
 # Docker image for matrix testing
 DOCKER_IMAGE_PREFIX := elastic-query-wizard-php
@@ -37,27 +29,7 @@ ARGS ?=
 
 ##@ Docker
 
-up: up-mysql up-es ## Start MySQL and Elasticsearch containers
-
-up-mysql: ## Start MySQL container
-	@if docker ps --format '{{.Names}}' | grep -q "^$(MYSQL_CONTAINER_NAME)$$"; then \
-		printf "$(GREEN)✔ $(MYSQL_CONTAINER_NAME) already running$(RESET)\n"; \
-	else \
-		printf "$(YELLOW)→ Starting $(MYSQL_CONTAINER_NAME) container$(RESET)\n"; \
-		if docker run --rm -d \
-			--name $(MYSQL_CONTAINER_NAME) \
-			-p $(MYSQL_HOST_PORT):3306 \
-			-e MYSQL_RANDOM_ROOT_PASSWORD=yes \
-			-e MYSQL_DATABASE=$(MYSQL_DATABASE) \
-			-e MYSQL_USER=$(MYSQL_USER) \
-			-e MYSQL_PASSWORD=$(MYSQL_PASSWORD) \
-			mysql:$(MYSQL_VERSION); then \
-			printf "$(GREEN)✔ $(MYSQL_CONTAINER_NAME) started$(RESET)\n"; \
-		else \
-			printf "$(RED)✘ Failed to start $(MYSQL_CONTAINER_NAME)$(RESET)\n"; \
-			exit 1; \
-		fi; \
-	fi
+up: up-es ## Start the Elasticsearch container (the tests use SQLite in memory)
 
 up-es: ## Start Elasticsearch container
 	@if docker ps --format '{{.Names}}' | grep -q "^$(ES_CONTAINER_NAME)$$"; then \
@@ -80,31 +52,13 @@ up-es: ## Start Elasticsearch container
 
 down: ## Stop all containers
 	@printf "$(YELLOW)→ Stopping containers$(RESET)\n"
-	@-docker stop $(MYSQL_CONTAINER_NAME) 2>/dev/null || true
 	@-docker stop $(ES_CONTAINER_NAME) 2>/dev/null || true
 	@printf "$(GREEN)✔ Containers stopped$(RESET)\n"
-
-down-mysql: ## Stop MySQL container only
-	@-docker stop $(MYSQL_CONTAINER_NAME) 2>/dev/null || true
 
 down-es: ## Stop Elasticsearch container only
 	@-docker stop $(ES_CONTAINER_NAME) 2>/dev/null || true
 
-wait: wait-mysql wait-es ## Wait until containers are ready
-
-wait-mysql: ## Wait until MySQL is ready (timeout: 60s)
-	@printf "$(YELLOW)→ Waiting for $(MYSQL_CONTAINER_NAME)$(RESET)\n"
-	@elapsed=0; \
-	while ! docker exec $(MYSQL_CONTAINER_NAME) mysqladmin -u $(MYSQL_USER) -p$(MYSQL_PASSWORD) -h 127.0.0.1 ping 2>/dev/null; do \
-		if [ $$elapsed -ge 60 ]; then \
-			printf "$(RED)✘ $(MYSQL_CONTAINER_NAME) timeout after 60s$(RESET)\n"; \
-			exit 1; \
-		fi; \
-		printf "$(RED)✘ $(MYSQL_CONTAINER_NAME) not ready, waiting... ($$elapsed/60s)$(RESET)\n"; \
-		sleep 3; \
-		elapsed=$$((elapsed + 3)); \
-	done
-	@printf "$(GREEN)✔ $(MYSQL_CONTAINER_NAME) ready$(RESET)\n"
+wait: wait-es ## Wait until the container is ready
 
 wait-es: ## Wait until Elasticsearch is ready (timeout: 120s)
 	@printf "$(YELLOW)→ Waiting for $(ES_CONTAINER_NAME)$(RESET)\n"
@@ -122,9 +76,7 @@ wait-es: ## Wait until Elasticsearch is ready (timeout: 120s)
 
 clean: ## Remove all containers and volumes
 	@printf "$(YELLOW)→ Cleaning up$(RESET)\n"
-	@-docker stop $(MYSQL_CONTAINER_NAME) 2>/dev/null || true
 	@-docker stop $(ES_CONTAINER_NAME) 2>/dev/null || true
-	@-docker rm -f $(MYSQL_CONTAINER_NAME) 2>/dev/null || true
 	@-docker rm -f $(ES_CONTAINER_NAME) 2>/dev/null || true
 	@printf "$(GREEN)✔ Cleanup complete$(RESET)\n"
 
@@ -164,13 +116,13 @@ coverage: ## Run tests with coverage (ARGS="--filter=testName")
 test-es8: ## Run tests with Elasticsearch 8.x
 	@$(MAKE) down
 	@composer update --with="elasticsearch/elasticsearch:^8.0" --no-interaction --no-progress
-	@ES_VERSION=8.19.11 $(MAKE) up wait test
+	@ES_VERSION=8.19.22 $(MAKE) up wait test
 	@$(MAKE) down
 
 test-es9: ## Run tests with Elasticsearch 9.x
 	@$(MAKE) down
 	@composer update --with="elasticsearch/elasticsearch:^9.0" --no-interaction --no-progress
-	@ES_VERSION=9.3.0 $(MAKE) up wait test
+	@ES_VERSION=9.5.3 $(MAKE) up wait test
 	@$(MAKE) down
 
 test-matrix: ## Run tests on all Elasticsearch versions (current PHP)
@@ -195,7 +147,6 @@ test-full-matrix: build-images ## Run full test matrix (PHP × Laravel × ES) vi
 	@printf "$(CYAN)  Running full test matrix (PHP × Laravel × Elasticsearch)$(RESET)\n"
 	@printf "$(CYAN)════════════════════════════════════════════════════════════$(RESET)\n"
 	@$(MAKE) down 2>/dev/null || true
-	@$(MAKE) up-mysql wait-mysql
 	@passed=0; failed=0; skipped=0; \
 	for es_version in $(ES_VERSIONS); do \
 		es_major=$$(echo $$es_version | cut -d. -f1); \
@@ -203,16 +154,15 @@ test-full-matrix: build-images ## Run full test matrix (PHP × Laravel × ES) vi
 		ES_VERSION=$$es_version $(MAKE) up-es wait-es; \
 		for php_version in $(PHP_VERSIONS); do \
 			for laravel_version in $(LARAVEL_VERSIONS); do \
-				if [ "$$php_version" = "8.1" ] && [ "$$laravel_version" != "10" ]; then \
-					printf "$(YELLOW)⊘ PHP $$php_version / Laravel $$laravel_version / ES $$es_version - skipped (Laravel $$laravel_version requires PHP 8.2+)$(RESET)\n"; \
+				if [ "$$php_version" = "8.2" ] && [ "$$laravel_version" = "13" ]; then \
+					printf "$(YELLOW)⊘ PHP $$php_version / Laravel $$laravel_version / ES $$es_version - skipped (Laravel 13 requires PHP 8.3+)$(RESET)\n"; \
 					skipped=$$((skipped + 1)); \
 					continue; \
 				fi; \
 				printf "\n$(CYAN)▶ PHP $$php_version / Laravel $$laravel_version / ES $$es_version$(RESET)\n"; \
 				case $$laravel_version in \
-					10) testbench_version=8 ;; \
-					11) testbench_version=9 ;; \
 					12) testbench_version=10 ;; \
+					13) testbench_version=11 ;; \
 				esac; \
 				if docker run --rm \
 					--network host \
@@ -220,14 +170,10 @@ test-full-matrix: build-images ## Run full test matrix (PHP × Laravel × ES) vi
 					-v $(COMPOSER_CACHE_VOLUME):/root/.composer/cache \
 					-w /app \
 					-e ELASTIC_HOST=127.0.0.1:$(ES_HOST_PORT) \
-					-e DB_HOST=127.0.0.1 \
-					-e DB_PORT=$(MYSQL_HOST_PORT) \
-					-e DB_DATABASE=$(MYSQL_DATABASE) \
-					-e DB_USERNAME=$(MYSQL_USER) \
-					-e DB_PASSWORD=$(MYSQL_PASSWORD) \
 					$(DOCKER_IMAGE_PREFIX):$$php_version sh -c "\
 						cp -r /src/. /app/ && \
 						composer update \
+							--with='laravel/framework:^$$laravel_version.0' \
 							--with='orchestra/testbench:^$$testbench_version.0' \
 							--with='elasticsearch/elasticsearch:^$$es_major.0' \
 							--prefer-dist --no-interaction --no-progress && \
@@ -298,4 +244,4 @@ update: ## Update dependencies
 ##@ Help
 
 help: ## Show this help
-	@awk 'BEGIN {FS = ":.*##"; printf "\n$(CYAN)Usage:$(RESET)\n  make $(YELLOW)<target>$(RESET)\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  $(YELLOW)%-18s$(RESET) %s\n", $$1, $$2 } /^##@/ { printf "\n$(CYAN)%s$(RESET)\n", substr($$0, 5) }' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*##"; printf "\n$(CYAN)Usage:$(RESET)\n  make $(YELLOW)<target>$(RESET)\n"} /^[a-zA-Z0-9_-]+:.*?##/ { printf "  $(YELLOW)%-18s$(RESET) %s\n", $$1, $$2 } /^##@/ { printf "\n$(CYAN)%s$(RESET)\n", substr($$0, 5) }' $(MAKEFILE_LIST)

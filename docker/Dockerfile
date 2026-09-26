@@ -3,7 +3,7 @@ FROM php:${PHP_VERSION}-cli
 
 RUN apt-get update -qq \
     && apt-get install -y -qq git unzip libzip-dev \
-    && docker-php-ext-install zip pdo pdo_mysql \
+    && docker-php-ext-install zip \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
