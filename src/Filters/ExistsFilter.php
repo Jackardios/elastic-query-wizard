@@ -6,12 +6,12 @@ namespace Jackardios\ElasticQueryWizard\Filters;
 
 use Jackardios\ElasticQueryWizard\Concerns\AddsExistsQuery;
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
-use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Query\Compound\BoolQuery;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Query\Term\ExistsQuery;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Support\Query;
+use Jackardios\QueryWizard\Support\FilterValueParser;
 
 final class ExistsFilter extends AbstractElasticFilter
 {
@@ -63,15 +63,12 @@ final class ExistsFilter extends AbstractElasticFilter
 
     protected function applyExistsLogic(BoolQuery $boolQuery, mixed $value): void
     {
-        if (FilterValueSanitizer::isBlank($value)) {
+        $exists = FilterValueParser::boolean($value, $this);
+
+        if ($exists === null) {
             return;
         }
 
-        $normalized = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-        if ($normalized === null) {
-            return;
-        }
-
-        $this->addExistsQuery($boolQuery, $this->applyParametersOnQuery(Query::exists($this->property)), ! $normalized);
+        $this->addExistsQuery($boolQuery, $this->applyParametersOnQuery(Query::exists($this->property)), ! $exists);
     }
 }

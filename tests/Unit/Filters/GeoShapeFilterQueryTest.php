@@ -227,7 +227,7 @@ class GeoShapeFilterQueryTest extends UnitTestCase
     public function it_throws_for_unknown_type(): void
     {
         $this->expectException(InvalidGeoShapeValue::class);
-        $this->expectExceptionMessage('has unknown shape type');
+        $this->expectExceptionMessage('Unknown shape type');
 
         $wizard = $this
             ->createElasticWizardWithFilters([
@@ -244,7 +244,7 @@ class GeoShapeFilterQueryTest extends UnitTestCase
     public function it_throws_for_missing_type(): void
     {
         $this->expectException(InvalidGeoShapeValue::class);
-        $this->expectExceptionMessage('has unknown shape type `null`');
+        $this->expectExceptionMessage('Unknown shape type `null`');
 
         $wizard = $this
             ->createElasticWizardWithFilters([
@@ -260,7 +260,7 @@ class GeoShapeFilterQueryTest extends UnitTestCase
     public function it_throws_for_invalid_envelope(): void
     {
         $this->expectException(InvalidGeoShapeValue::class);
-        $this->expectExceptionMessage('envelope requires coordinates');
+        $this->expectExceptionMessage('An envelope expects coordinates');
 
         $wizard = $this
             ->createElasticWizardWithFilters([
@@ -277,7 +277,7 @@ class GeoShapeFilterQueryTest extends UnitTestCase
     public function it_throws_for_invalid_polygon(): void
     {
         $this->expectException(InvalidGeoShapeValue::class);
-        $this->expectExceptionMessage('polygon requires coordinates');
+        $this->expectExceptionMessage('A polygon expects coordinates');
 
         $wizard = $this
             ->createElasticWizardWithFilters([
@@ -294,7 +294,7 @@ class GeoShapeFilterQueryTest extends UnitTestCase
     public function it_throws_for_invalid_point(): void
     {
         $this->expectException(InvalidGeoShapeValue::class);
-        $this->expectExceptionMessage('point requires coordinates');
+        $this->expectExceptionMessage('A point expects coordinates');
 
         $wizard = $this
             ->createElasticWizardWithFilters([
@@ -311,7 +311,7 @@ class GeoShapeFilterQueryTest extends UnitTestCase
     public function it_throws_for_invalid_indexed_shape(): void
     {
         $this->expectException(InvalidGeoShapeValue::class);
-        $this->expectExceptionMessage('indexed_shape requires');
+        $this->expectExceptionMessage('An indexed shape expects');
 
         $wizard = $this
             ->createElasticWizardWithFilters([

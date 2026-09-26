@@ -95,7 +95,7 @@ final class GeoShapeFilter extends AbstractElasticFilter
             'polygon' => $this->applyPolygon($query, $value),
             'point' => $this->applyPoint($query, $value),
             'indexed_shape' => $this->applyIndexedShape($query, $value),
-            default => throw InvalidGeoShapeValue::unknownType($this->property, $typeString),
+            default => throw InvalidGeoShapeValue::unknownType($value, $this, $typeString),
         };
     }
 
@@ -107,13 +107,13 @@ final class GeoShapeFilter extends AbstractElasticFilter
         $coordinates = $value['coordinates'] ?? null;
 
         if (! is_array($coordinates) || count($coordinates) !== 2) {
-            throw InvalidGeoShapeValue::invalidEnvelope($this->property);
+            throw InvalidGeoShapeValue::invalidEnvelope($value, $this);
         }
 
         $validated = FilterValueSanitizer::toCoordinatesArray($coordinates);
 
         if ($validated === null) {
-            throw InvalidGeoShapeValue::invalidEnvelope($this->property);
+            throw InvalidGeoShapeValue::invalidEnvelope($value, $this);
         }
 
         $query->envelope($validated);
@@ -127,13 +127,13 @@ final class GeoShapeFilter extends AbstractElasticFilter
         $coordinates = $value['coordinates'] ?? null;
 
         if (! is_array($coordinates) || $coordinates === [] || ! array_is_list($coordinates)) {
-            throw InvalidGeoShapeValue::invalidPolygon($this->property);
+            throw InvalidGeoShapeValue::invalidPolygon($value, $this);
         }
 
         $rings = [];
 
         foreach ($coordinates as $ring) {
-            $rings[] = $this->closedRing($ring) ?? throw InvalidGeoShapeValue::invalidPolygon($this->property);
+            $rings[] = $this->closedRing($ring) ?? throw InvalidGeoShapeValue::invalidPolygon($value, $this);
         }
 
         $query->shape(['type' => 'polygon', 'coordinates' => $rings]);
@@ -168,14 +168,14 @@ final class GeoShapeFilter extends AbstractElasticFilter
         $coordinates = $value['coordinates'] ?? null;
 
         if (! is_array($coordinates) || count($coordinates) !== 2) {
-            throw InvalidGeoShapeValue::invalidPoint($this->property);
+            throw InvalidGeoShapeValue::invalidPoint($value, $this);
         }
 
         $lon = FilterValueSanitizer::finiteFloat($coordinates[0] ?? null);
         $lat = FilterValueSanitizer::finiteFloat($coordinates[1] ?? null);
 
         if ($lon === null || $lat === null) {
-            throw InvalidGeoShapeValue::invalidPoint($this->property);
+            throw InvalidGeoShapeValue::invalidPoint($value, $this);
         }
 
         $query->point([$lon, $lat]);
@@ -192,7 +192,7 @@ final class GeoShapeFilter extends AbstractElasticFilter
         $path = is_string($rawPath) ? $rawPath : 'shape';
 
         if (! is_string($index) || ! is_string($id)) {
-            throw InvalidGeoShapeValue::invalidIndexedShape($this->property);
+            throw InvalidGeoShapeValue::invalidIndexedShape($value, $this);
         }
 
         $query->indexedShape($index, $id, $path);

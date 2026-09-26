@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Jackardios\ElasticQueryWizard\Filters;
 
 use Jackardios\ElasticQueryWizard\Concerns\AddsExistsQuery;
-use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Query\Compound\BoolQuery;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Support\Query;
+use Jackardios\QueryWizard\Support\FilterValueParser;
 
 /**
  * Filter by NULL/NOT NULL values (field existence in Elasticsearch).
@@ -87,11 +87,8 @@ final class NullFilter extends AbstractElasticFilter
 
     protected function applyNullLogic(BoolQuery $boolQuery, mixed $value): void
     {
-        if (FilterValueSanitizer::isBlank($value)) {
-            return;
-        }
+        $isTruthy = FilterValueParser::boolean($value, $this);
 
-        $isTruthy = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
         if ($isTruthy === null) {
             return;
         }

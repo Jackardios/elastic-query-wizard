@@ -46,7 +46,7 @@ final class RangeFilter extends AbstractElasticFilter
             return null;
         }
 
-        $rangeFilters = FilterValueSanitizer::rangeFilterValue($value, $this->property);
+        $rangeFilters = FilterValueSanitizer::rangeFilterValue($value, $this);
 
         if (empty($rangeFilters)) {
             return null;

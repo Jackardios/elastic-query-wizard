@@ -6,6 +6,7 @@ namespace Jackardios\ElasticQueryWizard\Filters;
 
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
+use Jackardios\QueryWizard\Support\FilterValueParser;
 
 final class TrashedFilter extends AbstractElasticFilter
 {
@@ -39,25 +40,11 @@ final class TrashedFilter extends AbstractElasticFilter
 
     public function handle(SearchBuilder $builder, mixed $value): void
     {
-        if ($value === true) {
-            $value = 'with';
-        } elseif ($value === false) {
-            $value = 'without';
-        }
-
-        $normalized = is_string($value) ? strtolower($value) : $value;
-
-        if ($normalized === 'true') {
-            $normalized = 'with';
-        } elseif ($normalized === 'false') {
-            $normalized = 'without';
-        }
-
-        match ($normalized) {
+        match (FilterValueParser::trashedMode($value, $this)) {
             'with' => $builder->withTrashed(),
             'only' => $builder->onlyTrashed(),
             'without' => $builder->excludeTrashed(),
-            default => null,
+            null => null,
         };
     }
 }

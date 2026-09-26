@@ -8,6 +8,10 @@ use Countable;
 use Jackardios\ElasticQueryWizard\Exceptions\InvalidGeoBoundingBoxValue;
 use Jackardios\ElasticQueryWizard\Exceptions\InvalidGeoDistanceValue;
 use Jackardios\ElasticQueryWizard\Exceptions\InvalidRangeValue;
+use Jackardios\QueryWizard\Contracts\FilterInterface;
+use Jackardios\QueryWizard\Exceptions\InvalidFilterValue;
+use Jackardios\QueryWizard\Support\FilterValueParser;
+use Jackardios\QueryWizard\Support\ParsedDate;
 
 class FilterValueSanitizer
 {
@@ -17,30 +21,29 @@ class FilterValueSanitizer
 
     /**
      * @param  mixed  $value  raw filter value
-     * @param  string  $propertyName  will be used to throw exception
+     * @param  string|FilterInterface  $filter  the filter or its public name, for the exception
      * @return array{0: float, 1: float, 2: float, 3: float}
      *
      * @throws InvalidGeoBoundingBoxValue
      */
-    public static function geoBoundingBoxValue(mixed $value, string $propertyName): array
+    public static function geoBoundingBoxValue(mixed $value, string|FilterInterface $filter): array
     {
         $bbox = [];
         $arrayValue = self::normalizeGeoBoundingBoxInput($value);
 
         foreach ($arrayValue as $item) {
-            $bbox[] = self::finiteFloat($item) ?? throw InvalidGeoBoundingBoxValue::make($propertyName);
+            $bbox[] = self::finiteFloat($item) ?? throw InvalidGeoBoundingBoxValue::invalidBox($value, $filter);
         }
 
         if (count($bbox) !== 4) {
-            throw InvalidGeoBoundingBoxValue::make($propertyName);
+            throw InvalidGeoBoundingBoxValue::invalidBox($value, $filter);
         }
 
         [$left, $bottom, $right, $top] = $bbox;
 
-        self::assertLongitude($left, $propertyName);
-        self::assertLongitude($right, $propertyName);
-        self::assertLatitude($bottom, $propertyName);
-        self::assertLatitude($top, $propertyName);
+        if (! self::isLongitude($left) || ! self::isLongitude($right) || ! self::isLatitude($bottom) || ! self::isLatitude($top)) {
+            throw InvalidGeoBoundingBoxValue::invalidBox($value, $filter);
+        }
 
         // Normalize latitude axis only. Longitude order must be preserved to support
         // antimeridian-crossing boxes where left > right is intentional.
@@ -87,46 +90,49 @@ class FilterValueSanitizer
         return [];
     }
 
-    /**
-     * @throws InvalidGeoBoundingBoxValue
-     */
-    private static function assertLongitude(float $value, string $propertyName): void
+    private static function isLongitude(float $value): bool
     {
-        if ($value < -180.0 || $value > 180.0) {
-            throw InvalidGeoBoundingBoxValue::make($propertyName);
-        }
+        return $value >= -180.0 && $value <= 180.0;
     }
 
-    /**
-     * @throws InvalidGeoBoundingBoxValue
-     */
-    private static function assertLatitude(float $value, string $propertyName): void
+    private static function isLatitude(float $value): bool
     {
-        if ($value < -90.0 || $value > 90.0) {
-            throw InvalidGeoBoundingBoxValue::make($propertyName);
-        }
+        return $value >= -90.0 && $value <= 90.0;
     }
 
     /**
      * @param  mixed  $value  raw filter value
-     * @param  string  $propertyName  will be used to throw exception
+     * @param  string|FilterInterface  $filter  the filter or its public name, for the exception
      * @return array{lat: float, lon: float, distance: string}
      *
      * @throws InvalidGeoDistanceValue
      */
-    public static function geoDistanceValue(mixed $value, string $propertyName): array
+    public static function geoDistanceValue(mixed $value, string|FilterInterface $filter): array
     {
-        $value = is_array($value) ? $value : [];
-        $lat = self::finiteFloat($value['lat'] ?? null);
-        $lon = self::finiteFloat($value['lon'] ?? null);
-        $rawDistance = $value['distance'] ?? null;
-        $distance = (is_string($rawDistance) || is_numeric($rawDistance)) ? trim((string) $rawDistance) : null;
+        $point = is_array($value) ? $value : [];
+        $lat = self::finiteFloat($point['lat'] ?? null);
+        $lon = self::finiteFloat($point['lon'] ?? null);
+        $rawDistance = $point['distance'] ?? null;
+        $distance = (is_string($rawDistance) || is_int($rawDistance) || is_float($rawDistance)) ? trim((string) $rawDistance) : null;
 
-        if (! isset($lat, $lon, $distance)) {
-            throw InvalidGeoDistanceValue::make($propertyName);
+        if ($lat === null || $lon === null || $distance === null
+            || ! self::isLatitude($lat) || ! self::isLongitude($lon) || ! self::isDistance($distance)) {
+            throw InvalidGeoDistanceValue::invalidDistance($value, $filter);
         }
 
         return ['lat' => $lat, 'lon' => $lon, 'distance' => $distance];
+    }
+
+    /**
+     * A decimal number greater than zero with an optional Elasticsearch
+     * distance unit, such as `3km` or `1.5 mi`.
+     */
+    private static function isDistance(string $distance): bool
+    {
+        $units = 'mm|millimeters|cm|centimeters|m|meters|km|kilometers|in|inch|ft|feet|yd|yards|mi|miles|NM|nmi|nauticalmiles';
+
+        return preg_match('/^(\d+(?:\.\d*)?|\.\d+)\s*(?:'.$units.')?$/', $distance, $matches) === 1
+            && (float) $matches[1] > 0.0;
     }
 
     /**
@@ -135,37 +141,47 @@ class FilterValueSanitizer
      * Only ES 9.x compatible operators are allowed: gt, gte, lt, lte.
      * Legacy operators (from, to, include_lower, include_upper) will throw InvalidRangeValue.
      *
+     * Each bound is a decimal number or an ISO 8601 date (see laravel-query-wizard's
+     * `FilterValueParser::comparable()`); a date is passed on as sent, for
+     * Elasticsearch to read with the field's format and the query's `time_zone`.
+     *
      * @param  mixed  $value  raw filter value
-     * @param  string  $propertyName  will be used to throw exception
+     * @param  string|FilterInterface  $filter  the filter or its public name, for the exception
      * @return array{gt?: string|int|float, gte?: string|int|float, lt?: string|int|float, lte?: string|int|float}
      *
      * @throws InvalidRangeValue
      */
-    public static function rangeFilterValue(mixed $value, string $propertyName): array
+    public static function rangeFilterValue(mixed $value, string|FilterInterface $filter): array
     {
         if (! is_array($value)) {
-            throw InvalidRangeValue::make($propertyName);
+            throw InvalidRangeValue::invalidBounds($value, $filter);
         }
 
         $prepared = [];
         foreach ($value as $itemKey => $itemValue) {
             if (in_array($itemKey, self::LEGACY_RANGE_OPERATORS, true)) {
-                throw InvalidRangeValue::legacyOperator($propertyName, $itemKey);
+                throw InvalidRangeValue::legacyOperator($value, $filter, $itemKey);
             }
 
             if (! in_array($itemKey, self::RANGE_OPERATORS, true)) {
-                throw InvalidRangeValue::make($propertyName);
+                throw InvalidRangeValue::invalidBounds($value, $filter);
             }
 
-            if (static::isBlank($itemValue)) {
+            try {
+                $bound = FilterValueParser::comparable($itemValue, $filter, FilterValueParser::defaultTimezone(), $itemKey);
+            } catch (InvalidFilterValue $exception) {
+                throw InvalidRangeValue::make($value, $filter, $exception->reason);
+            }
+
+            if ($bound === null) {
                 continue;
             }
 
-            if (! is_string($itemValue) && ! is_numeric($itemValue)) {
-                throw InvalidRangeValue::make($propertyName);
+            if ($bound instanceof ParsedDate) {
+                $bound = is_string($itemValue) ? trim($itemValue) : $bound->value->format(DATE_ATOM);
             }
 
-            $prepared[$itemKey] = $itemValue;
+            $prepared[$itemKey] = $bound;
         }
 
         return $prepared;

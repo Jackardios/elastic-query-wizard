@@ -4,16 +4,20 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Exceptions;
 
-use Jackardios\QueryWizard\Exceptions\InvalidQuery;
-use Symfony\Component\HttpFoundation\Response;
+use Jackardios\QueryWizard\Contracts\FilterInterface;
+use Jackardios\QueryWizard\Exceptions\InvalidFilterValue;
 
-final class InvalidGeoBoundingBoxValue extends InvalidQuery
+/**
+ * The 400 a geo bounding box filter throws for a value it cannot read.
+ */
+final class InvalidGeoBoundingBoxValue extends InvalidFilterValue
 {
-    public static function make(string $propertyName): self
+    public static function invalidBox(mixed $value, string|FilterInterface $filter): self
     {
-        return new self(
-            Response::HTTP_UNPROCESSABLE_ENTITY,
-            "`$propertyName` must be valid geo bounding box array in `left,bottom,right,top` format"
+        return self::make(
+            $value,
+            $filter,
+            'Expected four coordinates in `left,bottom,right,top` order, or `left`, `bottom`, `right` and `top` keys.'
         );
     }
 }

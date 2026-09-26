@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Exceptions;
 
-use Jackardios\QueryWizard\Exceptions\InvalidQuery;
-use Symfony\Component\HttpFoundation\Response;
+use Jackardios\QueryWizard\Contracts\FilterInterface;
+use Jackardios\QueryWizard\Exceptions\InvalidFilterValue;
 
-final class InvalidRangeValue extends InvalidQuery
+/**
+ * The 400 a range filter throws for a value it cannot read.
+ */
+final class InvalidRangeValue extends InvalidFilterValue
 {
     private const OPERATOR_MIGRATION = [
         'from' => 'gte',
@@ -16,21 +19,19 @@ final class InvalidRangeValue extends InvalidQuery
         'include_upper' => 'lte (instead of lt)',
     ];
 
-    public static function make(string $propertyName): self
+    public static function invalidBounds(mixed $value, string|FilterInterface $filter): self
     {
-        return new self(
-            Response::HTTP_UNPROCESSABLE_ENTITY,
-            "`$propertyName` must be valid array with valid keys: `gt`, `gte`, `lt` or `lte`"
-        );
+        return self::make($value, $filter, 'Expected an array with `gt`, `gte`, `lt` or `lte` keys.');
     }
 
-    public static function legacyOperator(string $propertyName, string $operator): self
+    public static function legacyOperator(mixed $value, string|FilterInterface $filter, string $operator): self
     {
         $suggestion = self::OPERATOR_MIGRATION[$operator] ?? 'gt/gte/lt/lte';
 
-        return new self(
-            Response::HTTP_UNPROCESSABLE_ENTITY,
-            "`$propertyName` uses legacy operator `$operator` which was removed in Elasticsearch 9.x. Use `$suggestion` instead."
+        return self::make(
+            $value,
+            $filter,
+            "The `{$operator}` operator was removed in Elasticsearch 9.x. Use `{$suggestion}` instead."
         );
     }
 }

@@ -35,6 +35,7 @@ Filters allow you to limit Elasticsearch query results based on query parameters
 - [Aliases](#aliases)
 - [Bool Clause Methods](#bool-clause-methods)
 - [Filter Groups](#filter-groups)
+- [Invalid Values](#invalid-values)
 
 ## Quick Reference
 
@@ -747,7 +748,9 @@ GET /places?filter[nearby][lat]=55.75&filter[nearby][lon]=37.62&filter[nearby][d
 |-----------|-------------|
 | `lat` | Latitude of the center point |
 | `lon` | Longitude of the center point |
-| `distance` | Search radius (e.g., `10km`, `5mi`, `1000m`) |
+| `distance` | Search radius greater than zero, with an optional unit (e.g., `10km`, `5mi`, `1000m`; meters without one) |
+
+Latitude must be within [-90, 90] and longitude within [-180, 180]. Units are case-sensitive, as in Elasticsearch.
 
 ### Elasticsearch Query
 
@@ -1050,7 +1053,6 @@ ElasticFilter::trashed('deleted')
 # Include deleted
 GET /posts?filter[trashed]=with
 GET /posts?filter[trashed]=true
-GET /posts?filter[trashed]=1
 
 # Only deleted
 GET /posts?filter[trashed]=only
@@ -1058,7 +1060,6 @@ GET /posts?filter[trashed]=only
 # Explicitly exclude deleted
 GET /posts?filter[trashed]=without
 GET /posts?filter[trashed]=false
-GET /posts?filter[trashed]=0
 ```
 
 ### Parameter Values
@@ -1066,9 +1067,11 @@ GET /posts?filter[trashed]=0
 | Value | Description |
 |-------|-------------|
 | (not specified) | Only non-deleted records |
-| `with`, `true`, `1` | All records, including deleted |
+| `with`, `true` | All records, including deleted |
 | `only` | Only deleted records |
-| `without`, `false`, `0` | Only non-deleted records |
+| `without`, `false` | Only non-deleted records |
+
+Values are read in any letter case. Any other value, `1` and `0` included, returns 400 (`InvalidFilterValue`).
 
 ### Important Limitation
 
@@ -1527,3 +1530,28 @@ Nested groups are resolved recursively and support arbitrary depth.
    defaults to its path, so two nested groups on one path need names), and a leaf alias can be in only one group. The
    build throws `FilterNameConflictException` for either; before, the other filter was silently dropped or one value
    applied in both groups.
+
+---
+
+## Invalid Values
+
+A filter value that a filter cannot read returns 400. The exception extends `laravel-query-wizard`'s
+`InvalidFilterValue` (error code `invalid_filter_value`), names the filter by its public name (the alias when set) and
+carries the value (`$exception->filterValue`) and what was expected (`$exception->reason`):
+
+| Filter | Rejected values | Exception |
+|--------|-----------------|-----------|
+| `range` | not an array; a key other than `gt`, `gte`, `lt`, `lte`; a legacy key (`from`, `to`, `include_lower`, `include_upper`); a bound that is not a decimal number or an ISO 8601 date (exponents and date math such as `now-1d` included) | `InvalidRangeValue` |
+| `geoBoundingBox` | not four finite coordinates; unknown edge names; latitude outside [-90, 90] or longitude outside [-180, 180] | `InvalidGeoBoundingBoxValue` |
+| `geoDistance` | missing `lat`, `lon` or `distance`; coordinates out of range; a distance that is not a positive number with an optional unit | `InvalidGeoDistanceValue` |
+| `geoShape` | an unknown type; coordinates that do not form the shape | `InvalidGeoShapeValue` |
+| `exists`, `null` | not a boolean (`true`, `false`, `1`, `0`, `yes`, `no`, `on`, `off`, in any letter case) | `InvalidFilterValue` |
+| `trashed` | not `with`, `only`, `without`, `true` or `false` | `InvalidFilterValue` |
+
+A value of the wrong shape for the filter (for example a list for `exists`) is rejected earlier with 400
+`InvalidFilterQuery`. Blank values (`null`, whitespace, `,`) add no condition. `disable_invalid_filter_query_exception`
+covers unknown filter names only, not unreadable values.
+
+A range bound that is a date is passed on as sent, and Elasticsearch reads it with the field's format, in UTC unless
+the query sets `time_zone` (`->withParameters(['time_zone' => '+03:00'])`).
+

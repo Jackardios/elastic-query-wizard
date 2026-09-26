@@ -4,50 +4,46 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Exceptions;
 
-use Jackardios\QueryWizard\Exceptions\InvalidQuery;
-use Symfony\Component\HttpFoundation\Response;
+use Jackardios\QueryWizard\Contracts\FilterInterface;
+use Jackardios\QueryWizard\Exceptions\InvalidFilterValue;
 
-final class InvalidGeoShapeValue extends InvalidQuery
+/**
+ * The 400 a geo shape filter throws for a value it cannot read.
+ */
+final class InvalidGeoShapeValue extends InvalidFilterValue
 {
-    public static function unknownType(string $propertyName, ?string $type): self
+    public static function unknownType(mixed $value, string|FilterInterface $filter, ?string $type): self
     {
-        $typeStr = $type ?? 'null';
+        $typeString = $type ?? 'null';
 
-        return new self(
-            Response::HTTP_UNPROCESSABLE_ENTITY,
-            "`$propertyName` has unknown shape type `$typeStr`. Supported: envelope, polygon, point, indexed_shape"
+        return self::make(
+            $value,
+            $filter,
+            "Unknown shape type `{$typeString}`. Supported: envelope, polygon, point, indexed_shape."
         );
     }
 
-    public static function invalidEnvelope(string $propertyName): self
+    public static function invalidEnvelope(mixed $value, string|FilterInterface $filter): self
     {
-        return new self(
-            Response::HTTP_UNPROCESSABLE_ENTITY,
-            "`$propertyName` envelope requires coordinates as [[minLon, maxLat], [maxLon, minLat]]"
+        return self::make($value, $filter, 'An envelope expects coordinates as [[minLon, maxLat], [maxLon, minLat]].');
+    }
+
+    public static function invalidPolygon(mixed $value, string|FilterInterface $filter): self
+    {
+        return self::make(
+            $value,
+            $filter,
+            'A polygon expects coordinates as a list of rings of at least four [lon, lat] points.'
         );
     }
 
-    public static function invalidPolygon(string $propertyName): self
+    public static function invalidPoint(mixed $value, string|FilterInterface $filter): self
     {
-        return new self(
-            Response::HTTP_UNPROCESSABLE_ENTITY,
-            "`$propertyName` polygon requires coordinates as array of [lon, lat] pairs"
-        );
+        return self::make($value, $filter, 'A point expects coordinates as [lon, lat].');
     }
 
-    public static function invalidPoint(string $propertyName): self
+    public static function invalidIndexedShape(mixed $value, string|FilterInterface $filter): self
     {
-        return new self(
-            Response::HTTP_UNPROCESSABLE_ENTITY,
-            "`$propertyName` point requires coordinates as [lon, lat]"
-        );
-    }
-
-    public static function invalidIndexedShape(string $propertyName): self
-    {
-        return new self(
-            Response::HTTP_UNPROCESSABLE_ENTITY,
-            "`$propertyName` indexed_shape requires `index` and `id` as strings"
-        );
+        return self::make($value, $filter, 'An indexed shape expects an `id` string.');
     }
 }

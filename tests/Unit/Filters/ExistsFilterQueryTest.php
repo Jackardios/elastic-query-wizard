@@ -6,6 +6,7 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Filters;
 
 use Jackardios\ElasticQueryWizard\Filters\ExistsFilter;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use Jackardios\QueryWizard\Exceptions\InvalidFilterValue;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -61,18 +62,15 @@ class ExistsFilterQueryTest extends UnitTestCase
     }
 
     #[Test]
-    public function it_ignores_invalid_boolean_value(): void
+    public function it_rejects_a_value_that_is_not_a_boolean(): void
     {
-        $wizard = $this
+        $this->expectException(InvalidFilterValue::class);
+        $this->expectExceptionMessage('Expected a boolean');
+
+        $this
             ->createElasticWizardWithFilters(['has_image' => 'definitely'])
-            ->allowedFilters(ExistsFilter::make('has_image'));
-        $wizard->build();
-
-        $filterQueries = $this->getFilterQueries($wizard->boolQuery());
-        $mustNotQueries = $this->getMustNotQueries($wizard->boolQuery());
-
-        $this->assertEmpty($filterQueries);
-        $this->assertEmpty($mustNotQueries);
+            ->allowedFilters(ExistsFilter::make('has_image'))
+            ->build();
     }
 
     #[Test]

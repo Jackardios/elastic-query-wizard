@@ -36,7 +36,7 @@ final class GeoBoundingBoxFilter extends AbstractElasticFilter
             return null;
         }
 
-        [$left, $bottom, $right, $top] = FilterValueSanitizer::geoBoundingBoxValue($value, $this->property);
+        [$left, $bottom, $right, $top] = FilterValueSanitizer::geoBoundingBoxValue($value, $this);
 
         $query = Query::geoBoundingBox($this->property, $top, $left, $bottom, $right);
 

@@ -4,16 +4,20 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Exceptions;
 
-use Jackardios\QueryWizard\Exceptions\InvalidQuery;
-use Symfony\Component\HttpFoundation\Response;
+use Jackardios\QueryWizard\Contracts\FilterInterface;
+use Jackardios\QueryWizard\Exceptions\InvalidFilterValue;
 
-final class InvalidGeoDistanceValue extends InvalidQuery
+/**
+ * The 400 a geo distance filter throws for a value it cannot read.
+ */
+final class InvalidGeoDistanceValue extends InvalidFilterValue
 {
-    public static function make(string $propertyName): self
+    public static function invalidDistance(mixed $value, string|FilterInterface $filter): self
     {
-        return new self(
-            Response::HTTP_UNPROCESSABLE_ENTITY,
-            "`$propertyName` must be valid array with `lat`, `lon` and `distance` keys, for example: `['lat' => 55.105673, 'lon' => 36.461995, 'distance' => 3000]`"
+        return self::make(
+            $value,
+            $filter,
+            'Expected `lat`, `lon` and `distance` keys, for example `lat=55.75&lon=37.61&distance=3km`.'
         );
     }
 }

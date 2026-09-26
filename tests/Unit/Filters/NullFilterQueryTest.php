@@ -6,6 +6,7 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Filters;
 
 use Jackardios\ElasticQueryWizard\Filters\NullFilter;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use Jackardios\QueryWizard\Exceptions\InvalidFilterValue;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -61,18 +62,15 @@ class NullFilterQueryTest extends UnitTestCase
     }
 
     #[Test]
-    public function it_ignores_invalid_boolean_value(): void
+    public function it_rejects_a_value_that_is_not_a_boolean(): void
     {
-        $wizard = $this
+        $this->expectException(InvalidFilterValue::class);
+        $this->expectExceptionMessage('Expected a boolean');
+
+        $this
             ->createElasticWizardWithFilters(['is_null' => 'invalid'])
-            ->allowedFilters(NullFilter::make('deleted_at', 'is_null'));
-        $wizard->build();
-
-        $filterQueries = $this->getFilterQueries($wizard->boolQuery());
-        $mustNotQueries = $this->getMustNotQueries($wizard->boolQuery());
-
-        $this->assertEmpty($filterQueries);
-        $this->assertEmpty($mustNotQueries);
+            ->allowedFilters(NullFilter::make('deleted_at', 'is_null'))
+            ->build();
     }
 
     #[Test]

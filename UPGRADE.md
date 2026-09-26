@@ -450,6 +450,15 @@ The request is parsed by `laravel-query-wizard` v3, whose stricter rules apply t
   children still match. Group configuration errors no longer wait for a request that uses the group: `children()`
   throws `UnsupportedFilterInGroupException` for a passthrough, callback or trashed child, and the build throws
   `FilterNameConflictException` for a group named like another filter or a filter in two groups.
+- **Unreadable values are 400s.** `InvalidRangeValue`, `InvalidGeoBoundingBoxValue`, `InvalidGeoDistanceValue` and
+  `InvalidGeoShapeValue` extend `laravel-query-wizard`'s `InvalidFilterValue`: the status is 400 (was 422), the error
+  code `invalid_filter_value`, and the message names the filter by its public name. Their factories take the value and
+  the filter (`InvalidRangeValue::invalidBounds($value, $filter)`, `InvalidGeoShapeValue::invalidPoint($value, $filter)`,
+  …) instead of a property name. Values that reached Elasticsearch and failed there with a 500 are now rejected
+  first: a range bound that is not a decimal number or an ISO 8601 date (`abc`, `1e3`, date math such as `now-1d`), a
+  geo distance that is not a positive number with a unit, and coordinates out of range. Exists and null filters reject
+  a value that is not a boolean, and the trashed filter one that is not `with`, `only`, `without`, `true` or `false`
+  (`1` and `0` included); v2 ignored them.
 - **Values.** A range bound left empty is no bound. A geo bounding box also takes named edges (`left`, `bottom`,
   `right`, `top`). A geo shape polygon keeps its holes and is closed when its last point differs from its first.
   Coordinates that overflow to infinity (`1e999`) are rejected instead of failing the JSON encoding with a 500.

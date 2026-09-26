@@ -81,7 +81,7 @@ class RangeFilterQueryTest extends UnitTestCase
     public function it_throws_for_legacy_from_operator(): void
     {
         $this->expectException(InvalidRangeValue::class);
-        $this->expectExceptionMessage('uses legacy operator `from` which was removed in Elasticsearch 9.x. Use `gte` instead');
+        $this->expectExceptionMessage('The `from` operator was removed in Elasticsearch 9.x. Use `gte` instead');
 
         $this
             ->createElasticWizardWithFilters(['age' => ['from' => '18']])
@@ -93,7 +93,7 @@ class RangeFilterQueryTest extends UnitTestCase
     public function it_throws_for_legacy_to_operator(): void
     {
         $this->expectException(InvalidRangeValue::class);
-        $this->expectExceptionMessage('uses legacy operator `to` which was removed in Elasticsearch 9.x. Use `lte` instead');
+        $this->expectExceptionMessage('The `to` operator was removed in Elasticsearch 9.x. Use `lte` instead');
 
         $this
             ->createElasticWizardWithFilters(['age' => ['to' => '65']])
@@ -105,7 +105,7 @@ class RangeFilterQueryTest extends UnitTestCase
     public function it_throws_for_legacy_include_lower_operator(): void
     {
         $this->expectException(InvalidRangeValue::class);
-        $this->expectExceptionMessage('legacy operator `include_lower`');
+        $this->expectExceptionMessage('The `include_lower` operator was removed');
 
         $this
             ->createElasticWizardWithFilters(['age' => ['include_lower' => true]])
@@ -117,7 +117,7 @@ class RangeFilterQueryTest extends UnitTestCase
     public function it_throws_for_legacy_include_upper_operator(): void
     {
         $this->expectException(InvalidRangeValue::class);
-        $this->expectExceptionMessage('legacy operator `include_upper`');
+        $this->expectExceptionMessage('The `include_upper` operator was removed');
 
         $this
             ->createElasticWizardWithFilters(['age' => ['include_upper' => true]])

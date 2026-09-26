@@ -36,7 +36,7 @@ final class GeoDistanceFilter extends AbstractElasticFilter
             return null;
         }
 
-        ['lon' => $lon, 'lat' => $lat, 'distance' => $distance] = FilterValueSanitizer::geoDistanceValue($value, $this->property);
+        ['lon' => $lon, 'lat' => $lat, 'distance' => $distance] = FilterValueSanitizer::geoDistanceValue($value, $this);
 
         $query = Query::geoDistance($this->property, $lat, $lon, $distance);
 
