@@ -6,6 +6,7 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Filters;
 
 use Jackardios\ElasticQueryWizard\Filters\MatchFilter;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use Jackardios\QueryWizard\Exceptions\InvalidFilterQuery;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -59,16 +60,13 @@ class MatchFilterQueryTest extends UnitTestCase
     }
 
     #[Test]
-    public function it_joins_array_values_with_comma(): void
+    public function it_refuses_a_list(): void
     {
-        $wizard = $this
+        $this->expectException(InvalidFilterQuery::class);
+
+        $this
             ->createElasticWizardWithFilters(['name' => ['foo', 'bar']])
-            ->allowedFilters(MatchFilter::make('name'));
-        $wizard->build();
-
-        $queries = $this->getMustQueries($wizard->boolQuery());
-
-        $this->assertCount(1, $queries);
-        $this->assertEquals(['match' => ['name' => ['query' => 'foo,bar']]], $queries[0]);
+            ->allowedFilters(MatchFilter::make('name'))
+            ->build();
     }
 }

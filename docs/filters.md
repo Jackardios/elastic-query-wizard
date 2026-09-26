@@ -142,7 +142,9 @@ so `?filter[status]=published,draft` gives `term` and `ids` a list. The value is
 
 Filters whose value is one pattern or text don't split it: `prefix`, `wildcard`, `regexp`, `fuzzy`, `match`,
 `matchPhrase`, `matchPhrasePrefix`, `multiMatch`, `queryString`, `simpleQueryString` and `moreLikeThis`, so `a{1,3}` and `red, blue`
-reach Elasticsearch as sent. Call `withValueSplitting()` on one of them to split again.
+reach Elasticsearch as sent. A list (`?filter[title][]=red&filter[title][]=blue`) is a 400 for all of them except
+`moreLikeThis`, which reads a list as several texts; with `withValueSplitting()` a value containing the separator becomes
+a list too.
 
 ### Bool Clauses (inFilter / inMust / inShould / inMustNot)
 

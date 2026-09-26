@@ -23,8 +23,7 @@ final class SimpleQueryStringFilter extends AbstractElasticFilter
     use LimitsValueLength;
 
     /**
-     * The value is one text, which may contain the separator; call
-     * withValueSplitting() to accept a list.
+     * The value is one text, which may contain the separator; a list is a 400.
      */
     protected bool $splitValues = false;
 
@@ -46,7 +45,7 @@ final class SimpleQueryStringFilter extends AbstractElasticFilter
 
     public function validateValueShape(mixed $value): ?string
     {
-        return $this->validateScalarOrFlatListValueShape($value);
+        return $this->validateScalarOrBlankValueShape($value);
     }
 
     protected function getDefaultClause(): BoolClause
@@ -56,10 +55,6 @@ final class SimpleQueryStringFilter extends AbstractElasticFilter
 
     public function buildQuery(mixed $value): ?QueryInterface
     {
-        if (is_array($value)) {
-            $value = FilterValueSanitizer::arrayToCommaSeparatedString($value);
-        }
-
         $prepared = FilterValueSanitizer::toString($value);
 
         if ($prepared === null || $prepared === '') {

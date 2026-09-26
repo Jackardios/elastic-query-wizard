@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Groups;
 
+use Closure;
 use Jackardios\ElasticQueryWizard\Concerns\HasBoolClause;
 use Jackardios\ElasticQueryWizard\Enums\BoolClause;
 use Jackardios\ElasticQueryWizard\Exceptions\DuplicateGroupChildFilterNameException;
@@ -15,6 +16,7 @@ use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\QueryWizard\Contracts\FilterInterface;
 use Jackardios\QueryWizard\Filters\AbstractFilter;
+use LogicException;
 
 /**
  * Base class for filter groups.
@@ -71,6 +73,47 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
     public function getType(): string
     {
         return 'group';
+    }
+
+    /**
+     * @throws LogicException A group has no value of its own; set a default on a child filter
+     */
+    public function default(mixed $value): static
+    {
+        throw $this->valueModifierException('default');
+    }
+
+    /**
+     * @throws LogicException A group has no value of its own; prepare the value of a child filter
+     */
+    public function prepareValueWith(Closure $callback): static
+    {
+        throw $this->valueModifierException('prepareValueWith');
+    }
+
+    /**
+     * @throws LogicException A group has no value of its own; add the condition to a child filter
+     */
+    public function when(Closure $callback): static
+    {
+        throw $this->valueModifierException('when');
+    }
+
+    /**
+     * @throws LogicException A group has no value of its own; read a child filter's value as a boolean
+     */
+    public function asBoolean(): static
+    {
+        throw $this->valueModifierException('asBoolean');
+    }
+
+    private function valueModifierException(string $method): LogicException
+    {
+        return new LogicException(sprintf(
+            'Filter group `%s` has no value of its own, so %s() does not apply to it; call it on a child filter.',
+            $this->getName(),
+            $method
+        ));
     }
 
     /**

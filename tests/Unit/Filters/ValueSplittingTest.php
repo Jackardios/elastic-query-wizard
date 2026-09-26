@@ -7,13 +7,15 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Filters;
 use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use Jackardios\QueryWizard\Contracts\FilterInterface;
+use Jackardios\QueryWizard\Exceptions\InvalidFilterQuery;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Request values are split by laravel-query-wizard only, with its separator,
- * and filters whose value is one pattern or text are not split at all.
+ * and filters whose value is one pattern or text are not split at all; the text
+ * filters refuse a list, except more-like-this, which takes several texts.
  */
 #[Group('unit')]
 #[Group('filter')]
@@ -98,6 +100,43 @@ class ValueSplittingTest extends UnitTestCase
     }
 
     /**
+     * @return iterable<string, array{FilterInterface}>
+     */
+    public static function singleTextFilters(): iterable
+    {
+        yield 'match' => [ElasticFilter::match('title')];
+        yield 'match phrase' => [ElasticFilter::matchPhrase('title')];
+        yield 'match phrase prefix' => [ElasticFilter::matchPhrasePrefix('title')];
+        yield 'multi match' => [ElasticFilter::multiMatch(['title', 'body'], 'title')];
+        yield 'query string' => [ElasticFilter::queryString('title')];
+        yield 'simple query string' => [ElasticFilter::simpleQueryString('title')];
+    }
+
+    #[Test]
+    #[DataProvider('singleTextFilters')]
+    public function a_text_filter_refuses_a_list(FilterInterface $filter): void
+    {
+        $this->expectException(InvalidFilterQuery::class);
+
+        $this->createElasticWizardWithFilters([$filter->getName() => ['red', 'blue']])->allowedFilters($filter)->build();
+    }
+
+    #[Test]
+    public function a_more_like_this_list_is_several_texts(): void
+    {
+        $filter = ElasticFilter::moreLikeThis(['title'], 'similar');
+
+        $this->assertSame(
+            ['red, green', 'blue'],
+            $this->mustQueries($filter, ['red, green', 'blue'])[0]['more_like_this']['like']
+        );
+        $this->assertSame(
+            'red, green',
+            $this->mustQueries($filter, 'red, green')[0]['more_like_this']['like']
+        );
+    }
+
+    /**
      * @return array<int, mixed>
      */
     private function filterQueries(FilterInterface $filter, string $value): array
@@ -111,7 +150,7 @@ class ValueSplittingTest extends UnitTestCase
     /**
      * @return array<int, mixed>
      */
-    private function mustQueries(FilterInterface $filter, string $value): array
+    private function mustQueries(FilterInterface $filter, mixed $value): array
     {
         $wizard = $this->createElasticWizardWithFilters([$filter->getName() => $value])->allowedFilters($filter);
         $wizard->build();

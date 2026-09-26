@@ -6,6 +6,7 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Filters;
 
 use Jackardios\ElasticQueryWizard\Filters\SimpleQueryStringFilter;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use Jackardios\QueryWizard\Exceptions\InvalidFilterQuery;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -80,16 +81,13 @@ class SimpleQueryStringFilterQueryTest extends UnitTestCase
     }
 
     #[Test]
-    public function it_handles_array_input_by_joining_with_comma(): void
+    public function it_refuses_a_list(): void
     {
-        $wizard = $this
+        $this->expectException(InvalidFilterQuery::class);
+
+        $this
             ->createElasticWizardWithFilters(['search' => ['quick', '+brown']])
-            ->allowedFilters(SimpleQueryStringFilter::make('search'));
-        $wizard->build();
-
-        $queries = $this->getMustQueries($wizard->boolQuery());
-
-        $this->assertCount(1, $queries);
-        $this->assertEquals(['simple_query_string' => ['query' => 'quick,+brown', 'fields' => ['search']]], $queries[0]);
+            ->allowedFilters(SimpleQueryStringFilter::make('search'))
+            ->build();
     }
 }

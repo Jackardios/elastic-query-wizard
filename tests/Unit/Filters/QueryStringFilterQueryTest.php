@@ -6,6 +6,7 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Filters;
 
 use Jackardios\ElasticQueryWizard\Filters\QueryStringFilter;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use Jackardios\QueryWizard\Exceptions\InvalidFilterQuery;
 use Jackardios\QueryWizard\Exceptions\InvalidFilterValue;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
@@ -83,17 +84,14 @@ class QueryStringFilterQueryTest extends UnitTestCase
     }
 
     #[Test]
-    public function it_handles_array_input_by_joining_with_comma(): void
+    public function it_refuses_a_list(): void
     {
-        $wizard = $this
+        $this->expectException(InvalidFilterQuery::class);
+
+        $this
             ->createElasticWizardWithFilters(['search' => ['quick', 'brown']])
-            ->allowedFilters(QueryStringFilter::make('search'));
-        $wizard->build();
-
-        $queries = $this->getMustQueries($wizard->boolQuery());
-
-        $this->assertCount(1, $queries);
-        $this->assertEquals(['query_string' => ['query' => 'quick,brown', 'fields' => ['search'], 'allow_leading_wildcard' => false]], $queries[0]);
+            ->allowedFilters(QueryStringFilter::make('search'))
+            ->build();
     }
 
     #[Test]
