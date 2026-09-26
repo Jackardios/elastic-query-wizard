@@ -492,6 +492,7 @@ class ElasticQueryWizard extends BaseQueryWizard
                 }
             }
 
+            /** @var Builder<Model> $builder */
             $shape->applyTo($builder);
         };
 

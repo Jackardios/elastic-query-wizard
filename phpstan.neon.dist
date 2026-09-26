@@ -2,11 +2,3 @@ parameters:
   level: 9
   paths:
     - src
-  ignoreErrors:
-    # laravel-query-wizard types EloquentShape::applyTo() as Builder<Model>, which a builder of a
-    # specific model does not match (Builder is invariant in TModel)
-    -
-      identifier: argument.templateType
-      message: '#EloquentShape::applyTo\(\)#'
-      path: src/ElasticQueryWizard.php
-      count: 1
