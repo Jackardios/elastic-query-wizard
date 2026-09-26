@@ -177,4 +177,4 @@ jobs:
         run: composer install --no-interaction --no-progress
 
       - name: Check code style
-        run: vendor/bin/php-cs-fixer fix --dry-run --diff
+        run: vendor/bin/pint --test

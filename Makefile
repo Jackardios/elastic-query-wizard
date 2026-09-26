@@ -256,12 +256,12 @@ lint: format-check static-analysis ## Quick lint check (no tests)
 
 format-check: ## Check code style (dry-run)
 	@printf "$(YELLOW)→ Checking code style$(RESET)\n"
-	@vendor/bin/php-cs-fixer fix --dry-run --diff --verbose
+	@vendor/bin/pint --test
 	@printf "$(GREEN)✔ Code style OK$(RESET)\n"
 
 format: ## Fix code style
 	@printf "$(YELLOW)→ Fixing code style$(RESET)\n"
-	@vendor/bin/php-cs-fixer fix --verbose
+	@vendor/bin/pint
 	@printf "$(GREEN)✔ Code style fixed$(RESET)\n"
 
 static-analysis: ## Run PHPStan static analysis
