@@ -167,8 +167,20 @@ class NestedGroupTest extends UnitTestCase
         $this->assertNotNull($query);
         $array = $query->toArray();
 
-        $this->assertArrayHasKey('nested', $array);
-        $this->assertArrayHasKey('inner_hits', $array['nested']);
+        $this->assertSame(['name' => 'sides'], $array['nested']['inner_hits']);
+    }
+
+    #[Test]
+    public function inner_hits_are_named_after_the_group(): void
+    {
+        $group = ElasticGroup::nested('comments', 'recent_comments')
+            ->innerHits(['size' => 3])
+            ->children([ElasticFilter::term('comments.status', 'status')]);
+
+        $this->assertSame(
+            ['size' => 3, 'name' => 'recent_comments'],
+            $group->buildGroupQuery(['status' => 'approved'])?->toArray()['nested']['inner_hits']
+        );
     }
 
     #[Test]
@@ -222,7 +234,7 @@ class NestedGroupTest extends UnitTestCase
         $this->assertEquals('reviews', $array['nested']['path']);
         $this->assertEquals('avg', $array['nested']['score_mode']);
         $this->assertTrue($array['nested']['ignore_unmapped']);
-        $this->assertEquals(['size' => 3], $array['nested']['inner_hits']);
+        $this->assertEquals(['size' => 3, 'name' => 'reviews'], $array['nested']['inner_hits']);
     }
 
     #[Test]

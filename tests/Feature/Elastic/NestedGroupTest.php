@@ -84,6 +84,21 @@ class NestedGroupTest extends TestCase
         $this->assertSame('jane', $hits[0]->innerHits()->get('four_star')?->first()?->source['author']);
     }
 
+    #[Test]
+    public function two_groups_on_one_path_return_inner_hits_under_their_names(): void
+    {
+        $hits = $this->hits(
+            ['author' => 'john', 'rating' => '4'],
+            ElasticGroup::nested('comments', 'by_author')->innerHits()->children([ElasticFilter::term('comments.author', 'author')]),
+            ElasticGroup::nested('comments', 'by_rating')->innerHits()->children([ElasticFilter::term('comments.rating', 'rating')]),
+        );
+
+        $this->assertSame(['A'], $this->names($hits));
+        $this->assertEqualsCanonicalizing(['by_author', 'by_rating'], $hits[0]->innerHits()->keys()->all());
+        $this->assertSame('john', $hits[0]->innerHits()->get('by_author')?->first()?->source['author']);
+        $this->assertSame('jane', $hits[0]->innerHits()->get('by_rating')?->first()?->source['author']);
+    }
+
     private function commentsGroup(): NestedGroup
     {
         return ElasticGroup::nested('comments')->children([

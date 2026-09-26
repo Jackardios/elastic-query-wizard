@@ -1534,7 +1534,7 @@ ElasticGroup::nested('comments')
 
 | Option | Description |
 |--------|-------------|
-| `name` | Name for the inner_hits result set |
+| `name` | Name for the inner_hits result set; defaults to the group's name (its alias, or else its path) |
 | `size` | Maximum number of nested docs to return (default: 3) |
 | `from` | Offset for pagination |
 | `sort` | Sort order for nested documents |

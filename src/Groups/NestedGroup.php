@@ -81,6 +81,9 @@ final class NestedGroup extends AbstractElasticGroup
     /**
      * Enable inner_hits to retrieve matching nested documents.
      *
+     * The result set is named after the group unless the options set a `name`,
+     * so two groups on one path return separate result sets.
+     *
      * @param  array<string, mixed>  $options  Options: name, size, from, sort, highlight, _source
      *
      * @example innerHits() // Enable with defaults
@@ -140,7 +143,7 @@ final class NestedGroup extends AbstractElasticGroup
         }
 
         if ($this->innerHits !== null) {
-            $nestedQuery->innerHits($this->innerHits);
+            $nestedQuery->innerHits($this->innerHits + ['name' => $this->getName()]);
         }
 
         return $nestedQuery;
