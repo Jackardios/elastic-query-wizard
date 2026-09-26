@@ -32,6 +32,11 @@ class TestModel extends Model
         return $this->hasMany(RelatedModel::class);
     }
 
+    public function relatedModelsWithDefaults(): HasMany
+    {
+        return $this->hasMany(RelatedModelWithDefaults::class);
+    }
+
     public function relatedModel(): BelongsTo
     {
         return $this->belongsTo(RelatedModel::class);
