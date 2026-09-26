@@ -30,7 +30,7 @@ class FieldsTest extends TestCase
     public function it_fetches_all_columns_if_no_field_was_requested(): void
     {
         $model = $this
-            ->createElasticWizardWithFields([])
+            ->createElasticWizardFromQuery()
             ->build()
             ->size(1)
             ->execute()
@@ -46,7 +46,7 @@ class FieldsTest extends TestCase
     public function it_fetches_all_columns_if_no_field_was_requested_but_allowed_fields_were_specified(): void
     {
         $model = $this
-            ->createElasticWizardWithFields([])
+            ->createElasticWizardFromQuery()
             ->allowedFields('id', 'name')
             ->build()
             ->size(1)
@@ -134,7 +134,22 @@ class FieldsTest extends TestCase
     }
 
     #[Test]
-    public function it_does_not_hide_everything_when_invalid_fields_are_ignored(): void
+    public function an_explicit_empty_root_fieldset_hides_every_root_attribute(): void
+    {
+        $model = $this
+            ->createElasticWizardWithFields(['testModel' => ''])
+            ->allowedFields('id', 'name')
+            ->build()
+            ->size(1)
+            ->execute()
+            ->models()
+            ->first();
+
+        $this->assertSame([], $model->toArray());
+    }
+
+    #[Test]
+    public function all_invalid_root_fields_hide_every_root_attribute_when_the_exception_is_disabled(): void
     {
         Config::set('query-wizard.disable_invalid_field_query_exception', true);
 
@@ -147,8 +162,8 @@ class FieldsTest extends TestCase
             ->models()
             ->first();
 
-        $this->assertNotEmpty($model->toArray());
-        $this->assertArrayHasKey('name', $model->toArray());
+        $this->assertSame($this->model->getKey(), $model->getKey());
+        $this->assertSame([], $model->toArray());
     }
 
     // ========== Relation Fields Tests ==========

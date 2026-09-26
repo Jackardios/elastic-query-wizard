@@ -15,7 +15,7 @@ This guide covers migrating from `jackardios/elastic-query-wizard` v2 to v3.
 ```json
 "php": "^8.2",
 "jackardios/es-scout-driver": "^1.0.0-rc.1",
-"jackardios/laravel-query-wizard": "^3.0.0-rc.2",
+"jackardios/laravel-query-wizard": "^3.0.0-rc.3",
 "laravel/framework": "^12.61.1 || ^13.12.0"
 ```
 
@@ -385,6 +385,18 @@ $builder->filter($query);
 $builder->should($query);
 $builder->mustNot($query);
 ```
+
+### Sparse Fieldsets
+
+Root and relation fieldsets follow `laravel-query-wizard`'s `EloquentQueryWizard`: an explicit empty root fieldset
+(`?fields[post]=`) and a root fieldset whose fields were all dropped as invalid (with
+`disable_invalid_field_query_exception` on) hide every root attribute. Before, both returned every column. Without a
+`fields` parameter for the resource the models keep every attribute, as before.
+
+The primary key and the Scout key are always selected, and hidden unless requested. A root fieldset keeps the count and
+exists includes, the selects added in `modifyQuery()` (hidden unless requested) and the keys of the eager loads registered
+there. A relation fieldset runs after the eager-load constraint registered in `modifyQuery()` and keeps the related
+model's `$with` and `$withCount`.
 
 ### Soft Deletes
 

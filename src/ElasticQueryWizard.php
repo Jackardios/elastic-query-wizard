@@ -16,12 +16,11 @@ use Jackardios\EsScoutDriver\Query\Compound\BoolQuery;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Search\SearchResult;
 use Jackardios\QueryWizard\BaseQueryWizard;
-use Jackardios\QueryWizard\Concerns\HandlesRelationPostProcessing;
-use Jackardios\QueryWizard\Concerns\HandlesSafeRelationSelect;
 use Jackardios\QueryWizard\Config\QueryWizardConfig;
 use Jackardios\QueryWizard\Contracts\FilterInterface;
 use Jackardios\QueryWizard\Contracts\IncludeInterface;
 use Jackardios\QueryWizard\Contracts\SortInterface;
+use Jackardios\QueryWizard\Eloquent\EloquentShape;
 use Jackardios\QueryWizard\Eloquent\Includes\RelationshipInclude;
 use Jackardios\QueryWizard\QueryParametersManager;
 use Jackardios\QueryWizard\Schema\ResourceSchemaInterface;
@@ -54,9 +53,6 @@ use Jackardios\QueryWizard\Schema\ResourceSchemaInterface;
  */
 class ElasticQueryWizard extends BaseQueryWizard
 {
-    use HandlesRelationPostProcessing;
-    use HandlesSafeRelationSelect;
-
     /** @var SearchBuilder */
     protected mixed $subject;
 
@@ -66,30 +62,23 @@ class ElasticQueryWizard extends BaseQueryWizard
     /** @var array<int, Closure(Collection): Collection> */
     protected array $modelModifiers = [];
 
-    /** @var array<int, Closure(Builder, SearchResult): mixed> */
-    protected array $buildQueryModifiers = [];
-
     /** @var array<int, Closure(SearchBuilder): mixed> */
     protected array $searchBuilderModifiers = [];
 
     /** @var class-string<Model> */
     protected string $modelClass;
 
-    /** @var array<int, string> */
-    protected array $validatedRequestedRootFields = [];
+    /**
+     * The includes of the build in progress, by requested name.
+     *
+     * @var array<string, IncludeInterface>
+     */
+    private array $shapeIncludes = [];
 
-    /** @var array<string> */
-    protected array $safeRootHiddenFields = [];
+    /** @var array<string>|null */
+    private ?array $shapeRootFields = null;
 
-    /** @var array{fields: array<string>, relations: array<string, mixed>} */
-    protected array $relationFieldTree;
-
-    /** @var array{appends: array<string>, relations: array<string, mixed>} */
-    protected array $appendTree;
-
-    protected bool $relationFieldTreePrepared = false;
-
-    protected bool $appendTreePrepared = false;
+    private ?EloquentShape $shape = null;
 
     /** @var array<string, bool> */
     private static array $searchBuilderFluentMethods = [];
@@ -109,14 +98,8 @@ class ElasticQueryWizard extends BaseQueryWizard
         $this->modelClass = is_string($subject) ? $subject : $subject::class;
         /** @var SearchBuilder $searchBuilder */
         $searchBuilder = $this->modelClass::searchQuery();
-        $this->subject = $searchBuilder;
-        $this->originalSubject = clone $this->subject;
-        $this->resolveParametersFromContainer = $parameters === null;
-        $this->parameters = $parameters ?? app(QueryParametersManager::class);
-        $this->config = $config ?? app(QueryWizardConfig::class);
-        $this->schema = $schema;
-        $this->relationFieldTree = $this->emptyRelationFieldTree();
-        $this->appendTree = $this->emptyAppendTree();
+
+        parent::__construct($searchBuilder, $parameters, $config, $schema);
     }
 
     public static function for(Model|string $subject, ?QueryParametersManager $parameters = null): static
@@ -147,7 +130,7 @@ class ElasticQueryWizard extends BaseQueryWizard
 
     public function boolQuery(): BoolQuery
     {
-        if ($this->built) {
+        if ($this->isBuilt()) {
             $this->proxyModified = true;
         }
 
@@ -204,43 +187,27 @@ class ElasticQueryWizard extends BaseQueryWizard
 
     protected function normalizeStringToInclude(string $name): IncludeInterface
     {
-        return RelationshipInclude::fromString($name, $this->config->getCountSuffix(), $this->config->getExistsSuffix());
+        $config = $this->getConfig();
+
+        return RelationshipInclude::fromString($name, $config->getCountSuffix(), $config->getExistsSuffix());
     }
 
     protected function applyFields(array $fields): void
     {
-        $requestedFields = $fields;
-        $this->validatedRequestedRootFields = array_values(array_unique($requestedFields));
-        $this->safeRootHiddenFields = [];
-
-        // An empty set means no sparse fieldset narrows this resource. The base
-        // package resolves a `fields` parameter that selects nothing for this
-        // resource to [] rather than null, so without this guard the select below
-        // would collapse to the key alone and hide every other attribute.
-        // EloquentQueryWizard::applyFields() makes the same distinction.
-        if (empty($requestedFields) || $requestedFields === ['*']) {
-            return;
-        }
-
-        $fields = $this->applySafeRootFieldRequirements($requestedFields);
-        $this->safeRootHiddenFields = array_values(array_diff($fields, $requestedFields));
-
-        /** @var Model $model */
-        $model = new $this->modelClass;
-        $keyName = $model->getKeyName();
-        $scoutKeyName = $model->getScoutKeyName();
-
-        $requiredFields = array_unique(array_filter([$keyName, $scoutKeyName]));
-        $fields = array_values(array_unique(array_merge($requiredFields, $fields)));
-
-        $this->addBuildQueryModifier(function (Builder $eloquentBuilder) use ($fields) {
-            $eloquentBuilder->select($fields);
-        });
+        $this->shapeRootFields = $fields;
     }
 
     public function getResourceKey(): string
     {
         return $this->resolveDefaultResourceKey($this->modelClass);
+    }
+
+    /**
+     * The model the wizard searches, for wildcard appends and hidden fields.
+     */
+    protected function resourceModel(): Model
+    {
+        return new $this->modelClass;
     }
 
     /**
@@ -257,48 +224,8 @@ class ElasticQueryWizard extends BaseQueryWizard
     public function applyPostProcessingTo(mixed $results): mixed
     {
         $this->build();
-        $this->applyPostProcessingToResults($results);
 
-        return $results;
-    }
-
-    /**
-     * Apply post-processing to results (appends + relation field hiding).
-     *
-     * @param  Model|\Traversable<mixed>|array<mixed>  $results
-     */
-    protected function applyPostProcessingToResults(mixed $results): void
-    {
-        if (! empty($this->safeRootHiddenFields)) {
-            if ($results instanceof Model) {
-                $results->makeHidden($this->safeRootHiddenFields);
-            } else {
-                foreach ($results as $item) {
-                    if ($item instanceof Model) {
-                        $item->makeHidden($this->safeRootHiddenFields);
-                    }
-                }
-            }
-        }
-
-        $this->applyRelationPostProcessingToResults($results, $this->appendTree, $this->relationFieldTree);
-
-        $rootFields = $this->validatedRequestedRootFields;
-        if (! empty($rootFields) && ! in_array('*', $rootFields)) {
-            if ($results instanceof Model) {
-                $this->hideModelAttributesExcept($results, $rootFields);
-            } elseif ($results instanceof Collection) {
-                /** @var Model|null $firstModel */
-                $firstModel = $results->first();
-                if ($firstModel) {
-                    $newHidden = array_values(array_unique([
-                        ...$firstModel->getHidden(),
-                        ...array_diff(array_keys($firstModel->getAttributes()), $rootFields),
-                    ]));
-                    $results->each(fn (Model $model) => $model->setHidden($newHidden));
-                }
-            }
-        }
+        return $this->shape === null ? $results : $this->shape->postProcess($results);
     }
 
     protected function applyFilter(FilterInterface $filter, mixed $preparedValue): void
@@ -437,92 +364,74 @@ class ElasticQueryWizard extends BaseQueryWizard
     }
 
     /**
+     * Includes load with the models, so they are collected here and applied
+     * by the shape when the search results are resolved to models.
+     *
      * @param  array<int, string>  $validRequestedIncludes
      * @param  array<string, IncludeInterface>  $includesIndex
      */
     protected function applyValidatedIncludes(array $validRequestedIncludes, array $includesIndex): void
     {
-        $elasticIncludes = [];
-        $relationshipIncludes = [];
-        $otherIncludes = [];
-        $relationshipPaths = [];
-
         foreach ($validRequestedIncludes as $includeName) {
-            $include = $includesIndex[$includeName];
-            if ($include instanceof AbstractElasticInclude) {
-                $elasticIncludes[] = $include;
-            } elseif ($include->getType() === 'relationship') {
-                $relationshipIncludes[] = $include;
-                $relationshipPaths[] = $include->getRelation();
-            } else {
-                $otherIncludes[] = $include;
-            }
-        }
-
-        /** @var Model $model */
-        $model = new $this->modelClass;
-        $this->prepareSafeRelationSelectPlan($model, $relationshipPaths);
-
-        if (! empty($otherIncludes)) {
-            $this->addBuildQueryModifier(
-                function (Builder $builder, SearchResult $searchResult) use ($otherIncludes) {
-                    foreach ($otherIncludes as $include) {
-                        $include->apply($builder);
-                    }
-                }
-            );
-        }
-
-        if (! empty($relationshipIncludes)) {
-            $safeRelationSelectColumnsByPath = [];
-            foreach ($relationshipPaths as $relationPath) {
-                $columns = $this->getSafeRelationSelectColumns($relationPath);
-                if ($columns !== null) {
-                    $safeRelationSelectColumnsByPath[$relationPath] = $columns;
-                }
-            }
-
-            $this->addBuildQueryModifier(
-                function (Builder $builder, SearchResult $searchResult) use ($relationshipIncludes, $safeRelationSelectColumnsByPath) {
-                    foreach ($relationshipIncludes as $include) {
-                        $relationPath = $include->getRelation();
-                        $columns = $safeRelationSelectColumnsByPath[$relationPath] ?? null;
-
-                        if ($columns === null) {
-                            $include->apply($builder);
-
-                            continue;
-                        }
-
-                        $builder->with([
-                            $relationPath => static function ($query) use ($columns): void {
-                                $query->select($columns);
-                            },
-                        ]);
-                    }
-                }
-            );
-        }
-
-        if (! empty($elasticIncludes)) {
-            $this->addBuildQueryModifier(
-                function (Builder $builder, SearchResult $searchResult) use ($elasticIncludes) {
-                    foreach ($elasticIncludes as $include) {
-                        $include->setSearchResult($searchResult)->apply($builder);
-                    }
-                }
-            );
+            $this->shapeIncludes[$includeName] = $includesIndex[$includeName];
         }
     }
 
     protected function prepareBuild(): void
     {
+        $this->shapeIncludes = [];
+        $this->shapeRootFields = null;
+        $this->shape = null;
         $this->applySearchBuilderModifiers();
     }
 
+    /**
+     * Validate the Eloquent side of the request and register the callbacks
+     * that shape the model query and the loaded models.
+     *
+     * The callbacks capture the shape, not the wizard, so a clone or a later
+     * reconfiguration can't change a search that was already built. The shape
+     * runs after the developer's modifyQuery() callbacks, so it selects the
+     * keys of the eager loads they register.
+     */
     protected function finalizeBuild(): void
     {
-        $this->finalizeSubject();
+        $model = $this->resourceModel();
+        $shape = $this->shape = $this->resolveEloquentShape(
+            $this->shapeIncludes,
+            $this->shapeRootFields,
+            array_values(array_unique([$model->getKeyName(), $model->getScoutKeyName()])),
+        );
+        $elasticIncludes = array_values(array_filter(
+            $this->shapeIncludes,
+            static fn (IncludeInterface $include): bool => $include instanceof AbstractElasticInclude
+        ));
+        $queryModifiers = $this->queryModifiers;
+        $modelModifiers = $this->modelModifiers;
+
+        $this->subject
+            ->modifyQuery(static function (Builder $builder, array $rawResult) use ($queryModifiers, $elasticIncludes, $shape): void {
+                foreach ($queryModifiers as $callback) {
+                    $callback($builder, $rawResult);
+                }
+
+                if ($elasticIncludes !== []) {
+                    $searchResult = new SearchResult($rawResult);
+
+                    foreach ($elasticIncludes as $include) {
+                        $include->setSearchResult($searchResult);
+                    }
+                }
+
+                $shape->applyTo($builder);
+            })
+            ->modifyModels(static function (Collection $collection) use ($modelModifiers, $shape): Collection {
+                foreach ($modelModifiers as $callback) {
+                    $collection = $callback($collection);
+                }
+
+                return $shape->postProcess($collection);
+            });
     }
 
     protected function invalidateBuild(): void
@@ -534,71 +443,7 @@ class ElasticQueryWizard extends BaseQueryWizard
             );
         }
 
-        $this->resetSafeRelationSelectState();
-        $this->relationFieldTree = $this->emptyRelationFieldTree();
-        $this->relationFieldTreePrepared = false;
-        $this->appendTree = $this->emptyAppendTree();
-        $this->appendTreePrepared = false;
-        $this->safeRootHiddenFields = [];
         parent::invalidateBuild();
-        $this->buildQueryModifiers = [];
-        $this->validatedRequestedRootFields = [];
-    }
-
-    protected function finalizeSubject(): void
-    {
-        $this->prepareRelationFieldData();
-        $this->prepareAppendTreeData();
-
-        $queryModifiers = $this->queryModifiers;
-        $buildQueryModifiers = $this->buildQueryModifiers;
-        $modelModifiers = $this->modelModifiers;
-
-        $this->subject
-            ->modifyQuery(function (Builder $builder, array $rawResult) use ($queryModifiers, $buildQueryModifiers) {
-                foreach ($queryModifiers as $callback) {
-                    $callback($builder, $rawResult);
-                }
-
-                if ($buildQueryModifiers === []) {
-                    return;
-                }
-
-                $searchResult = new SearchResult($rawResult);
-                foreach ($buildQueryModifiers as $callback) {
-                    $callback($builder, $searchResult);
-                }
-            })
-            ->modifyModels(function (Collection $collection) use ($modelModifiers) {
-                foreach ($modelModifiers as $callback) {
-                    $collection = call_user_func($callback, $collection);
-                }
-
-                $this->applyPostProcessingToResults($collection);
-
-                return $collection;
-            });
-    }
-
-    protected function prepareRelationFieldData(): void
-    {
-        if ($this->relationFieldTreePrepared) {
-            return;
-        }
-
-        $this->relationFieldTreePrepared = true;
-        $relationFieldMap = $this->buildValidatedRelationFieldMap();
-        $this->relationFieldTree = $this->buildRelationFieldTree($relationFieldMap);
-    }
-
-    protected function prepareAppendTreeData(): void
-    {
-        if ($this->appendTreePrepared) {
-            return;
-        }
-
-        $this->appendTreePrepared = true;
-        $this->appendTree = $this->getValidRequestedAppendsTree();
     }
 
     protected function applySearchBuilderModifiers(): void
@@ -609,21 +454,13 @@ class ElasticQueryWizard extends BaseQueryWizard
     }
 
     /**
-     * @param  Closure(Builder, SearchResult): mixed  $callback
-     */
-    protected function addBuildQueryModifier(Closure $callback): void
-    {
-        $this->buildQueryModifiers[] = $callback;
-    }
-
-    /**
      * @param  Closure(SearchBuilder): mixed  $callback
      */
     protected function queueSearchBuilderMutation(Closure $callback): static
     {
         $this->searchBuilderModifiers[] = $callback;
 
-        if ($this->built) {
+        if ($this->isBuilt()) {
             $this->proxyModified = true;
             $callback($this->subject);
         }
@@ -712,7 +549,7 @@ class ElasticQueryWizard extends BaseQueryWizard
 
     private function assertBuildCallbackCanBeAdded(string $methodName): void
     {
-        if (! $this->built) {
+        if (! $this->isBuilt()) {
             return;
         }
 
@@ -728,9 +565,8 @@ class ElasticQueryWizard extends BaseQueryWizard
      * Only the taint flag is reset: a fresh clone has not been modified through
      * the search-builder proxy yet.
      *
-     * The derived post-processing state (append tree, relation field tree, root
-     * field masks, build-query modifiers) is left in place - it describes the
-     * subject this clone carries over, and only build() can rebuild it.
+     * The shape of the build is left in place: it describes the subject this
+     * clone carries over, and only build() can rebuild it.
      */
     public function __clone(): void
     {
