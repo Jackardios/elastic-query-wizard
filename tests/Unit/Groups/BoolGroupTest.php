@@ -128,6 +128,21 @@ class BoolGroupTest extends UnitTestCase
     }
 
     #[Test]
+    public function it_leaves_out_minimum_should_match_when_no_should_child_is_requested(): void
+    {
+        $group = ElasticGroup::bool('advanced')
+            ->minimumShouldMatch(1)
+            ->children([
+                ElasticFilter::term('owner', 'owner'),
+                ElasticFilter::term('status', 'status')->inShould(),
+            ]);
+
+        $query = $group->buildGroupQuery(['owner' => '5']);
+
+        $this->assertSame(['bool' => ['filter' => [['term' => ['owner' => ['value' => '5']]]]]], $query?->toArray());
+    }
+
+    #[Test]
     public function it_builds_bool_query_with_should_children(): void
     {
         $group = ElasticGroup::bool('advanced')

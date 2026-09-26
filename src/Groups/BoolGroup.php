@@ -41,6 +41,9 @@ final class BoolGroup extends AbstractElasticGroup
     /**
      * Set minimum_should_match for the bool query.
      *
+     * Applied only when the request fills at least one should child: an integer
+     * minimum over no should clause would match no document.
+     *
      * @param  int|string  $value  Number or percentage (e.g., 1, '30%', '2<75%')
      */
     public function minimumShouldMatch(int|string $value): static
@@ -89,7 +92,7 @@ final class BoolGroup extends AbstractElasticGroup
             return null;
         }
 
-        if ($this->minimumShouldMatch !== null) {
+        if ($this->minimumShouldMatch !== null && $innerBoolQuery->getShouldClauses() !== []) {
             $innerBoolQuery->minimumShouldMatch($this->minimumShouldMatch);
         }
 

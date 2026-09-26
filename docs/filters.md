@@ -1337,7 +1337,7 @@ ElasticQueryWizard::for(Post::class)
 
 | Method | Description |
 |--------|-------------|
-| `minimumShouldMatch(int\|string)` | Minimum should clauses to match (e.g., `1`, `'75%'`) |
+| `minimumShouldMatch(int\|string)` | Minimum should clauses to match (e.g., `1`, `'75%'`); left out when the request fills no should child |
 | `boost(float)` | Boost factor for relevance scoring |
 | `inFilter()` / `inMust()` / `inShould()` / `inMustNot()` | Bool clause for the group |
 | `children(array)` | Set child filters |
