@@ -1494,4 +1494,11 @@ Nested groups are resolved recursively and support arbitrary depth.
 
 5. **Root vs Group Deduplication**: If the same filter name appears both at root level and inside a group, only the group version is applied.
 
-6. **Unsupported in Groups**: `ElasticFilter::trashed()`, `ElasticFilter::callback()`, and `ElasticFilter::passthrough()` cannot be used inside groups.
+6. **Unsupported in Groups**: `ElasticFilter::trashed()`, `ElasticFilter::callback()`, `ElasticFilter::passthrough()` and
+   any filter that is not an Elasticsearch filter or group cannot be used inside groups. `children()` throws
+   `UnsupportedFilterInGroupException` when the group is configured.
+
+7. **Names Across Groups**: A group can't share its name with another allowed filter or group (a nested group's name
+   defaults to its path, so two nested groups on one path need names), and a leaf alias can be in only one group. The
+   build throws `FilterNameConflictException` for either; before, the other filter was silently dropped or one value
+   applied in both groups.

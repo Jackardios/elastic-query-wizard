@@ -8,6 +8,7 @@ use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Jackardios\ElasticQueryWizard\Exceptions\FilterNameConflictException;
 use Jackardios\ElasticQueryWizard\Filters\TermFilter;
 use Jackardios\ElasticQueryWizard\Groups\GroupInterface;
 use Jackardios\ElasticQueryWizard\Includes\AbstractElasticInclude;
@@ -238,6 +239,65 @@ class ElasticQueryWizard extends BaseQueryWizard
         /** @var SearchBuilder $result */
         $result = $filter->apply($this->subject, $preparedValue);
         $this->subject = $result;
+    }
+
+    /**
+     * @throws FilterNameConflictException When a group is named like another
+     *                                     allowed filter, or a leaf is in two groups
+     */
+    protected function getEffectiveFilters(): array
+    {
+        if ($this->cachedEffectiveFilters === null) {
+            $this->assertNoFilterNameConflicts(
+                $this->allowedFiltersExplicitlySet ? $this->allowedFilters : ($this->getSchema()?->filters($this) ?? [])
+            );
+        }
+
+        return parent::getEffectiveFilters();
+    }
+
+    /**
+     * The core keys the allowed filters by name, so a group sharing a name with
+     * another filter silently replaces it; and a leaf in two groups would apply
+     * the same request value in both.
+     *
+     * @param  array<FilterInterface|string>  $filters
+     */
+    private function assertNoFilterNameConflicts(array $filters): void
+    {
+        $nameCounts = [];
+        $leafCounts = [];
+        $groups = [];
+
+        foreach ($filters as $filter) {
+            $name = $this->normalizePublicPath(is_string($filter) ? $filter : $filter->getName());
+
+            if ($this->disallowedFilters !== [] && $this->isNameDisallowed($name, $this->disallowedFilters)) {
+                continue;
+            }
+
+            $nameCounts[$name] = ($nameCounts[$name] ?? 0) + 1;
+
+            if ($filter instanceof GroupInterface) {
+                $groups[$name] = $filter;
+
+                foreach (array_unique(array_map($this->normalizePublicPath(...), $filter->getChildFilterNames())) as $leafName) {
+                    $leafCounts[$leafName] = ($leafCounts[$leafName] ?? 0) + 1;
+                }
+            }
+        }
+
+        foreach ($groups as $name => $group) {
+            if ($nameCounts[$name] > 1) {
+                throw FilterNameConflictException::groupNameTaken($group->getName());
+            }
+        }
+
+        $sharedLeaves = array_keys(array_filter($leafCounts, static fn (int $count): bool => $count > 1));
+
+        if ($sharedLeaves !== []) {
+            throw FilterNameConflictException::leavesInSeveralGroups($sharedLeaves);
+        }
     }
 
     /**

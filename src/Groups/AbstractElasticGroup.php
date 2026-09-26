@@ -29,8 +29,18 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
     /** @var array<FilterInterface> */
     protected array $children = [];
 
+    /**
+     * @throws UnsupportedFilterInGroupException When a child is not an Elasticsearch filter or group, or is a trashed filter
+     * @throws DuplicateGroupChildFilterNameException When two leaves of the tree share a name
+     */
     public function children(array $children): static
     {
+        foreach ($children as $child) {
+            if (! $child instanceof GroupInterface && (! $child instanceof AbstractElasticFilter || $child instanceof TrashedFilter)) {
+                throw UnsupportedFilterInGroupException::forFilter($child, $this->getName());
+            }
+        }
+
         $this->assertUniqueLeafFilterNames($children);
         $this->children = $children;
 
@@ -100,15 +110,7 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
                     continue;
                 }
 
-                $value = $childValues[$childName];
-
-                if ($child instanceof TrashedFilter) {
-                    throw UnsupportedFilterInGroupException::forFilter($child, $this->getName());
-                }
-
-                // Use handleInGroup() to properly handle filters with conditional clause logic
-                // (ExistsFilter, NullFilter)
-                $child->handleInGroup($innerBoolQuery, $value);
+                $child->handleInGroup($innerBoolQuery, $childValues[$childName]);
             } else {
                 // Non-elastic filters (CallbackFilter, PassthroughFilter) cannot be used in groups
                 throw UnsupportedFilterInGroupException::forFilter($child, $this->getName());

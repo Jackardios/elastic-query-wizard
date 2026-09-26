@@ -6,6 +6,7 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Groups;
 
 use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\ElasticGroup;
+use Jackardios\ElasticQueryWizard\Exceptions\FilterNameConflictException;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use Jackardios\QueryWizard\Exceptions\InvalidFilterQuery;
 use PHPUnit\Framework\Attributes\Group;
@@ -360,5 +361,69 @@ class GroupIntegrationTest extends UnitTestCase
         // Check inner bool query has both filters
         $innerBool = $filterQueries[0]['nested']['query']['bool'];
         $this->assertNotEmpty($innerBool);
+    }
+
+    #[Test]
+    public function a_group_named_like_another_allowed_filter_is_refused(): void
+    {
+        $this->expectException(FilterNameConflictException::class);
+        $this->expectExceptionMessage("Group 'category' has the name of another allowed filter");
+
+        $this
+            ->createElasticWizardWithFilters(['category' => 'books'])
+            ->allowedFilters([
+                ElasticFilter::term('category'),
+                ElasticGroup::bool('category')->children([ElasticFilter::term('status')]),
+            ])
+            ->build();
+    }
+
+    #[Test]
+    public function two_nested_groups_on_one_path_without_names_are_refused(): void
+    {
+        $this->expectException(FilterNameConflictException::class);
+        $this->expectExceptionMessage("Group 'comments' has the name of another allowed filter");
+
+        $this
+            ->createElasticWizardWithFilters(['status' => 'open'])
+            ->allowedFilters([
+                ElasticGroup::nested('comments')->children([ElasticFilter::term('comments.status')->alias('status')]),
+                ElasticGroup::nested('comments')->inMustNot()->children([ElasticFilter::term('comments.flag')->alias('flag')]),
+            ])
+            ->build();
+    }
+
+    #[Test]
+    public function a_leaf_in_two_groups_is_refused(): void
+    {
+        $this->expectException(FilterNameConflictException::class);
+        $this->expectExceptionMessage('Filter(s) status are in more than one group');
+
+        $this
+            ->createElasticWizardWithFilters(['status' => 'open'])
+            ->allowedFilters([
+                ElasticGroup::bool('a')->children([ElasticFilter::term('status')]),
+                ElasticGroup::bool('b')->inMustNot()->children([ElasticFilter::term('status')]),
+            ])
+            ->build();
+    }
+
+    #[Test]
+    public function a_disallowed_group_does_not_conflict(): void
+    {
+        $wizard = $this
+            ->createElasticWizardWithFilters(['status' => 'open'])
+            ->allowedFilters([
+                ElasticGroup::bool('a')->children([ElasticFilter::term('status')]),
+                ElasticGroup::bool('b')->inMustNot()->children([ElasticFilter::term('status')]),
+            ])
+            ->disallowedFilters('b');
+        $wizard->build();
+
+        $this->assertSame(
+            [['bool' => ['filter' => [['term' => ['status' => ['value' => 'open']]]]]]],
+            $this->getFilterQueries($wizard->boolQuery())
+        );
+        $this->assertSame([], $this->getMustNotQueries($wizard->boolQuery()));
     }
 }

@@ -104,55 +104,45 @@ class BoolGroupHandleInGroupTest extends UnitTestCase
     }
 
     #[Test]
-    public function trashed_filter_throws_exception_inside_group(): void
+    public function trashed_filter_is_refused_when_the_group_is_configured(): void
     {
-        $group = ElasticGroup::bool('advanced')->children([
-            ElasticFilter::trashed(),
-        ]);
-
         $this->expectException(UnsupportedFilterInGroupException::class);
-        $this->expectExceptionMessage('cannot be used inside group');
+        $this->expectExceptionMessage("Filter 'trashed' (Jackardios\\ElasticQueryWizard\\Filters\\TrashedFilter) cannot be used inside group 'advanced'");
 
-        $group->buildGroupQuery([
-            'trashed' => 'with',
+        ElasticGroup::bool('advanced')->children([ElasticFilter::trashed()]);
+    }
+
+    #[Test]
+    public function callback_filter_is_refused_when_the_group_is_configured(): void
+    {
+        $this->expectException(UnsupportedFilterInGroupException::class);
+        $this->expectExceptionMessage("Filter 'custom'");
+
+        ElasticGroup::bool('advanced')->children([
+            ElasticFilter::callback('custom', fn () => null),
         ]);
     }
 
     #[Test]
-    public function callback_filter_throws_exception_inside_group(): void
+    public function passthrough_filter_is_refused_when_the_group_is_configured(): void
     {
-        // Create an Eloquent callback filter (not supported in groups)
-        $callbackFilter = EloquentFilter::callback('custom', function ($query, $value) {
-            return $query;
-        });
-
-        $group = ElasticGroup::bool('advanced')->children([
-            $callbackFilter,
-        ]);
-
         $this->expectException(UnsupportedFilterInGroupException::class);
-        $this->expectExceptionMessage('cannot be used inside group');
+        $this->expectExceptionMessage("Filter 'custom'");
 
-        $group->buildGroupQuery([
-            'custom' => 'value',
+        ElasticGroup::bool('advanced')->children([
+            ElasticFilter::term('status'),
+            EloquentFilter::passthrough('custom'),
         ]);
     }
 
     #[Test]
-    public function passthrough_filter_throws_exception_inside_group(): void
+    public function an_unsupported_filter_in_a_nested_group_is_refused_when_that_group_is_configured(): void
     {
-        // Create an Eloquent passthrough filter (not supported in groups)
-        $passthroughFilter = EloquentFilter::passthrough('custom');
-
-        $group = ElasticGroup::bool('advanced')->children([
-            $passthroughFilter,
-        ]);
-
         $this->expectException(UnsupportedFilterInGroupException::class);
-        $this->expectExceptionMessage('cannot be used inside group');
+        $this->expectExceptionMessage("cannot be used inside group 'inner'");
 
-        $group->buildGroupQuery([
-            'custom' => 'value',
+        ElasticGroup::bool('outer')->children([
+            ElasticGroup::bool('inner')->children([EloquentFilter::callback('custom', fn () => null)]),
         ]);
     }
 
