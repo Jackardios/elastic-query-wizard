@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Tests\Unit\Sorts;
 
+use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\Sorts\RandomSort;
 use Jackardios\ElasticQueryWizard\Sorts\ScoreSort;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use Jackardios\EsScoutDriver\Search\SearchBuilder;
+use Jackardios\EsScoutDriver\Support\Query;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use stdClass;
@@ -23,7 +26,7 @@ class RandomSortQueryTest extends UnitTestCase
             ->allowedSorts(RandomSort::make('shuffle'));
         $wizard->build();
 
-        $queries = $this->getMustQueries($wizard->boolQuery());
+        $queries = [$wizard->getSubject()->getQuery()];
 
         $this->assertCount(1, $queries);
         $this->assertEquals([
@@ -74,7 +77,7 @@ class RandomSortQueryTest extends UnitTestCase
             ->allowedSorts(RandomSort::make('shuffle')->seed(12345));
         $wizard->build();
 
-        $queries = $this->getMustQueries($wizard->boolQuery());
+        $queries = [$wizard->getSubject()->getQuery()];
 
         $this->assertCount(1, $queries);
         $this->assertEquals([
@@ -100,7 +103,7 @@ class RandomSortQueryTest extends UnitTestCase
             ->allowedSorts(RandomSort::make('shuffle')->seed('session_abc123'));
         $wizard->build();
 
-        $queries = $this->getMustQueries($wizard->boolQuery());
+        $queries = [$wizard->getSubject()->getQuery()];
 
         $this->assertCount(1, $queries);
         $this->assertEquals([
@@ -126,7 +129,7 @@ class RandomSortQueryTest extends UnitTestCase
             ->allowedSorts(RandomSort::make('shuffle')->seed(42));
         $wizard->build();
 
-        $queries = $this->getMustQueries($wizard->boolQuery());
+        $queries = [$wizard->getSubject()->getQuery()];
 
         $this->assertCount(1, $queries);
         $this->assertArrayHasKey('function_score', $queries[0]);
@@ -145,7 +148,7 @@ class RandomSortQueryTest extends UnitTestCase
             );
         $wizard->build();
 
-        $queries = $this->getMustQueries($wizard->boolQuery());
+        $queries = [$wizard->getSubject()->getQuery()];
 
         $this->assertCount(1, $queries);
         $this->assertEquals([
@@ -171,7 +174,7 @@ class RandomSortQueryTest extends UnitTestCase
             ->allowedSorts(RandomSort::make('shuffle', 'random'));
         $wizard->build();
 
-        $queries = $this->getMustQueries($wizard->boolQuery());
+        $queries = [$wizard->getSubject()->getQuery()];
 
         $this->assertCount(1, $queries);
         $this->assertArrayHasKey('function_score', $queries[0]);
@@ -206,7 +209,7 @@ class RandomSortQueryTest extends UnitTestCase
             );
         $wizard->build();
 
-        $queries = $this->getMustQueries($wizard->boolQuery());
+        $queries = [$wizard->getSubject()->getQuery()];
         $sorts = $this->getSorts($wizard->getSubject());
 
         $this->assertCount(1, $queries);
@@ -249,5 +252,50 @@ class RandomSortQueryTest extends UnitTestCase
         $this->assertCount(2, $sorts);
         $this->assertEquals(['_score' => 'asc'], $sorts[0]);
         $this->assertEquals(['_score' => 'desc'], $sorts[1]);
+    }
+
+    #[Test]
+    public function it_replaces_the_score_of_the_whole_query(): void
+    {
+        $wizard = $this
+            ->createElasticWizardFromQuery(['filter' => ['q' => 'shoes', 'category' => 'x'], 'sort' => 'shuffle'])
+            ->allowedFilters(ElasticFilter::match('title', 'q'), ElasticFilter::term('category'))
+            ->allowedSorts(RandomSort::make('shuffle'))
+            ->tapSearchBuilder(fn (SearchBuilder $builder) => $builder->query(Query::term('is_visible', true)));
+        $wizard->build();
+
+        $this->assertEquals([
+            'function_score' => [
+                'query' => [
+                    'bool' => [
+                        'must' => [
+                            ['match' => ['title' => ['query' => 'shoes']]],
+                            ['term' => ['is_visible' => ['value' => true]]],
+                        ],
+                        'filter' => [['term' => ['category' => ['value' => 'x']]]],
+                    ],
+                ],
+                'functions' => [['random_score' => new stdClass]],
+                'boost_mode' => 'replace',
+            ],
+        ], $wizard->getSubject()->toArray()['body']['query']);
+    }
+
+    #[Test]
+    public function it_keeps_a_query_set_on_the_builder_when_no_filter_applies(): void
+    {
+        $wizard = $this
+            ->createElasticWizardWithSorts('shuffle')
+            ->allowedSorts(RandomSort::make('shuffle'))
+            ->tapSearchBuilder(fn (SearchBuilder $builder) => $builder->query(Query::term('is_visible', true)));
+        $wizard->build();
+
+        $this->assertEquals([
+            'function_score' => [
+                'query' => ['term' => ['is_visible' => ['value' => true]]],
+                'functions' => [['random_score' => new stdClass]],
+                'boost_mode' => 'replace',
+            ],
+        ], $wizard->getSubject()->toArray()['body']['query']);
     }
 }

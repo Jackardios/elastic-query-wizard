@@ -453,15 +453,20 @@ ElasticSort::random('shuffle')
 
 ```
 GET /products?sort=shuffle
-GET /products?sort=-shuffle  // Descending affects score ordering
+GET /products?sort=-shuffle  // The same order reversed
 ```
 
 ### Elasticsearch Query
 
+The query built from the filters is wrapped in a `function_score` whose random score replaces the relevance score, so
+scoring filters such as `match` choose the documents but not their order:
+
 ```json
+// GET /products?filter[q]=shoes&sort=shuffle
 {
   "query": {
     "function_score": {
+      "query": { "bool": { "must": [{ "match": { "title": { "query": "shoes" } } }] } },
       "functions": [
         { "random_score": {} }
       ],
@@ -474,17 +479,18 @@ GET /products?sort=-shuffle  // Descending affects score ordering
 }
 ```
 
+A scoring clause added to the search builder after the build (for example through `boolQuery()->must()`) adds its score
+to the random one.
+
 ### With Seed for Reproducibility
 
+Without a seed every request gets a new order, so the pages of one listing can repeat or skip documents. Pass a seed to
+paginate:
+
 ```php
-// Same seed = same order (useful for pagination)
+// Same seed = same order
 ElasticSort::random('shuffle')
     ->seed($request->session()->getId())
-
-// With custom field (required in ES 7.0+)
-ElasticSort::random('shuffle')
-    ->seed(12345)
-    ->field('_id')
 ```
 
 ### Configuration Methods
@@ -492,7 +498,10 @@ ElasticSort::random('shuffle')
 | Method | Description |
 |--------|-------------|
 | `seed(int\|string)` | Seed for reproducible random order (session ID, user ID, etc.) |
-| `field(string)` | Field for per-document randomization (default: `_seq_no` when seed is set) |
+| `field(string)` | Field for per-document randomization with a seed (default: `_seq_no`) |
+
+Elasticsearch 8 rejects a seed without a field, which is why `_seq_no` is filled in. Don't use `_id`: fielddata on `_id`
+is disabled by default, and both Elasticsearch 8 and 9 answer 400.
 
 ### Examples
 
@@ -514,10 +523,7 @@ ElasticSort::random('shuffle')
 ```php
 ElasticSort::random('shuffle')
     ->seed(auth()->id())
-    ->field('_id')
 ```
-
-> **Note:** Seeded random requires the `field` parameter in Elasticsearch 7.0+. The default field is `_seq_no` when a seed is provided.
 
 ---
 

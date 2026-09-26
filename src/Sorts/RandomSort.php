@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Sorts;
 
+use Jackardios\EsScoutDriver\Query\Compound\BoolQuery;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Sort\Sort;
 use Jackardios\EsScoutDriver\Support\Query;
@@ -12,10 +13,13 @@ use stdClass;
 /**
  * Random/shuffle sorting with optional seed for reproducibility.
  *
- * Uses function_score with random_score to randomize results.
- * With a seed, the same order is returned for repeated queries.
+ * Wraps the query built so far, filters included, in a function_score whose
+ * random_score replaces the relevance score, and sorts by that score. Apply
+ * it after every scoring clause: a scoring clause added to the search builder
+ * later adds its score to the random one.
  *
- * Note: Seeded random requires a field parameter in Elasticsearch 7.0+.
+ * Without a seed every request gets a new order, so pages of one listing can
+ * repeat or skip documents; pass a seed (e.g. a session ID) to paginate.
  *
  * @see https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-function-score-query.html#function-random
  */
@@ -45,10 +49,10 @@ final class RandomSort extends AbstractElasticSort
     /**
      * Set field for per-document consistent randomization.
      *
-     * Required for seeded random in Elasticsearch 7.0+.
-     * Defaults to '_seq_no' if seed is set but field is not.
+     * Used only with a seed, which Elasticsearch 8 rejects without a field.
+     * Defaults to '_seq_no'. Not '_id': fielddata on _id is disabled by default.
      *
-     * @param  string  $field  Usually '_seq_no', '_id', or a unique field
+     * @param  string  $field  '_seq_no' or a unique field with doc values
      */
     public function field(string $field): static
     {
@@ -64,14 +68,35 @@ final class RandomSort extends AbstractElasticSort
 
     public function handle(SearchBuilder $builder, string $direction): void
     {
-        $randomScore = $this->buildRandomScoreFunction();
-
-        $functionScore = Query::functionScore()
-            ->addFunction($randomScore)
+        $functionScore = Query::functionScore($this->queryBuiltSoFar($builder))
+            ->addFunction($this->buildRandomScoreFunction())
             ->boostMode('replace');
 
-        $builder->must($functionScore);
+        $builder->clearBoolQuery()->query($functionScore);
         $builder->sort(Sort::score()->order($direction));
+    }
+
+    /**
+     * The bool query and the query set on the builder, combined as the builder would run them.
+     *
+     * @return BoolQuery|array<string, mixed>|null
+     */
+    private function queryBuiltSoFar(SearchBuilder $builder): BoolQuery|array|null
+    {
+        $boolQuery = $builder->getBoolQuery();
+        $query = $builder->getQuery();
+
+        if ($boolQuery === null || ! $boolQuery->hasClauses()) {
+            return $query;
+        }
+
+        $boolQuery = clone $boolQuery;
+
+        if ($query !== null) {
+            $boolQuery->addMust($query);
+        }
+
+        return $boolQuery;
     }
 
     /**
@@ -83,11 +108,6 @@ final class RandomSort extends AbstractElasticSort
             return ['random_score' => new stdClass];
         }
 
-        $randomScore = ['seed' => $this->seed];
-
-        // Field is required for seeded random in ES 7.0+
-        $randomScore['field'] = $this->field ?? '_seq_no';
-
-        return ['random_score' => $randomScore];
+        return ['random_score' => ['seed' => $this->seed, 'field' => $this->field ?? '_seq_no']];
     }
 }

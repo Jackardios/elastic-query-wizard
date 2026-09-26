@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic\Sorts;
 
 use Illuminate\Support\Collection;
+use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\Sorts\RandomSort;
 use Jackardios\ElasticQueryWizard\Tests\Concerns\AssertsCollectionSorting;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
+use Jackardios\EsScoutDriver\Search\Hit;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -141,5 +143,31 @@ class RandomSortTest extends TestCase
             ->models();
 
         $this->assertCount(10, $result);
+    }
+
+    #[Test]
+    public function the_relevance_of_scoring_filters_does_not_change_the_random_order(): void
+    {
+        TestModel::factory()->create(['name' => 'shoes']);
+        TestModel::factory()->create(['name' => 'shoes shoes shoes']);
+        TestModel::factory()->create(['name' => 'red shoes for running in the rain']);
+
+        $scores = fn (array $query): array => $this
+            ->createElasticWizardFromQuery($query)
+            ->allowedFilters(ElasticFilter::match('name', 'q'))
+            ->allowedSorts(RandomSort::make('random')->seed(42))
+            ->build()
+            ->size(50)
+            ->execute()
+            ->hits()
+            ->mapWithKeys(fn (Hit $hit) => [$hit->documentId => $hit->score])
+            ->all();
+
+        $filtered = $scores(['filter' => ['q' => 'shoes'], 'sort' => 'random']);
+        $unfiltered = $scores(['sort' => 'random']);
+
+        $this->assertCount(3, $filtered);
+        $this->assertCount(13, $unfiltered);
+        $this->assertEquals(array_intersect_key($unfiltered, $filtered), $filtered);
     }
 }
