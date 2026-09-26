@@ -18,8 +18,8 @@ use Jackardios\EsScoutDriver\Support\Query;
  * ElasticGroup::nested('sides')
  *     ->inFilter()
  *     ->children([
- *         ElasticFilter::term(field: 'sides.id', key: 'id')->inFilter(),
- *         ElasticFilter::multiMatch(fields: ['sides.address'], key: 'search')->inMust(),
+ *         ElasticFilter::term(property: 'sides.id', alias: 'id')->inFilter(),
+ *         ElasticFilter::multiMatch(fields: ['sides.address'], property: 'search')->inMust(),
  *     ])
  *
  * @see https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-nested-query.html

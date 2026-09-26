@@ -33,9 +33,9 @@ A powerful Laravel package for building Elasticsearch queries with JSON:API styl
 
 ## Requirements
 
-- PHP 8.1+
-- Laravel 10, 11, or 12
-- Elasticsearch 8.x or 9.x
+- PHP 8.2+
+- Laravel 12.61.1+ or 13.12.0+
+- Elasticsearch 8.x or 9.x (CI runs 8.19 and 9.5)
 - [es-scout-driver](https://github.com/Jackardios/es-scout-driver)
 - [laravel-query-wizard](https://github.com/Jackardios/laravel-query-wizard)
 
@@ -154,6 +154,9 @@ ElasticQueryWizard::forSchema(PostSchema::class)
     ->build()
     ->execute();
 ```
+
+`disallowedFilters()` also drops the schema's `defaultFilters()` entry for that filter, so a default that must always
+restrict the results belongs on the search itself ([example](docs/advanced.md#combining-schemas-with-overrides)).
 
 See [Advanced Usage](docs/advanced.md#resource-schemas) for full schema documentation including context-aware schemas, wildcard support, and all available methods.
 

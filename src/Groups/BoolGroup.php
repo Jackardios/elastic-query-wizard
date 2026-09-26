@@ -18,8 +18,8 @@ use Jackardios\EsScoutDriver\Query\QueryInterface;
  *     ->minimumShouldMatch(1)
  *     ->inFilter()
  *     ->children([
- *         ElasticFilter::term(field: 'status', key: 'status')->inShould(),
- *         ElasticFilter::term(field: 'priority', key: 'priority')->inShould(),
+ *         ElasticFilter::term('status')->inShould(),
+ *         ElasticFilter::term('priority')->inShould(),
  *     ])
  */
 final class BoolGroup extends AbstractElasticGroup

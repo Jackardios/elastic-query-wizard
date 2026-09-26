@@ -1,4 +1,4 @@
-# Migration Guide: v2 → v3 (dev-master)
+# Migration Guide: v2 → v3
 
 This guide covers migrating from `jackardios/elastic-query-wizard` v2 to v3.
 
@@ -66,8 +66,8 @@ This guide covers migrating from `jackardios/elastic-query-wizard` v2 to v3.
 | `setAllowedFields()` | `allowedFields()` |
 | `setAllowedAppends()` | `allowedAppends()` |
 | `setDefaultSorts()` | `defaultSorts()` |
-| `getPropertyName()` | `$this->property` (public property) |
-| `getInclude()` | `$this->relation` (public property) |
+| `getPropertyName()` | `getProperty()`, or `$this->property` (protected) inside the filter |
+| `getInclude()` | `getRelation()`, or `$this->relation` (protected) inside the include |
 | `addEloquentQueryCallback()` | `modifyQuery()` |
 | `addEloquentCollectionCallback()` | `modifyModels()` |
 | `getRootBoolQuery()` | `boolQuery()` or use `$builder` directly |
@@ -189,8 +189,10 @@ new CustomFilter('property_name');
 
 ### v3
 ```php
+use Jackardios\ElasticQueryWizard\Enums\BoolClause;
 use Jackardios\ElasticQueryWizard\Filters\AbstractElasticFilter;
-use Jackardios\EsScoutDriver\Search\SearchBuilder;
+use Jackardios\EsScoutDriver\Query\QueryInterface;
+use Jackardios\EsScoutDriver\Support\Query;
 
 final class CustomFilter extends AbstractElasticFilter
 {
@@ -204,10 +206,14 @@ final class CustomFilter extends AbstractElasticFilter
         return 'custom';
     }
 
-    public function handle(SearchBuilder $builder, mixed $value): void
+    protected function getDefaultClause(): BoolClause
     {
-        $propertyName = $this->property;  // Not getPropertyName()!
-        $builder->must(/* ... */);
+        return BoolClause::MUST;
+    }
+
+    public function buildQuery(mixed $value): QueryInterface|array|null
+    {
+        return is_string($value) ? Query::match($this->property, $value) : null;
     }
 }
 
@@ -218,9 +224,10 @@ CustomFilter::make('property_name');
 **Key changes:**
 - Base class: `ElasticFilter` → `AbstractElasticFilter`
 - Class should be `final`
-- `$queryWizard` parameter removed from `handle()`
-- `SearchParametersBuilder` → `SearchBuilder`
-- No more `getRootBoolQuery()` — call methods directly on `$builder`
+- Implement `buildQuery()` instead of `handle()`: return the query (or `null` to add nothing), and the wizard adds it
+  to the filter's bool clause, so `inMust()`, `inShould()` and bool groups work with custom filters
+- The default clause is `filter`; override `getDefaultClause()` to change it
+- No more `getRootBoolQuery()`
 - Must implement `getType(): string` method
 - Access property via `$this->property` instead of `$this->getPropertyName()`
 - Static `::make()` factory required
@@ -410,6 +417,43 @@ $wizard->boolQuery()->withTrashed();
 $wizard->withTrashed();   // also onlyTrashed(), excludeTrashed()
 ```
 
+### Request Handling (laravel-query-wizard v3)
+
+The request is parsed by `laravel-query-wizard` v3, whose stricter rules apply to the elastic wizard too. The main ones
+(see its [UPGRADE.md](https://github.com/Jackardios/laravel-query-wizard/blob/master/UPGRADE.md) for the full list):
+
+- A filter value of the wrong shape (a list where a filter takes one value, a scalar for `dateRange`) → 400
+  (`InvalidFilterQuery`).
+- Blank values are absent: `null`, a whitespace-only string, `,` and a list of blanks add no condition, and with
+  `apply_filter_default_on_null` the default applies to them.
+- An empty `?sort=` (also `-` and `,`) → 400 (`InvalidSortQuery`), unless `disable_invalid_sort_query_exception` is on,
+  in which case the default sorts apply.
+- Count and exists includes are allowed only explicitly: `allowedIncludes('comments')` does not allow `commentsCount`.
+- `defaultSorts()`, `defaultIncludes()` and the other `default*()` methods replace the schema defaults; calling one
+  without arguments sets no defaults.
+- The `limits` config caps includes, filters, sorts, appends and, new in v3, the values one filter receives
+  (`max_filter_values_count`, 1000 by default) → 400. Config values are validated when read.
+
+### Filter Behavior
+
+- **Value splitting.** A value is split by the filter separator once, by `laravel-query-wizard`; with
+  `withoutValueSplitting()` or another separator, `Smith, John` stays one term (v2 split it on `,` a second time). The pattern and
+  text filters (`prefix`, `wildcard`, `regexp`, `fuzzy`, `match`, `matchPhrase`, `matchPhrasePrefix`, `multiMatch`,
+  `queryString`, `simpleQueryString`) no longer split: `red, blue` reaches Elasticsearch as sent. Call
+  `withValueSplitting()` to restore the v2 behavior.
+- **Negated exists and null filters** stay in the filter's clause: in `inShould()` or a bool group a negated condition
+  is one alternative (v2 added a `must_not` that excluded the documents from every alternative), and in `inMustNot()`
+  the double negation requires the field.
+- **Random sort** wraps the whole query, filters included, in a `function_score` whose `random_score` replaces the
+  relevance score, and sorts by `_score`. Scoring filters such as `match` no longer affect the shuffled order.
+- **Bool groups** leave out `minimum_should_match` when the request fills none of their should children, so the other
+  children still match. Group configuration errors no longer wait for a request that uses the group: `children()`
+  throws `UnsupportedFilterInGroupException` for a passthrough, callback or trashed child, and the build throws
+  `FilterNameConflictException` for a group named like another filter or a filter in two groups.
+- **Values.** A range bound left empty is no bound. A geo bounding box also takes named edges (`left`, `bottom`,
+  `right`, `top`). A geo shape polygon keeps its holes and is closed when its last point differs from its first.
+  Coordinates that overflow to infinity (`1e999`) are rejected instead of failing the JSON encoding with a 500.
+
 ### Filter Parameters
 
 `withParameters()` now checks each name when the filter is configured and throws `InvalidArgumentException` for a
@@ -595,7 +639,7 @@ class ProductSchema extends ResourceSchema
 // Usage - one schema works with all wizard types
 $products = ElasticQueryWizard::forSchema(ProductSchema::class)->build()->execute();
 $products = EloquentQueryWizard::forSchema(ProductSchema::class)->get();
-$product = ModelQueryWizard::forSchema(ProductSchema::class, Product::find(1))->process();
+$product = ModelQueryWizard::for(Product::find(1))->schema(ProductSchema::class)->process();
 ```
 
 **Benefits:**
@@ -679,7 +723,7 @@ ElasticInclude::callback('name', function(Builder $builder, string $relation) {
 - `ElasticSort::random()` — random ordering with seed
 
 ### New Include Types
-- `ElasticInclude::exists()` — add `has_*` boolean attribute
+- `ElasticInclude::exists()` — add a `{relation}_exists` boolean attribute (e.g. `comments_exists`)
 
 ### DSL Proxy Classes
 ```php
@@ -720,7 +764,7 @@ Only ES 9.x compatible operators are allowed: `gt`, `gte`, `lt`, `lte`.
 v3 is compatible with ES 8.x and 9.x. Key notes:
 
 1. **Range queries:** Use `gt/gte/lt/lte` (not `from/to`) — legacy operators throw exception
-2. **Random sorting:** Requires explicit `field` parameter when using `seed`
+2. **Random sorting:** A seeded `random_score` needs a `field`; `ElasticSort::random()->seed()` sets `_seq_no` for you
 3. **Highlighting:** `force_source` parameter removed
 4. **Histogram aggregation:** Cannot use on boolean fields (use `terms` instead)
 5. **Circle geo shape:** Not supported (use `GeoDistanceFilter` instead)
@@ -731,7 +775,7 @@ v3 is compatible with ES 8.x and 9.x. Key notes:
 
 ### Dependencies
 - [ ] Update `composer.json`: replace `elastic-scout-driver-plus` with `es-scout-driver`
-- [ ] Update `composer.json`: update `laravel-query-wizard` to dev-master
+- [ ] Update `composer.json`: require `laravel-query-wizard` `^3.0.0-rc.3` and `es-scout-driver` `^1.0.0-rc.1`
 
 ### Method Renames
 - [ ] Replace `setAllowedFilters()` → `allowedFilters()`

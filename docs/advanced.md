@@ -166,6 +166,7 @@ ElasticQueryWizard::forSchema(PostSchema::class)
 
 // Public endpoint: restricted access
 ElasticQueryWizard::forSchema(PostSchema::class)
+    ->tapSearchBuilder(fn ($builder) => $builder->filter(ElasticQuery::term('status', 'published')))
     ->disallowedFilters('status', 'trashed')     // Remove sensitive filters
     ->disallowedIncludes('comments')             // Remove heavy includes
     ->disallowedFields('body')                   // Hide full content
@@ -175,13 +176,18 @@ ElasticQueryWizard::forSchema(PostSchema::class)
 // Add extra filters not in schema (rare case - usually use disallowed* instead)
 $schema = app(PostSchema::class);
 $wizard = ElasticQueryWizard::forSchema($schema);
-$wizard->allowedFilters(
+$wizard->allowedFilters([
     ...$schema->filters($wizard),
     ElasticFilter::term('featured'),             // Additional filter
-)
+])
     ->build()
     ->execute();
 ```
+
+> **Warning:** `disallowedFilters()` also drops the schema's `defaultFilters()` entry for that filter. The
+> `['status' => 'published']` default above stops restricting the results once `status` is disallowed, which is why the
+> public endpoint adds the condition to the search itself with `tapSearchBuilder()`. Put a condition that must always
+> hold on the search, not in a filter default.
 
 ### Wildcard Support in disallowed*() Methods
 
@@ -359,7 +365,7 @@ Both proxies expose the full underlying `es-scout-driver` factory surface.
 Add Elasticsearch aggregations to collect analytics alongside search results:
 
 ```php
-$wizard = ElasticQueryWizard::for(Product::class)
+$search = ElasticQueryWizard::for(Product::class)
     ->allowedFilters([
         ElasticFilter::term('category'),
         ElasticFilter::range('price'),
@@ -369,7 +375,7 @@ $wizard = ElasticQueryWizard::for(Product::class)
     ->aggregate('price_histogram', ElasticAggregation::histogram('price', 100))
     ->build();
 
-$results = $wizard->execute();
+$results = $search->execute();
 
 // Get aggregation results
 $aggregations = $results->aggregations();
@@ -380,7 +386,7 @@ $priceStats = $aggregations['price_stats'];
 ### Nested Aggregations
 
 ```php
-$wizard->aggregate(
+$search->aggregate(
     'categories',
     ElasticAggregation::terms('category')
         ->agg('avg_price', ElasticAggregation::avg('price'))
@@ -395,14 +401,14 @@ $wizard->aggregate(
 Access the root bool query for complex query logic:
 
 ```php
-$wizard = ElasticQueryWizard::for(Post::class)
+$search = ElasticQueryWizard::for(Post::class)
     ->allowedFilters([
         ElasticFilter::term('status'),
     ])
     ->build();
 
 // Access the bool query directly
-$boolQuery = $wizard->boolQuery();
+$boolQuery = $search->boolQuery();
 
 // Add must clause
 $boolQuery->addMust(ElasticQuery::match('title', 'search term'));
@@ -510,24 +516,23 @@ $wizard = ElasticQueryWizard::for(Post::class)
 
 ## Accessing the SearchBuilder
 
-After building the wizard, you can access the underlying `SearchBuilder` for any low-level functionality not covered by helper methods:
+`build()` returns the underlying `SearchBuilder`, for any low-level functionality not covered by helper methods:
 
 ```php
-$wizard = ElasticQueryWizard::for(Post::class)
+$search = ElasticQueryWizard::for(Post::class)
     ->allowedFilters([
         ElasticFilter::term('status'),
     ])
     ->build();
 
-// Access the SearchBuilder
-$searchBuilder = $wizard->getSubject();
-
 // Add custom query
-$searchBuilder->must(ElasticQuery::matchPhrase('content', 'exact phrase'));
+$search->must(ElasticQuery::matchPhrase('content', 'exact phrase'));
 
 // Execute and get results
-$results = $wizard->execute();
+$results = $search->execute();
 ```
+
+Before the build, `$wizard->getSubject()` returns the same `SearchBuilder` without applying the request.
 
 ---
 
@@ -731,15 +736,15 @@ ElasticQueryWizard::for(Post::class)
 
 ## Execution Methods
 
-After building the wizard, you have several execution options:
+`build()` returns the `SearchBuilder`, which has several execution options:
 
 ```php
-$wizard = ElasticQueryWizard::for(Post::class)
+$search = ElasticQueryWizard::for(Post::class)
     ->allowedFilters([...])
     ->build();
 
 // Execute and get SearchResult
-$searchResult = $wizard->execute();
+$searchResult = $search->execute();
 
 // Get models
 $models = $searchResult->models();
@@ -754,7 +759,7 @@ $hits = $searchResult->hits();
 $aggregations = $searchResult->aggregations();
 
 // Paginate
-$paginated = $wizard->paginate(15);
+$paginated = $search->paginate(15);
 ```
 
 ---
@@ -846,8 +851,10 @@ $results = ElasticQueryWizard::for(Post::class)
 
 3. **Default sort overridden** — Request sort takes precedence:
    ```php
-   ->defaultSorts('-created_at')  // Applied only if no ?sort= in request
+   ->defaultSorts('-created_at')  // Applied only when ?sort is absent
    ```
+
+   An empty `?sort=` is not absent: it returns 400 (`InvalidSortQuery`).
 
 ### Include Not Loading
 
@@ -883,10 +890,10 @@ $results = ElasticQueryWizard::for(Post::class)
 })
 ```
 
-**Random sort inconsistent results**
+**Random sort repeats or skips documents across pages**
 ```php
-// Specify explicit field for consistent behavior
-ElasticSort::random('random')->seed(12345)->field('_seq_no')
+// Without a seed every request shuffles anew; a seed keeps one order per session
+ElasticSort::random('random')->seed($request->session()->getId())
 ```
 
 **"Boolean histogram aggregation not supported"**

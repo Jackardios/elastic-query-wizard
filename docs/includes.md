@@ -47,7 +47,7 @@ ElasticQueryWizard::for(Post::class)
 GET /posts?include=author
 
 # Multiple relations
-GET /posts?include=author,comments,tagsCount
+GET /posts?include=author,comments,commentsCount
 ```
 
 ### Security
@@ -279,12 +279,15 @@ ElasticInclude::callback('latestComments', function (Builder $builder) {
 ### Callback Signature
 
 ```php
-function (mixed $subject): mixed
+function (Builder $builder, string $relation): mixed
 ```
 
 | Argument | Description |
 |----------|-------------|
-| `$subject` | The query subject (Eloquent Builder in includes context) |
+| `$builder` | The Eloquent query that loads the models Elasticsearch returned |
+| `$relation` | The include's relation name (not its alias) |
+
+The return value is ignored.
 
 > **Note:** The callback receives the Eloquent Query Builder since includes are applied after Elasticsearch returns results. You can use standard Eloquent methods like `with()`, `withCount()`, etc.
 
@@ -322,11 +325,14 @@ ElasticInclude::callback('full', function (Builder $builder) {
 
 ```php
 ElasticInclude::callback('approvedCommentsCount', function (Builder $builder) {
-    $builder->withCount(['comments' => function ($query) {
+    $builder->withCount(['comments as approved_comments_count' => function ($query) {
         $query->where('is_approved', true);
     }]);
-})
+})->withRuntimeAttributes('approved_comments_count')
 ```
+
+`withRuntimeAttributes()` names the attributes the callback adds, so a sparse fieldset such as `?fields[post]=id` keeps
+them visible.
 
 ---
 

@@ -53,30 +53,20 @@ ElasticFilter::range('price')
 
 ### Random Sorting
 
+A `random_score` with a seed needs a `field`. `ElasticSort::random()` uses `_seq_no` when you pass a seed, so the same
+code works on 8.x and 9.x; call `field()` only to pick another field. Do not use `_id`: Elasticsearch refuses it for
+`random_score`.
+
 ```php
-// Option 1: ElasticSort::random() with explicit field
 ElasticQueryWizard::for(Post::class)
     ->allowedSorts([
-        ElasticSort::random('shuffle')->seed(12345)->field('_seq_no'),
+        ElasticSort::random('shuffle')->seed($request->session()->getId()),
     ])
     ->build();
-
-// Option 2: tapSearchBuilder with functionScore
-ElasticQueryWizard::for(Post::class)
-    ->tapSearchBuilder(function ($builder) {
-        $builder->must(
-            Query::functionScore()
-                ->addFunction([
-                    'random_score' => [
-                        'seed' => 12345,
-                        'field' => '_seq_no',  // Explicit for consistency
-                    ],
-                ])
-                ->boostMode('replace')
-        );
-    })
-    ->build();
 ```
+
+A `function_score` with `random_score` that you add yourself, for example through `tapSearchBuilder()`, must set `field`
+the same way.
 
 ### Boolean Aggregations
 
@@ -124,14 +114,8 @@ ElasticQueryWizard::for(Post::class)
 
 ### Code Changes Required
 
-**Random sorting:**
-```php
-// Before (ES 8.x)
-ElasticSort::random('shuffle')->seed(12345)
-
-// After (ES 8.x/9.x compatible)
-ElasticSort::random('shuffle')->seed(12345)->field('_seq_no')
-```
+**Random sorting:** `ElasticSort::random()->seed()` needs no change, since it sets `field` to `_seq_no`. Add `field` to
+any `random_score` you build yourself.
 
 **Boolean aggregations:**
 ```php

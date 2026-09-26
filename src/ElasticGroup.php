@@ -23,8 +23,8 @@ use Jackardios\ElasticQueryWizard\Groups\NestedGroup;
  *     ->boost(1.5)
  *     ->inFilter()
  *     ->children([
- *         ElasticFilter::term(field: 'status', key: 'status')->inShould(),
- *         ElasticFilter::term(field: 'priority', key: 'priority')->inShould(),
+ *         ElasticFilter::term('status')->inShould(),
+ *         ElasticFilter::term('priority')->inShould(),
  *     ])
  * @example NestedGroup with inner_hits
  * ElasticGroup::nested('comments')
@@ -32,8 +32,8 @@ use Jackardios\ElasticQueryWizard\Groups\NestedGroup;
  *     ->innerHits(['size' => 3, 'sort' => [['date' => 'desc']]])
  *     ->inFilter()
  *     ->children([
- *         ElasticFilter::term(field: 'comments.status', key: 'status'),
- *         ElasticFilter::match(field: 'comments.text', key: 'search')->inMust(),
+ *         ElasticFilter::term(property: 'comments.status', alias: 'status'),
+ *         ElasticFilter::match(property: 'comments.text', alias: 'search')->inMust(),
  *     ])
  */
 final class ElasticGroup

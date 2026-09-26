@@ -197,7 +197,7 @@ GET /posts?filter[status]=published,draft
 
 ```json
 // Single value
-{ "term": { "status": "published" } }
+{ "term": { "status": { "value": "published" } } }
 
 // Multiple values
 { "terms": { "status": ["published", "draft"] } }
@@ -234,7 +234,7 @@ GET /posts?filter[title]=hello world
 ### Elasticsearch Query
 
 ```json
-{ "match": { "title": "hello world" } }
+{ "match": { "title": { "query": "hello world" } } }
 ```
 
 ### With Additional Parameters
@@ -920,7 +920,7 @@ GET /posts?filter[variant_sku]=ABC123,DEF456
   "nested": {
     "path": "comments",
     "query": {
-      "term": { "comments.author": "john" }
+      "term": { "comments.author": { "value": "john" } }
     }
   }
 }
@@ -1231,7 +1231,7 @@ ElasticFilter::passthrough('custom_param')
 
 ## Additional Parameters
 
-Most filters support the `withParameters()` method for passing additional parameters to the Elasticsearch query:
+Every filter except geoShape, nested, moreLikeThis, null, trashed, passthrough and callback supports the `withParameters()` method for passing additional parameters to the Elasticsearch query (geoShape, nested and moreLikeThis have their own setters; the exists query has no options, so exists accepts none):
 
 ```php
 ElasticFilter::match('title')->withParameters([
@@ -1286,8 +1286,8 @@ By default, each filter is added to a specific bool clause (e.g., `filter` for t
 
 | Filter Type | Default Clause |
 |-------------|----------------|
-| TermFilter, RangeFilter, ExistsFilter, etc. | `filter` |
-| MatchFilter, MultiMatchFilter, FuzzyFilter, etc. | `must` |
+| match, multiMatch, matchPhrase, matchPhrasePrefix, fuzzy, queryString, simpleQueryString, moreLikeThis | `must` |
+| Every other filter (term, range, exists, prefix, wildcard, geo…) | `filter` |
 
 ### Usage
 
@@ -1313,7 +1313,7 @@ ElasticFilter::term('status')->inShould()
 {
   "bool": {
     "should": [
-      { "term": { "status": "active" } }
+      { "term": { "status": { "value": "active" } } }
     ]
   }
 }
@@ -1347,11 +1347,11 @@ ElasticQueryWizard::for(Post::class)
         // OR condition: match at least one of status OR priority
         ElasticGroup::bool('advanced')
             ->minimumShouldMatch(1)
-            ->boost(1.5)  // Influence relevance scoring
+            ->boost(1.5)  // Scores only in a must or should clause, not in filter
             ->inFilter()
             ->children([
-                ElasticFilter::term('status', 'status')->inShould(),
-                ElasticFilter::term('priority', 'priority')->inShould(),
+                ElasticFilter::term('status')->inShould(),
+                ElasticFilter::term('priority')->inShould(),
             ]),
     ])
     ->build();
@@ -1378,14 +1378,15 @@ GET /posts?filter[category]=tech&filter[status]=active&filter[priority]=high
 {
   "bool": {
     "filter": [
-      { "term": { "category": "tech" } },
+      { "term": { "category": { "value": "tech" } } },
       {
         "bool": {
           "should": [
-            { "term": { "status": "active" } },
-            { "term": { "priority": "high" } }
+            { "term": { "status": { "value": "active" } } },
+            { "term": { "priority": { "value": "high" } } }
           ],
-          "minimum_should_match": 1
+          "minimum_should_match": 1,
+          "boost": 1.5
         }
       }
     ]
@@ -1426,10 +1427,10 @@ GET /posts?filter[author]=john&filter[comment_search]=great
           "query": {
             "bool": {
               "filter": [
-                { "term": { "comments.author": "john" } }
+                { "term": { "comments.author": { "value": "john" } } }
               ],
               "must": [
-                { "match": { "comments.body": "great" } }
+                { "match": { "comments.body": { "query": "great" } } }
               ]
             }
           }
@@ -1490,7 +1491,7 @@ ElasticGroup::bool('complex')
                 ElasticFilter::term('variants.sku', 'sku'),
                 ElasticFilter::range('variants.price', 'price'),
             ]),
-        ElasticFilter::term('status', 'status'),
+        ElasticFilter::term('status'),
     ])
 ```
 

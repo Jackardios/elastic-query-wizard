@@ -596,13 +596,21 @@ ElasticQueryWizard::for(Post::class)
 // First featured, then by date
 ```
 
+A default sort must name an allowed sort: one missing from `allowedSorts()` is left out without an error, so here
+`is_featured` needs its own `ElasticSort::field('is_featured')`.
+
 ### Using Sort Objects
 
 ```php
+use Jackardios\QueryWizard\Enums\SortDirection;
+use Jackardios\QueryWizard\Values\Sort;
+
 ->defaultSorts(
-    ElasticSort::field('created_at') // will be applied as desc by default
+    new Sort('created_at', SortDirection::Descending)
 )
 ```
+
+A default sort names an allowed sort, the same way `?sort=` does; `defaultSorts()` does not take `ElasticSort` definitions.
 
 ---
 
