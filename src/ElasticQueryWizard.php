@@ -94,6 +94,12 @@ class ElasticQueryWizard extends BaseQueryWizard
      */
     private bool $proxyModified = false;
 
+    /**
+     * Set when boolQuery() is called before the build: the change lives on the
+     * subject, which a rebuild after a configuration change replaces.
+     */
+    private bool $boolQueryChangedBeforeBuild = false;
+
     public function __construct(
         Model|string $subject,
         ?QueryParametersManager $parameters = null,
@@ -137,10 +143,17 @@ class ElasticQueryWizard extends BaseQueryWizard
         return $this->subject;
     }
 
+    /**
+     * The root bool query of the search. A configuration change after the build
+     * throws a `LogicException`, since the rebuild would drop what was changed
+     * here; use `tapSearchBuilder()` for a change that survives rebuilds.
+     */
     public function boolQuery(): BoolQuery
     {
         if ($this->isBuilt()) {
             $this->proxyModified = true;
+        } else {
+            $this->boolQueryChangedBeforeBuild = true;
         }
 
         return $this->subject->boolQuery();
@@ -535,6 +548,13 @@ class ElasticQueryWizard extends BaseQueryWizard
             throw new \LogicException(
                 'Cannot modify query wizard configuration after calling query builder methods. '
                 .'Call all configuration methods (allowedFilters, allowedSorts, etc.) before query builder methods.'
+            );
+        }
+
+        if ($this->boolQueryChangedBeforeBuild && $this->isBuilt()) {
+            throw new \LogicException(
+                'Cannot modify query wizard configuration of a built wizard whose bool query was changed: the rebuild '
+                .'would drop the change. Change the bool query in tapSearchBuilder(), which runs on every build.'
             );
         }
 

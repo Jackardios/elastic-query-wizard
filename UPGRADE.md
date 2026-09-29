@@ -405,8 +405,8 @@ $builder->should($query);
 $builder->mustNot($query);
 ```
 
-`tapSearchBuilder()` runs again on every build. A change made through `boolQuery()` before `build()` is lost when a
-later configuration call rebuilds the search; after `build()`, `boolQuery()` locks the configuration instead.
+`tapSearchBuilder()` runs again on every build. A change made through `boolQuery()` stays on the built search, so a
+configuration call after `build()` throws a `LogicException` instead of rebuilding without it.
 
 ### Sparse Fieldsets
 

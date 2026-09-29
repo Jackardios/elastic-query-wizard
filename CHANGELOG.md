@@ -88,6 +88,8 @@ made since those snapshots.
   of being refused as a document reference.
 - A range bound left empty is no bound; coordinates that overflow to infinity no longer fail the JSON encoding.
 - A clone of a wizard whose built search was changed keeps the change lock.
+- A configuration call after the build throws a `LogicException` when `boolQuery()` was used before the build; the
+  rebuild used to drop its change silently.
 
 ### Security
 
