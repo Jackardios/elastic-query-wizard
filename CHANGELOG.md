@@ -57,6 +57,15 @@ made since those snapshots.
 - Geo bounding boxes take named edges (`left`, `bottom`, `right`, `top`); geo shape polygons keep their holes and are
   closed when their last point differs from their first.
 
+### Removed
+
+- `case_insensitive` on the term filter: its multi-value `terms` query does not support it, and Elasticsearch rejected
+  such a request. `withParameters(['case_insensitive' => …])` throws `InvalidArgumentException`.
+- The protected `ElasticQueryWizard` internals of the `dev-master` snapshots that subclasses could override:
+  `applyPostProcessingToResults()`, `finalizeSubject()`, `addBuildQueryModifier()` and the `HandlesSafeRelationSelect`
+  and `HandlesRelationPostProcessing` traits. Models are shaped by `EloquentShape`; use `modifyQuery()`,
+  `modifyModels()` and `tapSearchBuilder()`.
+
 ### Fixed
 
 - Negated exists and null filters stay in the filter's clause, so they work in `inShould()`, `inMustNot()` and bool
@@ -83,3 +92,5 @@ made since those snapshots.
   is refused and its default is not applied. It used to reach Elasticsearch.
 - A client can no longer read documents of other indices through more-like-this references or indexed shapes, or
   search fields outside a query string filter's property without a field-qualified term.
+
+[3.0.0]: https://github.com/Jackardios/elastic-query-wizard/compare/v2.2.0...HEAD

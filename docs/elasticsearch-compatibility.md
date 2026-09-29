@@ -35,7 +35,7 @@ If you're using or upgrading to Elasticsearch 9.x, be aware of these removed/cha
 
 | Feature | ES 8.x | ES 9.x | Recommendation |
 |---------|--------|--------|----------------|
-| `random_score` default field | `_id` | `_seq_no` | Specify field explicitly |
+| `random_score` with a seed and no `field` | 400: reads `_id`, whose fielddata is disabled | Reads `_seq_no` | Nothing: `ElasticSort::random()` sends `field: _seq_no` with a seed |
 
 ## Safe Usage Examples
 

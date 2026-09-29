@@ -548,6 +548,8 @@ use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
 use Jackardios\ElasticQueryWizard\Enums\BoolClause;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Support\Query;
+use Jackardios\QueryWizard\Exceptions\InvalidFilterValue;
+use Jackardios\QueryWizard\Support\FilterValueParser;
 
 class CustomFilter extends AbstractElasticFilter
 {
@@ -578,8 +580,13 @@ class CustomFilter extends AbstractElasticFilter
      */
     public function buildQuery(mixed $value): QueryInterface|array|null
     {
-        if (empty($value)) {
+        if (FilterValueParser::isBlank($value)) {
             return null;
+        }
+
+        // `a,b` arrives as a list; a 400 names the filter and the value
+        if (! is_string($value) && ! is_int($value)) {
+            throw InvalidFilterValue::make($value, $this, 'Expected one product code.');
         }
 
         // Your custom filter logic
@@ -592,6 +599,10 @@ class CustomFilter extends AbstractElasticFilter
     }
 }
 ```
+
+Read values with `laravel-query-wizard`'s `Support\FilterValueParser` (`isBlank()`, `number()`, `boolean()`,
+`isoDate()`, …): it returns null for a blank value and throws the 400 `InvalidFilterValue` for one it cannot read.
+`empty()` would also drop `0`.
 
 ### Using Custom Filters
 
@@ -783,7 +794,8 @@ $results = ElasticQueryWizard::for(Post::class)
 ```
 
 > **Note:** After `build()`, `modifyQuery()` and `modifyModels()` are locked and will throw a `LogicException`. Register these callbacks before build.
-> **Note:** Once you call SearchBuilder methods after `build()`, you cannot modify wizard configuration (allowedFilters, allowedSorts, etc.) anymore.
+> **Note:** Once you call SearchBuilder methods on the wizard after `build()`, changing its configuration (allowedFilters, allowedSorts, etc.) throws a `LogicException`.
+> Calls on the builder that `build()` returned are not tracked: a later configuration change rebuilds from a fresh builder and silently drops them. To keep a change across rebuilds, call the method on the wizard before `build()` or use `tapSearchBuilder()`.
 
 ---
 

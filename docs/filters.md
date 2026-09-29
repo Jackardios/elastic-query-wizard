@@ -154,7 +154,7 @@ Elasticsearch bool queries have four clause types. Each filter is placed into on
 |--------|--------|---------|---------|----------|
 | **filter** | `inFilter()` | No | Yes | Exact filters (term, range, exists) |
 | **must** | `inMust()` | Yes | No | Full-text search (match, fuzzy) |
-| **should** | `inShould()` | Yes | No | Optional/OR conditions |
+| **should** | `inShould()` | Yes | No | Optional conditions that raise the score |
 | **must_not** | `inMustNot()` | No | Yes | Exclusions |
 
 ```php
@@ -167,14 +167,19 @@ ElasticFilter::term('status')->inMust()
 // Exclusion: documents without this value
 ElasticFilter::term('status')->inMustNot()
 
-// Optional: OR logic with minimum_should_match
+// Optional: a match raises the score
 ElasticFilter::term('tag1')->inShould()
 ElasticFilter::term('tag2')->inShould()
 ```
 
+At the root the wizard sets no `minimum_should_match`, so Elasticsearch requires one should clause to match only while
+the root bool has no `filter` or `must` clause. Once another filter of the request adds one, the should clauses only
+raise the score. For "at least one of these", put the filters in a
+[bool group](#bool-group) with `minimumShouldMatch(1)`.
+
 **When to change clause:**
 - Use `inMust()` when you want the filter to affect relevance scoring
-- Use `inShould()` for optional conditions (OR logic)
+- Use `inShould()` for optional conditions that raise the score (for OR logic use a bool group)
 - Use `inMustNot()` to exclude documents
 - Keep `inFilter()` (default for exact filters) for best performance
 
@@ -1366,7 +1371,7 @@ ElasticFilter::match('title')->inFilter()  // Now cached, no scoring
 // Exclusion
 ElasticFilter::term('status')->inMustNot() // Exclude documents
 
-// Optional matching (OR logic with minimum_should_match)
+// Optional matching: raises the score (see the note on inShould() above)
 ElasticFilter::term('tag')->inShould()
 ```
 
@@ -1613,8 +1618,9 @@ carries the value (`$exception->filterValue`) and what was expected (`$exception
 | `trashed` | not `with`, `only`, `without`, `true` or `false` | `InvalidFilterValue` |
 
 A value of the wrong shape for the filter (for example a list for `exists`) is rejected earlier with 400
-`InvalidFilterQuery`. Blank values (`null`, whitespace, `,`) add no condition. `disable_invalid_filter_query_exception`
-covers unknown filter names only, not unreadable values.
+`InvalidFilterQuery`. Blank values (`null`, whitespace) add no condition, and neither does `,` for a filter that splits
+its value; the filters that keep their value whole ([Value Splitting](#value-splitting)) send `,` as the text.
+`disable_invalid_filter_query_exception` covers unknown filter names only, not unreadable values.
 
 A range bound that is a date is passed on as sent, and Elasticsearch reads it with the field's format, in UTC unless
 the query sets `time_zone` (`->withParameters(['time_zone' => '+03:00'])`).

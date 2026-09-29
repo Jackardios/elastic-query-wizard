@@ -72,6 +72,7 @@ This guide covers migrating from `jackardios/elastic-query-wizard` v2 to v3.
 | `addEloquentCollectionCallback()` | `modifyModels()` |
 | `getRootBoolQuery()` | `boolQuery()` or use `$builder` directly |
 | `->build()->get()` | `->build()->execute()` |
+| `build()` returned the wizard | `build()` returns the `SearchBuilder`; keep the wizard in its own variable |
 
 ---
 
@@ -373,6 +374,15 @@ $wizard->tapSearchBuilder(function(SearchBuilder $builder) {
 });
 ```
 
+The second argument of the `modifyQuery()` callback is the raw Elasticsearch response as an array; v2 passed a
+`SearchResult`, so a callback that type-hints it throws a `TypeError`.
+
+### Eloquent Filters
+
+v2 accepted `EloquentFilter` instances in `allowedFilters()` and applied them to the Eloquent query that loads the
+models. v3 takes Elasticsearch filters only: an Eloquent filter fails with a `TypeError` (a 500) on the first request
+that uses it. Replace it with an `ElasticFilter` so the condition is part of the search and of its total.
+
 ### Accessing Bool Query
 
 **v2:**
@@ -385,6 +395,8 @@ $wizard->getRootBoolQuery()->mustNot($query);
 
 **v3:**
 ```php
+$wizard->tapSearchBuilder(fn (SearchBuilder $builder) => $builder->boolQuery()->must($query));
+// Or once the configuration is final:
 $wizard->boolQuery()->must($query);
 // Or in filters, use $builder directly:
 $builder->must($query);
@@ -392,6 +404,9 @@ $builder->filter($query);
 $builder->should($query);
 $builder->mustNot($query);
 ```
+
+`tapSearchBuilder()` runs again on every build. A change made through `boolQuery()` before `build()` is lost when a
+later configuration call rebuilds the search; after `build()`, `boolQuery()` locks the configuration instead.
 
 ### Sparse Fieldsets
 
@@ -459,7 +474,8 @@ The request is parsed by `laravel-query-wizard` v3, whose stricter rules apply t
   `InvalidGeoShapeValue` extend `laravel-query-wizard`'s `InvalidFilterValue`: the status is 400 (was 422), the error
   code `invalid_filter_value`, and the message names the filter by its public name. Their factories take the value and
   the filter (`InvalidRangeValue::invalidBounds($value, $filter)`, `InvalidGeoShapeValue::invalidPoint($value, $filter)`,
-  …) instead of a property name. Values that reached Elasticsearch and failed there with a 500 are now rejected
+  …) instead of a property name; `InvalidGeoBoundingBoxValue::make()` and `InvalidGeoDistanceValue::make()` became
+  `invalidBox()` and `invalidDistance()`. Values that reached Elasticsearch and failed there with a 500 are now rejected
   first: a range bound that is not a decimal number or an ISO 8601 date (`abc`, `1e3`, date math such as `now-1d`), a
   geo distance that is not a positive number with a unit, and coordinates out of range. Exists and null filters reject
   a value that is not a boolean, and the trashed filter one that is not `with`, `only`, `without`, `true` or `false`
@@ -484,6 +500,11 @@ The request is parsed by `laravel-query-wizard` v3, whose stricter rules apply t
 - **Regexp patterns** longer than 1000 characters (Elasticsearch's default `index.max_regex_length`) return 400
   instead of a 500 from Elasticsearch; `maxLength()` sets another limit. The text and pattern filters take
   `maxLength()` as an opt-in limit.
+- **Range filters** go to the `filter` clause (v2: `must`), so they no longer add to the relevance score; `inMust()`
+  restores that.
+- **Geo bounding box longitudes keep their order.** v2 swapped `left` and `right` when `left > right`; v3 reads such a
+  box as crossing the antimeridian, so the same request matches the other side of the globe. Latitudes are still
+  swapped when `bottom > top`.
 - **Values.** A range bound left empty is no bound. A geo bounding box also takes named edges (`left`, `bottom`,
   `right`, `top`). A geo shape polygon keeps its holes and is closed when its last point differs from its first.
   Coordinates that overflow to infinity (`1e999`) are rejected instead of failing the JSON encoding with a 500.
@@ -730,8 +751,6 @@ ElasticInclude::callback('name', function(Builder $builder, string $relation) {
 ### New Filter Types
 - `ElasticFilter::exists()` — field existence
 - `ElasticFilter::multiMatch()` — search across multiple fields
-- `ElasticFilter::geoBoundingBox()` — geo bounding box queries
-- `ElasticFilter::geoDistance()` — geo distance queries
 - `ElasticFilter::geoShape()` — geo shape queries
 - `ElasticFilter::fuzzy()` — fuzzy matching
 - `ElasticFilter::prefix()` — prefix matching
@@ -742,7 +761,6 @@ ElasticInclude::callback('name', function(Builder $builder, string $relation) {
 - `ElasticFilter::matchPhrasePrefix()` — phrase prefix
 - `ElasticFilter::queryString()` — Lucene query syntax
 - `ElasticFilter::simpleQueryString()` — simple query syntax
-- `ElasticFilter::trashed()` — soft delete filtering
 - `ElasticFilter::dateRange()` — date range with format
 - `ElasticFilter::null()` — null/missing field queries
 - `ElasticFilter::nested()` — nested document filtering
@@ -780,20 +798,13 @@ release. Read values in custom filters with `laravel-query-wizard`'s `Support\Fi
 
 ### Range Filter Operators
 
-Legacy range operators are no longer supported and will throw `InvalidRangeValue`:
+A range filter takes `gt`, `gte`, `lt` and `lte`, as in v2. The legacy `from`, `to`, `include_lower` and
+`include_upper`, which Elasticsearch 9 removed, are refused with an `InvalidRangeValue` that names them; v2 refused
+them as any other unknown key.
 
-**v2 (accepted):**
-```
-?filter[price][from]=100&filter[price][to]=500
-?filter[price][include_lower]=true
-```
-
-**v3 (required):**
 ```
 ?filter[price][gte]=100&filter[price][lte]=500
 ```
-
-Only ES 9.x compatible operators are allowed: `gt`, `gte`, `lt`, `lte`.
 
 ---
 
@@ -849,6 +860,9 @@ v3 is compatible with ES 8.x and 9.x. Key notes:
 - [ ] Replace `getRootBoolQuery()->filter()` → `$builder->filter()`
 - [ ] Replace `addEloquentQueryCallback()` → `modifyQuery()`
 - [ ] Replace `addEloquentCollectionCallback()` → `modifyModels()`
+- [ ] Change the second `modifyQuery()` callback argument from `SearchResult` to `array $rawResult`
+- [ ] Code that used the wizard returned by `build()`: `build()` now returns the `SearchBuilder`
+- [ ] Replace `EloquentFilter` instances in `allowedFilters()` with Elasticsearch filters
 
 ### Namespace Updates
 - [ ] Replace `Elastic\ScoutDriverPlus\Builders\SearchParametersBuilder` → `Jackardios\EsScoutDriver\Search\SearchBuilder`

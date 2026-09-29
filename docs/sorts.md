@@ -522,8 +522,10 @@ ElasticSort::random('shuffle')
 
 ```php
 ElasticSort::random('shuffle')
-    ->seed(auth()->id())
+    ->seed(auth()->id() ?? $request->session()->getId())
 ```
+
+`seed()` takes an int or a string, so give guests another seed.
 
 ---
 

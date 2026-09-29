@@ -15,7 +15,9 @@ A powerful Laravel package for building Elasticsearch queries with JSON:API styl
 - [Documentation](#documentation)
 - [Resource Schemas](#resource-schemas)
 - [Usage Examples](#usage-examples)
+- [Query Parameter Format](#query-parameter-format)
 - [Elasticsearch Version Compatibility](#elasticsearch-version-compatibility)
+- [Testing](#testing)
 - [License](#license)
 
 ## Features
@@ -43,6 +45,14 @@ A powerful Laravel package for building Elasticsearch queries with JSON:API styl
 
 ```bash
 composer require jackardios/elastic-query-wizard
+```
+
+While v3 is a release candidate, a project with the default `minimum-stability: stable` has to allow the candidates of
+this package and of the two it needs (Composer applies stability flags of the root project only):
+
+```bash
+composer require "jackardios/elastic-query-wizard:^3.0@rc" "jackardios/laravel-query-wizard:^3.0@rc" \
+    "jackardios/es-scout-driver:^1.0@rc"
 ```
 
 Make sure your model uses the `Searchable` trait from `es-scout-driver`:
@@ -404,14 +414,16 @@ This package supports both Elasticsearch 8.x and 9.x. The package handles most v
 |---------|---------------|
 | `force_source` highlighting | Removed |
 | Boolean histogram aggregation | Removed (use `terms`) |
-| `random_score` default field | Changed to `_seq_no` |
+| `random_score` seed without `field` | Reads `_seq_no` (8.x refuses it); `ElasticSort::random()` always sends `_seq_no` |
 
 For full details, migration guide, and safe usage examples, see [Elasticsearch Compatibility](docs/elasticsearch-compatibility.md).
 
 ## Testing
 
 ```bash
-make test
+make up                 # start Elasticsearch in Docker (127.0.0.1:29200)
+make test               # run every test
+composer test:unit      # unit tests only, no Elasticsearch needed
 ```
 
 ## License
