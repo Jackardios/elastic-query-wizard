@@ -28,6 +28,11 @@ final class QueryStringFilter extends AbstractElasticFilter
     use LimitsValueLength;
 
     /**
+     * The characters that can end a term or start a new one inside it.
+     */
+    private const TERM_BREAKS = " \t\n\r\v\f()!:\\\"~^";
+
+    /**
      * The value is one text, which may contain the separator; a list is a 400.
      */
     protected bool $splitValues = false;
@@ -95,20 +100,76 @@ final class QueryStringFilter extends AbstractElasticFilter
     /**
      * Whether a term of the query starts with `*` or `?`, which Elasticsearch
      * refuses without `allow_leading_wildcard`. A lone `*`, quoted phrases,
-     * ranges and escaped characters are not such terms.
+     * ranges, regular expressions and escaped characters are not such terms.
+     *
+     * A new term starts after whitespace, `(`, `)`, `:`, `!`, a phrase, a range,
+     * a regular expression, and fuzziness or a boost (`a~*b`, `a^2*b`), as
+     * Lucene's query parser reads it. The scan is linear, so a long value can't
+     * exhaust the PCRE limits and slip through.
      */
     private static function hasLeadingWildcard(string $query): bool
     {
-        $unquoted = (string) preg_replace(['/"(?:\\\\.|[^"\\\\])*"?/s', '/[\[{][^\]}]*[\]}]?/'], ' ', $query);
+        $length = strlen($query);
+        $atTermStart = true;
 
-        preg_match_all('/(?:^|[\s():])[+\-!]*((?:\\\\.|[^\s():\\\\])+)/', $unquoted, $matches);
+        for ($i = 0; $i < $length; $i++) {
+            if (! $atTermStart) {
+                $i += strcspn($query, self::TERM_BREAKS, $i);
 
-        foreach ($matches[1] as $term) {
-            if ($term !== '*' && ($term[0] === '*' || $term[0] === '?')) {
-                return true;
+                if ($i >= $length) {
+                    break;
+                }
+            }
+
+            $char = $query[$i];
+
+            if (ctype_space($char) || $char === '(' || $char === ')' || $char === ':' || $char === '!') {
+                $atTermStart = true;
+            } elseif ($char === '\\') {
+                $i++;
+                $atTermStart = false;
+            } elseif ($char === '"') {
+                $i = self::closingPosition($query, $i, '"');
+                $atTermStart = true;
+            } elseif ($char === '~' || $char === '^') {
+                $i += strspn($query, '0123456789.', $i + 1);
+                $atTermStart = true;
+            } elseif ($char === '+' || $char === '-') {
+                continue;
+            } elseif ($char === '/') {
+                $i = self::closingPosition($query, $i, '/');
+            } elseif ($char === '[' || $char === '{') {
+                $i = self::closingPosition($query, $i, ']}');
+            } elseif ($char === '*' || $char === '?') {
+                $next = $query[$i + 1] ?? ' ';
+
+                if ($char === '?' || ! (ctype_space($next) || str_contains(')~^:', $next))) {
+                    return true;
+                }
+            } else {
+                $atTermStart = false;
             }
         }
 
         return false;
+    }
+
+    /**
+     * The position of the unescaped character that closes the construct opened
+     * at $open, or the last position when the value ends first.
+     */
+    private static function closingPosition(string $query, int $open, string $closers): int
+    {
+        $length = strlen($query);
+
+        for ($i = $open + 1; $i < $length; $i++) {
+            if ($query[$i] === '\\') {
+                $i++;
+            } elseif (str_contains($closers, $query[$i])) {
+                return $i;
+            }
+        }
+
+        return $length - 1;
     }
 }

@@ -8,6 +8,7 @@ use Illuminate\Support\Collection;
 use Jackardios\ElasticQueryWizard\Filters\QueryStringFilter;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -102,5 +103,41 @@ class QueryStringFilterTest extends TestCase
             ->models();
 
         $this->assertCount(4, $result);
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function acceptedQueries(): array
+    {
+        return [
+            'star inside a regular expression' => ['/a *b/'],
+            'slash inside a term' => ['a/*b/'],
+            'plus inside a term' => ['a+*b'],
+            'operator characters inside a term' => ['a&&*b'],
+            'escaped space' => ['a\\ *b'],
+            'escaped backslash inside a term' => ['\\\\*a'],
+            'escaped star' => ['\\*a'],
+            'lone star with fuzziness' => ['*~'],
+            'lone star with a boost' => ['*^2'],
+            'open range' => ['{a TO *}'],
+            'star in a field phrase' => ['name:"*b"'],
+            'field exists' => ['name:*'],
+            'phrase' => ['"a *b"'],
+            'inner and trailing wildcards' => ['a?c ab*'],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('acceptedQueries')]
+    public function a_query_the_filter_lets_through_is_accepted_by_elasticsearch(string $query): void
+    {
+        $this
+            ->createElasticWizardWithFilters(['q' => $query])
+            ->allowedFilters(QueryStringFilter::make('name', 'q'))
+            ->build()
+            ->execute();
+
+        $this->addToAssertionCount(1);
     }
 }

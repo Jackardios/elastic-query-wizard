@@ -66,6 +66,9 @@ made since those snapshots.
   the wizard is configured or built instead of misbehaving on a request.
 - Two nested groups with `innerHits()` on one path no longer fail the search: an inner hits result set without a
   `name` is named after its group.
+- The query string leading-wildcard check reads terms as Lucene does: it refuses `a~*b`, `a^2*b`, `(a)*b` and
+  `"a"*b`, accepts `*` inside a regular expression, and scans linearly, so a long value no longer slips past it to a
+  500 from Elasticsearch.
 - Geo shape points are checked like bounding box and distance coordinates: two numbers, in range, and an envelope
   whose top is not below its bottom; other values are 400s instead of 500s from Elasticsearch.
 - A range bound left empty is no bound; coordinates that overflow to infinity no longer fail the JSON encoding.
