@@ -70,5 +70,7 @@ made since those snapshots.
 
 ### Security
 
+- `disallowedFilters()` removes a filter inside a bool or nested group, as it removes one at the root: its request key
+  is refused and its default is not applied. It used to reach Elasticsearch.
 - A client can no longer read documents of other indices through more-like-this references or indexed shapes, or
   search fields outside a query string filter's property without a field-qualified term.

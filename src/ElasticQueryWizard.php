@@ -317,7 +317,9 @@ class ElasticQueryWizard extends BaseQueryWizard
         foreach ($filters as $filter) {
             if ($filter instanceof GroupInterface) {
                 foreach ($filter->getChildFilterNames() as $childName) {
-                    $names[] = $this->normalizePublicPath($childName);
+                    if (! $this->isGroupLeafDisallowed($childName)) {
+                        $names[] = $this->normalizePublicPath($childName);
+                    }
                 }
 
                 continue;
@@ -388,6 +390,10 @@ class ElasticQueryWizard extends BaseQueryWizard
         $childValues = [];
 
         foreach ($this->collectGroupLeafFilters($filter) as $child) {
+            if ($this->isGroupLeafDisallowed($child->getName())) {
+                continue;
+            }
+
             // Dispatch through $this, not parent::, so a subclass that customises
             // value resolution sees leaves nested in a group as well as root-level
             // filters. collectGroupLeafFilters() has already flattened away every
@@ -402,6 +408,15 @@ class ElasticQueryWizard extends BaseQueryWizard
         }
 
         return $childValues === [] ? null : $childValues;
+    }
+
+    /**
+     * disallowedFilters() removes root filters before they reach the groups, so
+     * the leaves of a group are checked here.
+     */
+    private function isGroupLeafDisallowed(string $name): bool
+    {
+        return $this->disallowedFilters !== [] && $this->isNameDisallowed($name, $this->disallowedFilters);
     }
 
     /**
