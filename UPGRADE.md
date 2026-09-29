@@ -478,8 +478,9 @@ The request is parsed by `laravel-query-wizard` v3, whose stricter rules apply t
   including epoch numbers and date math, → 400), read in the application timezone or the filter's `timezone()` (v2
   passed `timezone()` to Elasticsearch as `time_zone`, and without it Elasticsearch read dates in UTC). A date `to` covers
   the whole day. The bounds are sent as ISO 8601 date-times with an offset and `format: strict_date_optional_time`.
-  `dateFormat()` is deprecated in favor of `esFormat()`, and since the bounds are ISO date-times, the format must read
-  them: `dateFormat('dd/MM/yyyy')` with `from=01/01/2024` is now a 400.
+  `dateFormat()` is deprecated in favor of `esFormat()`. Neither changes the request format any more:
+  `dateFormat('dd/MM/yyyy')` with `from=01/01/2024` is now a 400. The format given is sent followed by
+  `||strict_date_optional_time`, so Elasticsearch still reads the ISO bounds.
 - **Regexp patterns** longer than 1000 characters (Elasticsearch's default `index.max_regex_length`) return 400
   instead of a 500 from Elasticsearch; `maxLength()` sets another limit. The text and pattern filters take
   `maxLength()` as an opt-in limit.

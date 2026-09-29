@@ -269,4 +269,22 @@ class DateRangeFilterTest extends TestCase
         $this->assertEqualsCanonicalizing([$this->models[2]->id, $late->id], $search(DateRangeFilter::make('created_at')));
         $this->assertEqualsCanonicalizing([$this->models[2]->id], $search(DateRangeFilter::make('created_at')->timezone('+03:00')));
     }
+
+    #[Test]
+    public function a_date_only_es_format_still_reads_the_iso_bounds(): void
+    {
+        $ids = fn (DateRangeFilter $filter): array => $this
+            ->createElasticWizardWithFilters(['created_at' => ['from' => '2024-06-01', 'to' => '2024-06-30']])
+            ->allowedFilters($filter)
+            ->build()
+            ->execute()
+            ->models()
+            ->pluck('id')
+            ->all();
+
+        $expected = $ids(DateRangeFilter::make('created_at'));
+
+        $this->assertNotEmpty($expected);
+        $this->assertEqualsCanonicalizing($expected, $ids(DateRangeFilter::make('created_at')->esFormat('yyyy-MM-dd')));
+    }
 }

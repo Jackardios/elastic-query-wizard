@@ -25,7 +25,8 @@ use Jackardios\QueryWizard\Support\FilterValueParser;
  * 2024-02-01 starts. Any other value is a 400 (InvalidFilterValue).
  *
  * The bounds reach Elasticsearch as ISO 8601 date-times with an offset, read
- * with the `strict_date_optional_time` format whatever the field's own format.
+ * with the `strict_date_optional_time` format whatever the field's own format;
+ * esFormat() puts another format first.
  *
  * @example filter[created_at][from]=2024-01-01&filter[created_at][to]=2024-12-31
  */
@@ -63,9 +64,10 @@ final class DateRangeFilter extends AbstractElasticFilter
     }
 
     /**
-     * The format Elasticsearch reads the bounds with. The bounds are ISO 8601
-     * date-times with an offset, so the format must read them; the default is
-     * `strict_date_optional_time`.
+     * A format Elasticsearch tries on the bounds before `strict_date_optional_time`,
+     * which always follows it (`yyyy-MM-dd||strict_date_optional_time`): the
+     * bounds are ISO 8601 date-times with an offset, which the given format may
+     * not read.
      *
      * @see https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-date-format.html
      */
@@ -77,11 +79,20 @@ final class DateRangeFilter extends AbstractElasticFilter
     }
 
     /**
-     * @deprecated Use esFormat(). The bounds are ISO 8601 date-times, so the format must read them.
+     * @deprecated Use esFormat(). It sets the Elasticsearch format, not the format of the request values.
      */
     public function dateFormat(string $format): static
     {
         return $this->esFormat($format);
+    }
+
+    private function resolveEsFormat(): string
+    {
+        if ($this->esFormat === null || in_array(self::DEFAULT_ES_FORMAT, explode('||', $this->esFormat), true)) {
+            return $this->esFormat ?? self::DEFAULT_ES_FORMAT;
+        }
+
+        return $this->esFormat.'||'.self::DEFAULT_ES_FORMAT;
     }
 
     /**
@@ -158,7 +169,7 @@ final class DateRangeFilter extends AbstractElasticFilter
             return null;
         }
 
-        $query = Query::range($this->property)->format($this->esFormat ?? self::DEFAULT_ES_FORMAT);
+        $query = Query::range($this->property)->format($this->resolveEsFormat());
 
         if ($from !== null) {
             $query->gte(self::isoDateTime($from->value));

@@ -1188,7 +1188,7 @@ ElasticFilter::dateRange('created_at')
     ->fromKey('start')                  // Change "from" key to "start"
     ->toKey('end')                      // Change "to" key to "end"
     ->timezone('Europe/Moscow')         // Read bounds without an offset in this timezone
-    ->esFormat('strict_date_time')      // Format Elasticsearch reads the bounds with
+    ->esFormat('yyyy-MM-dd')            // Sent as `yyyy-MM-dd||strict_date_optional_time`
 ```
 
 | Method | Description |
@@ -1196,7 +1196,7 @@ ElasticFilter::dateRange('created_at')
 | `fromKey(string)` | Change the key for the lower bound (default: `from`) |
 | `toKey(string)` | Change the key for the upper bound (default: `to`) |
 | `timezone(string)` | Timezone for bounds without an offset (default: the application's); an unknown one throws `InvalidArgumentException` |
-| `esFormat(string)` | Elasticsearch `format` for the bounds (default: `strict_date_optional_time`); it must read ISO 8601 date-times with an offset |
+| `esFormat(string)` | Elasticsearch `format` tried on the bounds before `strict_date_optional_time`, which is appended so the ISO 8601 bounds are always read (default: `strict_date_optional_time` alone). It does not change which request values are accepted |
 | `dateFormat(string)` | Deprecated alias of `esFormat()` |
 
 ### With Custom Keys
