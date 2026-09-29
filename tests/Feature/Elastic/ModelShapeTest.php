@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\LazyCollection;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\AppendModel;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\MorphModel;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
@@ -257,6 +258,25 @@ class ModelShapeTest extends TestCase
 
         $this->assertSame([['name'], ['name']], $keysOf($wizard->applyPostProcessingTo(TestModel::query()->get()->all())));
         $this->assertSame([['name'], ['name']], $keysOf($wizard->applyPostProcessingTo(new Collection(TestModel::query()->get()->all()))));
+    }
+
+    #[Test]
+    public function post_processing_a_lazy_collection_applies_the_fieldset_as_it_is_read(): void
+    {
+        TestModel::factory()->count(2)->create();
+        $wizard = $this->createElasticWizardWithFields(['testModel' => 'name'])->allowedFields('name');
+        $wizard->build();
+        $queries = 0;
+        DB::listen(function () use (&$queries): void {
+            $queries++;
+        });
+
+        $models = $wizard->applyPostProcessingTo(TestModel::query()->cursor());
+
+        $this->assertInstanceOf(LazyCollection::class, $models);
+        $this->assertSame(0, $queries);
+        $this->assertSame([['name'], ['name']], $models->map(fn (Model $model): array => array_keys($model->toArray()))->all());
+        $this->assertSame(1, $queries);
     }
 }
 

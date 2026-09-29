@@ -46,6 +46,10 @@ made since those snapshots.
   `moreLikeThis` reads a list as several texts.
 - `default()`, `prepareValueWith()`, `when()`, `asBoolean()`, `allowStructuredInput()`, `withValueSplitting()` and
   `withoutValueSplitting()` on a filter group throw a `LogicException`.
+- `applyPostProcessingTo()` returns a new lazy collection for a lazy collection, post-processing each model as it is
+  read, and throws `InvalidArgumentException` for a generator, which post-processing would use up.
+- Requests are subject to `laravel-query-wizard`'s `limits.max_fields_count` (100 fields across every fieldset by
+  default), and include, sort, field and append limits are checked while the request is read.
 
 ### Added
 

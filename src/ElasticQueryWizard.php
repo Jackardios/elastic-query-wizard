@@ -8,6 +8,7 @@ use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\LazyCollection;
 use Jackardios\ElasticQueryWizard\Exceptions\FilterNameConflictException;
 use Jackardios\ElasticQueryWizard\Exceptions\MaxResultWindowExceeded;
 use Jackardios\ElasticQueryWizard\Filters\TermFilter;
@@ -238,10 +239,15 @@ class ElasticQueryWizard extends BaseQueryWizard
      * Use this method when executing queries outside the wizard (e.g., via getSubject())
      * to apply sparse fieldsets and appends to loaded models.
      *
+     * A lazy collection is not read: a new one is returned that post-processes
+     * each model as it is read.
+     *
      * @template T of Model|\Traversable<mixed>|array<mixed>
      *
-     * @param  T  $results  Single model, collection, or iterable of models
-     * @return T The same results with post-processing applied
+     * @param  T  $results  Single model, collection, lazy collection, or iterable of models
+     * @return (T is LazyCollection<array-key, mixed> ? LazyCollection<array-key, mixed> : T) The same results with post-processing applied, or a new lazy collection for a lazy collection
+     *
+     * @throws \InvalidArgumentException For a generator when there is post-processing to apply, which would use it up
      */
     public function applyPostProcessingTo(mixed $results): mixed
     {
