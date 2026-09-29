@@ -232,22 +232,6 @@ class FilterValueSanitizer
     }
 
     /**
-     * @param  array<mixed>  $array
-     */
-    public static function arrayToCommaSeparatedString(array $array): string
-    {
-        $items = [];
-
-        foreach (static::arrayWithOnlyFilledItems($array) as $item) {
-            if (is_scalar($item) || $item instanceof \Stringable) {
-                $items[] = (string) $item;
-            }
-        }
-
-        return implode(',', $items);
-    }
-
-    /**
      * Converts a value to a list without blank items.
      *
      * A string is one item: laravel-query-wizard has already split the request
@@ -295,35 +279,6 @@ class FilterValueSanitizer
         }
 
         return null;
-    }
-
-    /**
-     * Validates and converts coordinates to float array format.
-     *
-     * @param  array<mixed>  $coordinates
-     * @return array<int, array<int, float>>|null
-     */
-    public static function toCoordinatesArray(array $coordinates): ?array
-    {
-        $result = [];
-        foreach ($coordinates as $point) {
-            if (! is_array($point)) {
-                return null;
-            }
-            $floats = [];
-            foreach ($point as $coord) {
-                $float = self::finiteFloat($coord);
-
-                if ($float === null) {
-                    return null;
-                }
-
-                $floats[] = $float;
-            }
-            $result[] = $floats;
-        }
-
-        return $result;
     }
 
     /**

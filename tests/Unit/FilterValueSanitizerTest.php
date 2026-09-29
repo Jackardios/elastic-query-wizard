@@ -210,20 +210,6 @@ class FilterValueSanitizerTest extends TestCase
     }
 
     #[Test]
-    public function array_to_comma_separated_string_works_correctly(): void
-    {
-        $result = FilterValueSanitizer::arrayToCommaSeparatedString(['a', '', 'b', null, 'c']);
-        $this->assertEquals('a,b,c', $result);
-    }
-
-    #[Test]
-    public function array_to_comma_separated_string_skips_items_that_are_not_scalars(): void
-    {
-        $result = FilterValueSanitizer::arrayToCommaSeparatedString(['a', ['nested'], 1, 2.5, true, new \stdClass]);
-        $this->assertSame('a,1,2.5,1', $result);
-    }
-
-    #[Test]
     public function to_string_returns_string_for_string_input(): void
     {
         $this->assertEquals('hello', FilterValueSanitizer::toString('hello'));
@@ -297,36 +283,12 @@ class FilterValueSanitizerTest extends TestCase
     }
 
     #[Test]
-    public function to_coordinates_array_converts_valid_coordinates(): void
+    public function finite_float_reads_numbers_and_refuses_infinity(): void
     {
-        $result = FilterValueSanitizer::toCoordinatesArray([[1, 2], [3, 4]]);
-        $this->assertEquals([[1.0, 2.0], [3.0, 4.0]], $result);
-    }
-
-    #[Test]
-    public function to_coordinates_array_converts_numeric_strings(): void
-    {
-        $result = FilterValueSanitizer::toCoordinatesArray([['1.5', '2.5'], ['3', '4']]);
-        $this->assertEquals([[1.5, 2.5], [3.0, 4.0]], $result);
-    }
-
-    #[Test]
-    public function to_coordinates_array_returns_null_for_non_array_points(): void
-    {
-        $this->assertNull(FilterValueSanitizer::toCoordinatesArray(['not_array', [1, 2]]));
-        $this->assertNull(FilterValueSanitizer::toCoordinatesArray([123]));
-    }
-
-    #[Test]
-    public function to_coordinates_array_returns_null_for_non_numeric_coords(): void
-    {
-        $this->assertNull(FilterValueSanitizer::toCoordinatesArray([[1, 'abc']]));
-        $this->assertNull(FilterValueSanitizer::toCoordinatesArray([['x', 'y']]));
-    }
-
-    #[Test]
-    public function to_coordinates_array_handles_empty_array(): void
-    {
-        $this->assertEquals([], FilterValueSanitizer::toCoordinatesArray([]));
+        $this->assertSame(1.5, FilterValueSanitizer::finiteFloat('1.5'));
+        $this->assertSame(3.0, FilterValueSanitizer::finiteFloat(3));
+        $this->assertNull(FilterValueSanitizer::finiteFloat('1e999'));
+        $this->assertNull(FilterValueSanitizer::finiteFloat('abc'));
+        $this->assertNull(FilterValueSanitizer::finiteFloat([1]));
     }
 }
