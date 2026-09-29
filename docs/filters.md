@@ -363,7 +363,7 @@ GET /posts?filter[thumbnail]=false
 { "exists": { "field": "thumbnail" } }
 
 // filter[thumbnail]=0
-{ "bool": { "must_not": { "exists": { "field": "thumbnail" } } } }
+{ "bool": { "must_not": [{ "exists": { "field": "thumbnail" } }] } }
 ```
 
 The negation follows the clause: with `inShould()` a missing field is one of the alternatives
@@ -398,7 +398,7 @@ GET /posts?filter[is_deleted]=false
 
 ```json
 // filter[is_deleted]=true (field IS NULL)
-{ "bool": { "must_not": { "exists": { "field": "deleted_at" } } } }
+{ "bool": { "must_not": [{ "exists": { "field": "deleted_at" } }] } }
 
 // filter[is_deleted]=false (field IS NOT NULL)
 { "exists": { "field": "deleted_at" } }
@@ -1053,7 +1053,7 @@ documents of another index. Any other key (`_index`, `_routing`, …) returns 40
 {
   "more_like_this": {
     "fields": ["title", "body"],
-    "like": "elasticsearch distributed search"
+    "like": "elasticsearch, distributed search"
   }
 }
 ```
@@ -1587,7 +1587,7 @@ Nested groups are resolved recursively and support arbitrary depth.
 
 3. **Group Names Are Routing-Only**: Group names are never used as filter value keys. Values are routed only by leaf filter aliases.
 
-4. **Unique Leaf Aliases Required**: Leaf filter aliases inside one group tree must be unique. Duplicate aliases now throw `DuplicateGroupChildFilterNameException`.
+4. **Unique Leaf Aliases Required**: Leaf filter aliases inside one group tree must be unique. Duplicate aliases throw `DuplicateGroupChildFilterNameException`.
 
 5. **Root vs Group Deduplication**: If the same filter name appears both at root level and inside a group, only the group version is applied.
 

@@ -175,8 +175,8 @@ final class ElasticFilter
     }
 
     /**
-     * Creates a passthrough filter that works with the SearchBuilder directly.
-     * Useful for non-elastic filtering needs.
+     * Creates a filter that is validated and captured but not applied: read its
+     * value with getPassthroughFilters() and use it outside the search.
      */
     public static function passthrough(string $name, ?string $alias = null): PassthroughFilter
     {

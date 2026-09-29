@@ -17,7 +17,7 @@ final class InvalidGeoDistanceValue extends InvalidFilterValue
         return self::make(
             $value,
             $filter,
-            'Expected `lat`, `lon` and `distance` keys, for example `lat=55.75&lon=37.61&distance=3km`.'
+            'Expected `lat` from -90 to 90, `lon` from -180 to 180 and a positive `distance` with an optional unit, for example `lat=55.75&lon=37.61&distance=3km`.'
         );
     }
 }

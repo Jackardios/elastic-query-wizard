@@ -120,7 +120,7 @@ ElasticSort::field('price')
 
 | Method | Description |
 |--------|-------------|
-| `missing(string|int|float|bool)` | Explicit value for missing docs (`_first`, `_last`, or scalar) |
+| `missing(string\|int\|float\|bool)` | Explicit value for missing docs (`_first`, `_last`, or scalar) |
 | `missingFirst()` | Shortcut for `missing('_first')` |
 | `missingLast()` | Shortcut for `missing('_last')` |
 | `mode(string)` | Mode for multi-valued fields (`min`, `max`, `avg`, `sum`, `median`) |
@@ -263,7 +263,7 @@ ElasticSort::script(
     scriptSource: "doc['price'].value * params.factor",
     property: 'weighted_price',  // Internal name
     alias: 'custom'              // Parameter name in API
-)
+)->params(['factor' => 1.2])
 ```
 
 ### Query Parameters
@@ -453,7 +453,7 @@ ElasticSort::random('shuffle')
 
 ```
 GET /products?sort=shuffle
-GET /products?sort=-shuffle  // The same order reversed
+GET /products?sort=-shuffle  // With a seed: the same order reversed
 ```
 
 ### Elasticsearch Query

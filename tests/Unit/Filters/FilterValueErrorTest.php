@@ -88,7 +88,7 @@ class FilterValueErrorTest extends UnitTestCase
     public function an_unreadable_trashed_mode_is_a_400(mixed $value): void
     {
         $this->expectException(InvalidFilterValue::class);
-        $this->expectExceptionMessage('Expected one of: with, only, without');
+        $this->expectExceptionMessage('Expected one of: with, only, without, true, false');
 
         $this->createElasticWizardWithFilters(['trashed' => $value], SoftDeleteModel::class)
             ->allowedFilters(ElasticFilter::trashed())

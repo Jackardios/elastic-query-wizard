@@ -137,15 +137,8 @@ any `random_score` you build yourself.
 
 ### Testing
 
-After making changes, test your application against both ES versions if possible:
-
-```bash
-# Test with ES 8.x
-make test-es8
-
-# Test with ES 9.x
-make test-es9
-```
+After making changes, run your application's tests against both ES versions if possible. This package's own suite
+runs on both with `make test-es8` and `make test-es9` from its repository.
 
 ### Package Compatibility
 

@@ -10,7 +10,6 @@ This section covers advanced features and customization options for Elastic Quer
 > use Jackardios\ElasticQueryWizard\ElasticInclude;
 > use Jackardios\ElasticQueryWizard\ElasticQuery;
 > use Jackardios\ElasticQueryWizard\ElasticAggregation;
-> use Jackardios\EsScoutDriver\Search\SearchResult;
 > use Illuminate\Database\Eloquent\Builder;
 > use Illuminate\Database\Eloquent\Collection;
 > ```
@@ -472,7 +471,7 @@ $wizard = ElasticQueryWizard::for(Post::class)
 ## Modify Models Callbacks
 
 Add callbacks that transform the collection of models after they're loaded.
-This API is consistent with `SearchBuilder::modifyModels()` from `es-scout-driver`:
+This API is consistent with `SearchBuilder::modifyModels()` from `es-scout-driver`.
 Register callbacks before calling `build()`.
 
 ```php
@@ -892,6 +891,13 @@ $results = ElasticQueryWizard::for(Post::class)
    ?include=commentsCount  # Loads count, not relation
    ```
 
+### Random Sort Repeats or Skips Documents Across Pages
+
+```php
+// Without a seed every request shuffles anew; a seed keeps one order per session
+ElasticSort::random('random')->seed($request->session()->getId())
+```
+
 ### Elasticsearch 9.x Specific Errors
 
 **"force_source not supported"**
@@ -900,12 +906,6 @@ $results = ElasticQueryWizard::for(Post::class)
 ->tapSearchBuilder(function ($builder) {
     $builder->highlight('title');  // Don't use force_source: true
 })
-```
-
-**Random sort repeats or skips documents across pages**
-```php
-// Without a seed every request shuffles anew; a seed keeps one order per session
-ElasticSort::random('random')->seed($request->session()->getId())
 ```
 
 **"Boolean histogram aggregation not supported"**
@@ -919,9 +919,10 @@ ElasticSort::random('random')->seed($request->session()->getId())
 **Problem:** Query should return results but returns empty.
 
 **Checklist:**
-1. **Check bool clause placement** — Scoring filters in `filter` clause won't boost:
+1. **Check bool clause placement** — A scoring filter in the `filter` clause matches but adds no score, so the best
+   matches are not first:
    ```php
-   // Might not match as expected
+   // Matches, ordered without relevance
    ElasticFilter::match('title')->inFilter()
 
    // Better: let match use default must clause
