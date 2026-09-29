@@ -894,6 +894,9 @@ GET /areas?filter[boundary][type]=indexed_shape&filter[boundary][id]=region_123
 | `point` | Single geographic point |
 | `indexed_shape` | Reference to a shape stored in another document; enabled with `indexedShapes()` |
 
+Every point is `[lon, lat]`: exactly two numbers, the longitude within ±180 and the latitude within ±90. An envelope
+is its top-left and bottom-right corners, so its first latitude may not be below its second. Anything else returns 400.
+
 Each polygon ring is a list of `[lon, lat]` points. A ring whose last point differs from its first is closed for you, and a ring must have at least four points once closed. Rings after the first are holes: documents inside a hole do not match.
 
 Coordinates must be finite numbers; a value such as `1e999` returns 400.

@@ -131,13 +131,14 @@ final class GeoShapeFilter extends AbstractElasticFilter
             throw InvalidGeoShapeValue::invalidEnvelope($value, $this);
         }
 
-        $validated = FilterValueSanitizer::toCoordinatesArray($coordinates);
+        $topLeft = self::position($coordinates[0] ?? null);
+        $bottomRight = self::position($coordinates[1] ?? null);
 
-        if ($validated === null) {
+        if ($topLeft === null || $bottomRight === null || $topLeft[1] < $bottomRight[1]) {
             throw InvalidGeoShapeValue::invalidEnvelope($value, $this);
         }
 
-        $query->envelope($validated);
+        $query->envelope([$topLeft, $bottomRight]);
     }
 
     /**
@@ -168,10 +169,20 @@ final class GeoShapeFilter extends AbstractElasticFilter
      */
     private function closedRing(mixed $ring): ?array
     {
-        $points = is_array($ring) ? FilterValueSanitizer::toCoordinatesArray($ring) : null;
-
-        if ($points === null || $points === []) {
+        if (! is_array($ring) || $ring === [] || ! array_is_list($ring)) {
             return null;
+        }
+
+        $points = [];
+
+        foreach ($ring as $point) {
+            $position = self::position($point);
+
+            if ($position === null) {
+                return null;
+            }
+
+            $points[] = $position;
         }
 
         if ($points[0] !== $points[count($points) - 1]) {
@@ -192,14 +203,34 @@ final class GeoShapeFilter extends AbstractElasticFilter
             throw InvalidGeoShapeValue::invalidPoint($value, $this);
         }
 
-        $lon = FilterValueSanitizer::finiteFloat($coordinates[0] ?? null);
-        $lat = FilterValueSanitizer::finiteFloat($coordinates[1] ?? null);
+        $position = self::position($coordinates);
 
-        if ($lon === null || $lat === null) {
+        if ($position === null) {
             throw InvalidGeoShapeValue::invalidPoint($value, $this);
         }
 
-        $query->point([$lon, $lat]);
+        $query->point($position);
+    }
+
+    /**
+     * A GeoJSON position `[lon, lat]` with both numbers in range, or null.
+     *
+     * @return array{0: float, 1: float}|null
+     */
+    private static function position(mixed $point): ?array
+    {
+        if (! is_array($point) || count($point) !== 2 || ! array_is_list($point)) {
+            return null;
+        }
+
+        $lon = FilterValueSanitizer::finiteFloat($point[0]);
+        $lat = FilterValueSanitizer::finiteFloat($point[1]);
+
+        if ($lon === null || $lat === null || abs($lon) > 180 || abs($lat) > 90) {
+            return null;
+        }
+
+        return [$lon, $lat];
     }
 
     /**

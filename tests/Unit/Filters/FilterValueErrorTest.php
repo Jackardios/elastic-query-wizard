@@ -44,6 +44,13 @@ class FilterValueErrorTest extends UnitTestCase
             'distance zero' => [ElasticFilter::geoDistance('location', 'cost'), ['lat' => '0', 'lon' => '0', 'distance' => '0km'], InvalidGeoDistanceValue::class],
             'distance unit in capitals' => [ElasticFilter::geoDistance('location', 'cost'), ['lat' => '0', 'lon' => '0', 'distance' => '3KM'], InvalidGeoDistanceValue::class],
             'shape type' => [ElasticFilter::geoShape('boundary', 'cost'), ['type' => 'circle'], InvalidGeoShapeValue::class],
+            'shape point latitude out of range' => [ElasticFilter::geoShape('boundary', 'cost'), ['type' => 'point', 'coordinates' => ['10', '100']], InvalidGeoShapeValue::class],
+            'shape point with three numbers' => [ElasticFilter::geoShape('boundary', 'cost'), ['type' => 'point', 'coordinates' => ['10', '10', '5']], InvalidGeoShapeValue::class],
+            'shape envelope corner with one number' => [ElasticFilter::geoShape('boundary', 'cost'), ['type' => 'envelope', 'coordinates' => [['1'], ['2']]], InvalidGeoShapeValue::class],
+            'shape envelope top below bottom' => [ElasticFilter::geoShape('boundary', 'cost'), ['type' => 'envelope', 'coordinates' => [['0', '0'], ['20', '50']]], InvalidGeoShapeValue::class],
+            'shape envelope longitude out of range' => [ElasticFilter::geoShape('boundary', 'cost'), ['type' => 'envelope', 'coordinates' => [['-200', '10'], ['20', '0']]], InvalidGeoShapeValue::class],
+            'shape polygon point with one number' => [ElasticFilter::geoShape('boundary', 'cost'), ['type' => 'polygon', 'coordinates' => [[['1'], ['2'], ['3'], ['1']]]], InvalidGeoShapeValue::class],
+            'shape polygon longitude out of range' => [ElasticFilter::geoShape('boundary', 'cost'), ['type' => 'polygon', 'coordinates' => [[['0', '0'], ['200', '0'], ['0', '10']]]], InvalidGeoShapeValue::class],
             'exists' => [ElasticFilter::exists('price', 'cost'), 'maybe', InvalidFilterValue::class],
             'null' => [ElasticFilter::null('price', 'cost'), 'maybe', InvalidFilterValue::class],
         ];
