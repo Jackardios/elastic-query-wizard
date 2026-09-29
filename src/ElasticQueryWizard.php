@@ -9,11 +9,13 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Jackardios\ElasticQueryWizard\Exceptions\FilterNameConflictException;
+use Jackardios\ElasticQueryWizard\Exceptions\MaxResultWindowExceeded;
 use Jackardios\ElasticQueryWizard\Filters\TermFilter;
 use Jackardios\ElasticQueryWizard\Groups\GroupInterface;
 use Jackardios\ElasticQueryWizard\Includes\AbstractElasticInclude;
 use Jackardios\ElasticQueryWizard\Sorts\FieldSort;
 use Jackardios\EsScoutDriver\Query\Compound\BoolQuery;
+use Jackardios\EsScoutDriver\Search\Paginator;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Search\SearchResult;
 use Jackardios\QueryWizard\BaseQueryWizard;
@@ -40,7 +42,6 @@ use Jackardios\QueryWizard\Schema\ResourceSchemaInterface;
  * Query execution methods (delegated to SearchBuilder):
  *
  * @method SearchResult execute() Execute query and get full SearchResult (hits, models, documents, aggregations, suggestions)
- * @method \Jackardios\EsScoutDriver\Search\Paginator paginate(int $perPage = 15, string $pageName = 'page', ?int $page = null) Paginate results (call ->withModels() or ->withDocuments() on result)
  * @method \Jackardios\EsScoutDriver\Search\Hit|null first() Get first hit (use ->model() to get Model)
  * @method \Jackardios\EsScoutDriver\Search\Hit firstOrFail() Get first hit or throw ModelNotFoundException
  * @method int count() Get total count without loading models
@@ -80,6 +81,8 @@ class ElasticQueryWizard extends BaseQueryWizard
     private ?array $shapeRootFields = null;
 
     private ?EloquentShape $shape = null;
+
+    private const DEFAULT_MAX_RESULT_WINDOW = 10000;
 
     /** @var array<string, bool> */
     private static array $searchBuilderFluentMethods = [];
@@ -561,6 +564,25 @@ class ElasticQueryWizard extends BaseQueryWizard
     }
 
     /**
+     * Paginate the results; call `withModels()` or `withDocuments()` on the paginator.
+     *
+     * @throws MaxResultWindowExceeded When the page ends past `elastic-query-wizard.max_result_window`
+     */
+    public function paginate(int $perPage = 15, string $pageName = 'page', ?int $page = null): Paginator
+    {
+        $page ??= Paginator::resolveCurrentPage($pageName);
+        $maxResultWindow = $this->maxResultWindow();
+
+        if ($maxResultWindow !== null && $perPage >= 1 && $page > intdiv($maxResultWindow, $perPage)) {
+            throw new MaxResultWindowExceeded($page, $perPage, $maxResultWindow, $pageName);
+        }
+
+        $this->build();
+
+        return $this->subject->paginate($perPage, $pageName, $page);
+    }
+
+    /**
      * @param  array<int, mixed>  $arguments
      */
     public function __call(string $name, array $arguments): mixed
@@ -587,6 +609,25 @@ class ElasticQueryWizard extends BaseQueryWizard
         }
 
         return $result;
+    }
+
+    /**
+     * The last result a page may reach, from `elastic-query-wizard.max_result_window`
+     * (Elasticsearch's default `index.max_result_window`); null lifts the limit.
+     *
+     * @throws \InvalidArgumentException When the value is not a positive integer or null
+     */
+    private function maxResultWindow(): ?int
+    {
+        $value = config('elastic-query-wizard.max_result_window', self::DEFAULT_MAX_RESULT_WINDOW);
+
+        if ($value !== null && (! is_int($value) || $value < 1)) {
+            throw new \InvalidArgumentException(
+                'Config `elastic-query-wizard.max_result_window` must be a positive integer or null.'
+            );
+        }
+
+        return $value;
     }
 
     private function isSearchBuilderFluentMethod(string $name): bool

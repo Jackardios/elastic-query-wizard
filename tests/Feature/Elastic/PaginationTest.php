@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic;
 
+use Elastic\Elasticsearch\Exception\ClientResponseException;
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
 use Jackardios\ElasticQueryWizard\Filters\TermFilter;
 use Jackardios\ElasticQueryWizard\Sorts\FieldSort;
@@ -34,6 +35,25 @@ class PaginationTest extends TestCase
         $this->assertEquals(10, $paginator->perPage());
         $this->assertEquals(25, $paginator->total());
         $this->assertEquals(3, $paginator->lastPage());
+    }
+
+    #[Test]
+    public function the_wizard_paginates_within_the_result_window(): void
+    {
+        $paginator = ElasticQueryWizard::for(TestModel::class)->paginate(10, 'page', 2);
+
+        $this->assertEquals(2, $paginator->currentPage());
+        $this->assertEquals(10, $paginator->count());
+    }
+
+    #[Test]
+    public function without_a_window_the_page_reaches_elasticsearch(): void
+    {
+        config()->set('elastic-query-wizard.max_result_window', null);
+
+        $this->expectException(ClientResponseException::class);
+
+        ElasticQueryWizard::for(TestModel::class)->paginate(10, 'page', 1001);
     }
 
     #[Test]

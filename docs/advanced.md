@@ -772,6 +772,30 @@ $aggregations = $searchResult->aggregations();
 $paginated = $search->paginate(15);
 ```
 
+### Pagination
+
+Paginate through the wizard to have the page checked against the result window:
+
+```php
+$paginator = ElasticQueryWizard::for(Post::class)
+    ->allowedFilters([...])
+    ->paginate(15);        // reads ?page=; call withModels() or withDocuments() on the paginator
+```
+
+Elasticsearch refuses a search whose `from + size` exceeds the index's `max_result_window` (10000 by default) with an
+error that reaches the client as a 500. The wizard's `paginate()` answers such a page with 400
+`MaxResultWindowExceeded` (error code `max_result_window_exceeded`) before searching. Set another limit, or `null` to
+turn the check off, in `config/elastic-query-wizard.php`:
+
+```php
+return [
+    'max_result_window' => 50000, // match the index setting
+];
+```
+
+`paginate()` on the search builder that `build()` returns does not check the window. For results deeper than the
+window, use `searchAfter()` or a point in time.
+
 ---
 
 ## Method Chaining

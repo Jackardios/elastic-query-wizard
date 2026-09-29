@@ -54,6 +54,9 @@ made since those snapshots.
 - `withParameters(['boost' => …])` on prefix and exists filters (their `es-scout-driver` queries gained `boost()`).
 - `maxLength()` on the text, pattern and more-like-this filters; a longer value is a 400. `regexp` defaults to 1000 characters,
   Elasticsearch's `index.max_regex_length`.
+- `ElasticQueryWizard::paginate()` answers a page that ends past the result window with 400 `MaxResultWindowExceeded`
+  instead of letting Elasticsearch refuse it with a 500. The window is `elastic-query-wizard.max_result_window`
+  (10000, `null` turns the check off).
 - Geo bounding boxes take named edges (`left`, `bottom`, `right`, `top`); geo shape polygons keep their holes and are
   closed when their last point differs from their first.
 
