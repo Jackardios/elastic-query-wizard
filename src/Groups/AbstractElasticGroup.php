@@ -107,6 +107,30 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
         throw $this->valueModifierException('asBoolean');
     }
 
+    /**
+     * @throws LogicException A group has no value of its own; let a child filter read structured input
+     */
+    public function allowStructuredInput(): static
+    {
+        throw $this->valueModifierException('allowStructuredInput');
+    }
+
+    /**
+     * @throws LogicException A group has no value of its own; split a child filter's value
+     */
+    public function withValueSplitting(): static
+    {
+        throw $this->valueModifierException('withValueSplitting');
+    }
+
+    /**
+     * @throws LogicException A group has no value of its own; keep a child filter's value whole
+     */
+    public function withoutValueSplitting(): static
+    {
+        throw $this->valueModifierException('withoutValueSplitting');
+    }
+
     private function valueModifierException(string $method): LogicException
     {
         return new LogicException(sprintf(

@@ -44,7 +44,8 @@ made since those snapshots.
 - The text and pattern filters take one value: a list is a 400 for `prefix`, `wildcard`, `regexp`, `fuzzy`, the match
   family, `queryString` and `simpleQueryString` (the match family and the query string filters joined it with `,`).
   `moreLikeThis` reads a list as several texts.
-- `default()`, `prepareValueWith()`, `when()` and `asBoolean()` on a filter group throw a `LogicException`.
+- `default()`, `prepareValueWith()`, `when()`, `asBoolean()`, `allowStructuredInput()`, `withValueSplitting()` and
+  `withoutValueSplitting()` on a filter group throw a `LogicException`.
 
 ### Added
 
