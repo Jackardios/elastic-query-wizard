@@ -107,9 +107,11 @@ straight into the Elasticsearch DSL and therefore need a second look before you 
 [`queryString`](#query-string-filter) (the value can address fields you never allowed),
 [`regexp`](#regexp-filter) and [`wildcard`](#wildcard-filter) (the value can force an index-wide scan).
 
-The text and pattern filters (`prefix`, `wildcard`, `regexp`, `fuzzy`, the match family, `queryString` and
-`simpleQueryString`) take `maxLength(int)`: a longer value returns 400 (`InvalidFilterValue`). Only `regexp` has a limit
-by default (1000, see [Regexp Filter](#regexp-filter)).
+The text and pattern filters (`prefix`, `wildcard`, `regexp`, `fuzzy`, the match family, `queryString`,
+`simpleQueryString` and `moreLikeThis`) take `maxLength(int)`: a longer value returns 400 (`InvalidFilterValue`). Only
+`regexp` has a limit by default (1000, see [Regexp Filter](#regexp-filter)). A query string is kept short by the web
+server's URL limit; with `request_data_source` set to `body` nothing limits it, so set `maxLength()` on the filters
+that take free text.
 
 ---
 
@@ -1624,4 +1626,26 @@ its value; the filters that keep their value whole ([Value Splitting](#value-spl
 
 A range bound that is a date is passed on as sent, and Elasticsearch reads it with the field's format, in UTC unless
 the query sets `time_zone` (`->withParameters(['time_zone' => '+03:00'])`).
+
+### Syntax Elasticsearch Refuses
+
+`queryString` and `regexp` pass their syntax to Elasticsearch, which parses it. A value it cannot parse, such as an
+unclosed parenthesis in a query string or `[` in a regular expression, fails the search with
+`Elastic\Elasticsearch\Exception\ClientResponseException` whose code is 400, and Laravel reports it as a 500. To
+answer the client with 400, render the exception in `bootstrap/app.php`:
+
+```php
+use Elastic\Elasticsearch\Exception\ClientResponseException;
+
+->withExceptions(function (Exceptions $exceptions) {
+    $exceptions->render(function (ClientResponseException $exception) {
+        if ($exception->getCode() === 400) {
+            return response()->json(['message' => 'The search query is invalid.'], 400);
+        }
+    });
+})
+```
+
+A 400 from Elasticsearch can also mean a mistake in the application, such as a query on a field of the wrong type, so
+log it before answering.
 
