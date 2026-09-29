@@ -458,6 +458,17 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
 
         $this->assertSame('red, blue', $like('red, blue'));
         $this->assertSame(['red', 'blue', ['_id' => '7']], $like(['red', ' ', 'blue', ['_id' => '7']]));
+        $this->assertSame(['red', 'blue'], $like([1 => 'red', 3 => 'blue']));
+    }
+
+    #[Test]
+    public function the_length_limit_applies_to_each_text(): void
+    {
+        $this->expectException(InvalidFilterValue::class);
+
+        $this->createElasticWizardWithFilters(['similar' => ['red', 'blue']])
+            ->allowedFilters(MoreLikeThisFilter::make(['title'], 'similar')->maxLength(3))
+            ->build();
     }
 
     #[Test]

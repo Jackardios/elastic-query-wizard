@@ -51,7 +51,7 @@ made since those snapshots.
 - `GeoShapeFilter::indexedShapes()`.
 - `DateRangeFilter::esFormat()`.
 - `withParameters(['boost' => …])` on prefix and exists filters (their `es-scout-driver` queries gained `boost()`).
-- `maxLength()` on the text and pattern filters; a longer value is a 400. `regexp` defaults to 1000 characters,
+- `maxLength()` on the text, pattern and more-like-this filters; a longer value is a 400. `regexp` defaults to 1000 characters,
   Elasticsearch's `index.max_regex_length`.
 - Geo bounding boxes take named edges (`left`, `bottom`, `right`, `top`); geo shape polygons keep their holes and are
   closed when their last point differs from their first.
@@ -71,6 +71,8 @@ made since those snapshots.
   500 from Elasticsearch.
 - Geo shape points are checked like bounding box and distance coordinates: two numbers, in range, and an envelope
   whose top is not below its bottom; other values are 400s instead of 500s from Elasticsearch.
+- A more-like-this list with gaps in its keys (`filter[similar][1]=a&filter[similar][3]=b`) is read as texts instead
+  of being refused as a document reference.
 - A range bound left empty is no bound; coordinates that overflow to infinity no longer fail the JSON encoding.
 - A clone of a wizard whose built search was changed keeps the change lock.
 

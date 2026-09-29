@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Filters;
 
+use Jackardios\ElasticQueryWizard\Concerns\LimitsValueLength;
 use Jackardios\ElasticQueryWizard\Enums\BoolClause;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
@@ -12,21 +13,19 @@ use Jackardios\EsScoutDriver\Support\Query;
 use Jackardios\QueryWizard\Exceptions\InvalidFilterValue;
 
 /**
- * Find documents similar to provided text or documents.
- *
- * Useful for "related content", "more like this", or recommendation features.
- *
- * @see https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-mlt-query.html
- */
-/**
- * Finds documents like the given texts or documents of the searched index.
+ * Finds documents like the given texts or documents of the searched index, for
+ * "related content" and recommendations.
  *
  * The value is one text, a list of texts, or `_id` references to documents
  * (`filter[similar][_id]=5`, `filter[similar][][_id]=5`). A reference takes
  * only an `_id`: the document is read from the index being searched.
+ *
+ * @see https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-mlt-query.html
  */
 final class MoreLikeThisFilter extends AbstractElasticFilter
 {
+    use LimitsValueLength;
+
     /**
      * A text is one value, which may contain the separator; several texts
      * come as a list.
@@ -231,13 +230,13 @@ final class MoreLikeThisFilter extends AbstractElasticFilter
             return $this->likeText($value) ?? throw InvalidFilterValue::make($value, $this, self::EXPECTED);
         }
 
-        if (! array_is_list($value)) {
+        if (! array_is_list($value) && array_filter(array_keys($value), is_string(...)) !== []) {
             return [$this->documentReference($value, $value)];
         }
 
         $like = [];
 
-        foreach ($value as $item) {
+        foreach (array_values($value) as $item) {
             if (FilterValueSanitizer::isBlank($item)) {
                 continue;
             }
@@ -252,7 +251,14 @@ final class MoreLikeThisFilter extends AbstractElasticFilter
 
     private function likeText(mixed $item): ?string
     {
-        return is_string($item) || is_int($item) || is_float($item) ? trim((string) $item) : null;
+        if (! is_string($item) && ! is_int($item) && ! is_float($item)) {
+            return null;
+        }
+
+        $text = trim((string) $item);
+        $this->assertValueLength($text);
+
+        return $text;
     }
 
     /**
