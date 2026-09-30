@@ -13,7 +13,7 @@ made since those snapshots.
 ### Requirements
 
 - PHP 8.2+, Laravel 12.69.0+ or 13.30.0+ (the first releases without CVE-2026-102279, like `laravel-query-wizard`'s
-  floors), `laravel-query-wizard` ^3.0.0-rc.3 and `es-scout-driver` ^1.0.0-rc.1.
+  floors), `laravel-query-wizard` ^3.0.0-rc.5 and `es-scout-driver` ^1.0.0-rc.1.
   CI runs Elasticsearch 8.19 and 9.5.
 
 ### Changed
@@ -53,6 +53,10 @@ made since those snapshots.
   `moreLikeThis` reads a list as several texts.
 - `default()`, `prepareValueWith()`, `when()`, `asBoolean()`, `withStructuredInput()`, `withoutStructuredInput()`,
   `withValueSplitting()` and `withoutValueSplitting()` on a filter group throw a `LogicException`.
+- Schema `defaultFilters()` keys name group leaves, as request keys do, and `disallowedFilters()` covers leaves through
+  `laravel-query-wizard` (^3.0.0-rc.5): a default for a leaf no longer fails every build, and a key naming a group
+  throws. A group named like another filter throws `laravel-query-wizard`'s `InvalidArgumentException`;
+  `FilterNameConflictException::groupNameTaken()` is removed.
 - `applyPostProcessingTo()` returns a new lazy collection for a lazy collection, post-processing each model as it is
   read, and throws `InvalidArgumentException` for a generator, which post-processing would use up.
 - Requests are subject to `laravel-query-wizard`'s `limits.max_fields_count` (100 fields across every fieldset by

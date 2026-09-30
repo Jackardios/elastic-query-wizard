@@ -119,10 +119,6 @@ class ElasticQueryWizard extends BaseQueryWizard
         $this->modelClass = $subject;
 
         parent::__construct($subject::searchQuery(), $parameters, $config, $schema);
-
-        if ($schema !== null) {
-            $this->assertSchemaDescribesResourceModel($schema);
-        }
     }
 
     /**
@@ -277,65 +273,8 @@ class ElasticQueryWizard extends BaseQueryWizard
     }
 
     /**
-     * @throws FilterNameConflictException When a group is named like another
-     *                                     allowed filter, or a leaf is in two groups
-     */
-    protected function getEffectiveFilters(): array
-    {
-        if ($this->cachedEffectiveFilters === null) {
-            $this->assertNoFilterNameConflicts($this->getConfiguredFilters());
-        }
-
-        return parent::getEffectiveFilters();
-    }
-
-    /**
-     * The core keys the allowed filters by name, so a group sharing a name with
-     * another filter silently replaces it; and a leaf in two groups would apply
-     * the same request value in both.
-     *
-     * @param  array<FilterInterface|string>  $filters
-     */
-    private function assertNoFilterNameConflicts(array $filters): void
-    {
-        $nameCounts = [];
-        $leafCounts = [];
-        $groups = [];
-
-        foreach ($filters as $filter) {
-            $name = $this->normalizePublicPath(is_string($filter) ? $filter : $filter->getName());
-
-            if ($this->disallowedFilters !== [] && $this->isNameDisallowed($name, $this->disallowedFilters)) {
-                continue;
-            }
-
-            $nameCounts[$name] = ($nameCounts[$name] ?? 0) + 1;
-
-            if ($filter instanceof GroupInterface) {
-                $groups[$name] = $filter;
-
-                foreach (array_unique(array_map($this->normalizePublicPath(...), $filter->getChildFilterNames())) as $leafName) {
-                    $leafCounts[$leafName] = ($leafCounts[$leafName] ?? 0) + 1;
-                }
-            }
-        }
-
-        foreach ($groups as $name => $group) {
-            if ($nameCounts[$name] > 1) {
-                throw FilterNameConflictException::groupNameTaken($group->getName());
-            }
-        }
-
-        $sharedLeaves = array_keys(array_filter($leafCounts, static fn (int $count): bool => $count > 1));
-
-        if ($sharedLeaves !== []) {
-            throw FilterNameConflictException::leavesInSeveralGroups($sharedLeaves);
-        }
-    }
-
-    /**
      * Groups are containers: their own name is not a valid request key, their
-     * leaves are.
+     * leaves are. The core removes the leaves that disallowedFilters() names.
      *
      * Names are normalized here because they are matched against the request keys
      * parsed by the parameters manager, which are normalized too.
@@ -350,9 +289,7 @@ class ElasticQueryWizard extends BaseQueryWizard
         foreach ($filters as $filter) {
             if ($filter instanceof GroupInterface) {
                 foreach ($filter->getChildFilterNames() as $childName) {
-                    if (! $this->isGroupLeafDisallowed($childName)) {
-                        $names[] = $this->normalizePublicPath($childName);
-                    }
+                    $names[] = $this->normalizePublicPath($childName);
                 }
 
                 continue;
@@ -377,29 +314,34 @@ class ElasticQueryWizard extends BaseQueryWizard
      *
      * @param  array<string, FilterInterface>  $filters
      * @return array<string, true>
+     *
+     * @throws FilterNameConflictException When a leaf is in more than one group,
+     *                                     where one request value would apply in each
      */
     protected function resolveShadowedFilterNames(array $filters): array
     {
-        $groupChildNames = [];
+        $groupsByLeaf = [];
 
-        foreach ($filters as $filter) {
+        foreach ($filters as $name => $filter) {
             if (! $filter instanceof GroupInterface) {
                 continue;
             }
 
-            foreach ($filter->getChildFilterNames() as $childName) {
-                $groupChildNames[$this->normalizePublicPath($childName)] = true;
+            foreach (array_unique(array_map($this->normalizePublicPath(...), $filter->getChildFilterNames())) as $leafName) {
+                $groupsByLeaf[$leafName][] = $name;
             }
         }
 
-        if ($groupChildNames === []) {
-            return [];
+        $sharedLeaves = array_keys(array_filter($groupsByLeaf, static fn (array $groups): bool => count($groups) > 1));
+
+        if ($sharedLeaves !== []) {
+            throw FilterNameConflictException::leavesInSeveralGroups($sharedLeaves);
         }
 
         $shadowed = [];
 
         foreach ($filters as $name => $filter) {
-            if (! $filter instanceof GroupInterface && isset($groupChildNames[$name])) {
+            if (! $filter instanceof GroupInterface && isset($groupsByLeaf[$name])) {
                 $shadowed[$name] = true;
             }
         }
@@ -423,10 +365,6 @@ class ElasticQueryWizard extends BaseQueryWizard
         $childValues = [];
 
         foreach ($this->collectGroupLeafFilters($filter) as $child) {
-            if ($this->isGroupLeafDisallowed($child->getName())) {
-                continue;
-            }
-
             // Dispatch through $this, not parent::, so a subclass that customises
             // value resolution sees leaves nested in a group as well as root-level
             // filters. collectGroupLeafFilters() has already flattened away every
@@ -441,15 +379,6 @@ class ElasticQueryWizard extends BaseQueryWizard
         }
 
         return $childValues === [] ? null : $childValues;
-    }
-
-    /**
-     * disallowedFilters() removes root filters before they reach the groups, so
-     * the leaves of a group are checked here.
-     */
-    private function isGroupLeafDisallowed(string $name): bool
-    {
-        return $this->disallowedFilters !== [] && $this->isNameDisallowed($name, $this->disallowedFilters);
     }
 
     /**

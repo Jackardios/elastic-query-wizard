@@ -145,6 +145,23 @@ class ElasticQueryWizardTest extends UnitTestCase
         ElasticQueryWizard::for(TestModel::class)->schema($schema);
     }
 
+    #[Test]
+    public function the_constructor_rejects_a_schema_of_another_model(): void
+    {
+        $schema = new class extends ResourceSchema
+        {
+            public function model(): string
+            {
+                return GeoModel::class;
+            }
+        };
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('describes '.GeoModel::class.', but the wizard queries '.TestModel::class.'.');
+
+        new ElasticQueryWizard(TestModel::class, null, null, $schema);
+    }
+
     /**
      * @return iterable<string, array{\Closure(): AbstractFilter}>
      */

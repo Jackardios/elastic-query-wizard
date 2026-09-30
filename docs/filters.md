@@ -1590,9 +1590,13 @@ Nested groups are resolved recursively and support arbitrary depth.
    `UnsupportedFilterInGroupException` when the group is configured.
 
 7. **Names Across Groups**: A group can't share its name with another allowed filter or group (a nested group's name
-   defaults to its path, so two nested groups on one path need names), and a leaf alias can be in only one group. The
-   build throws `FilterNameConflictException` for either; before, the other filter was silently dropped or one value
-   applied in both groups.
+   defaults to its path, so two nested groups on one path need names): the build throws `laravel-query-wizard`'s
+   `InvalidArgumentException`. A leaf alias can be in only one group: the build throws `FilterNameConflictException`.
+   Before, the other filter was silently dropped or one value applied in both groups.
+
+8. **Defaults and Disallowing**: A schema `defaultFilters()` key names a leaf, as the request does; a key naming the
+   group itself throws `InvalidArgumentException`. `disallowedFilters()` takes leaf names too: the leaf's key is
+   rejected like any disallowed filter, and its default is dropped.
 
 ---
 

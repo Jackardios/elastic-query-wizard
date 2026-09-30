@@ -15,7 +15,7 @@ This guide covers migrating from `jackardios/elastic-query-wizard` v2 to v3.
 ```json
 "php": "^8.2",
 "jackardios/es-scout-driver": "^1.0.0-rc.1",
-"jackardios/laravel-query-wizard": "^3.0.0-rc.3",
+"jackardios/laravel-query-wizard": "^3.0.0-rc.5",
 "laravel/framework": "^12.69.0 || ^13.30.0"
 ```
 
@@ -459,7 +459,8 @@ The request is parsed by `laravel-query-wizard` v3, whose stricter rules apply t
 - **Bool groups** leave out `minimum_should_match` when the request fills none of their should children, so the other
   children still match. Group configuration errors no longer wait for a request that uses the group: `children()`
   throws `UnsupportedFilterInGroupException` for a passthrough, callback or trashed child, and the build throws
-  `FilterNameConflictException` for a group named like another filter or a filter in two groups.
+  `InvalidArgumentException` for a group named like another filter and `FilterNameConflictException` for a filter in
+  two groups. A schema `defaultFilters()` key names a group's leaf, not the group.
 - **Unreadable values are 400s.** `InvalidRangeValue`, `InvalidGeoBoundingBoxValue`, `InvalidGeoDistanceValue` and
   `InvalidGeoShapeValue` extend `laravel-query-wizard`'s `InvalidFilterValue`: the status is 400 (was 422), the error
   code `invalid_filter_value`, and the message names the filter by its public name. Their factories take the value and
@@ -814,7 +815,7 @@ v3 is compatible with ES 8.x and 9.x. Key notes:
 
 ### Dependencies
 - [ ] Update `composer.json`: replace `elastic-scout-driver-plus` with `es-scout-driver`
-- [ ] Update `composer.json`: require `laravel-query-wizard` `^3.0.0-rc.3` and `es-scout-driver` `^1.0.0-rc.1`
+- [ ] Update `composer.json`: require `laravel-query-wizard` `^3.0.0-rc.5` and `es-scout-driver` `^1.0.0-rc.1`
 
 ### Method Renames
 - [ ] Replace `setAllowedFilters()` → `allowedFilters()`

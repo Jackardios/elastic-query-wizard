@@ -7,8 +7,11 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Groups;
 use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\ElasticGroup;
 use Jackardios\ElasticQueryWizard\Exceptions\FilterNameConflictException;
+use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use Jackardios\QueryWizard\Contracts\QueryWizardInterface;
 use Jackardios\QueryWizard\Exceptions\InvalidFilterQuery;
+use Jackardios\QueryWizard\Schema\ResourceSchema;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -366,8 +369,8 @@ class GroupIntegrationTest extends UnitTestCase
     #[Test]
     public function a_group_named_like_another_allowed_filter_is_refused(): void
     {
-        $this->expectException(FilterNameConflictException::class);
-        $this->expectExceptionMessage("Group 'category' has the name of another allowed filter");
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('More than one allowed filter is named `category`.');
 
         $this
             ->createElasticWizardWithFilters(['category' => 'books'])
@@ -381,8 +384,8 @@ class GroupIntegrationTest extends UnitTestCase
     #[Test]
     public function two_nested_groups_on_one_path_without_names_are_refused(): void
     {
-        $this->expectException(FilterNameConflictException::class);
-        $this->expectExceptionMessage("Group 'comments' has the name of another allowed filter");
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('More than one allowed filter is named `comments`.');
 
         $this
             ->createElasticWizardWithFilters(['status' => 'open'])
@@ -438,5 +441,90 @@ class GroupIntegrationTest extends UnitTestCase
             $this->getFilterQueries($wizard->boolQuery())
         );
         $this->assertSame([], $this->getMustNotQueries($wizard->boolQuery()));
+    }
+
+    #[Test]
+    public function a_schema_default_keyed_by_a_group_leaf_applies(): void
+    {
+        $wizard = $this->createElasticWizardWithFilters([])->schema($this->groupSchema(['status' => 'published']));
+        $wizard->build();
+
+        $this->assertSame(
+            [['bool' => ['filter' => [['term' => ['status' => ['value' => 'published']]]]]]],
+            $this->getFilterQueries($wizard->boolQuery())
+        );
+    }
+
+    #[Test]
+    public function a_schema_default_keyed_by_a_group_throws(): void
+    {
+        $wizard = $this->createElasticWizardWithFilters([])->schema($this->groupSchema(['a' => 'published']));
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Schema defaultFilters() names no allowed filter: `a`.');
+
+        $wizard->build();
+    }
+
+    #[Test]
+    public function disallowing_a_group_leaf_drops_its_schema_default(): void
+    {
+        $wizard = $this
+            ->createElasticWizardWithFilters(['priority' => 'high'])
+            ->schema($this->groupSchema(['status' => 'published']))
+            ->disallowedFilters('status');
+        $wizard->build();
+
+        $this->assertSame(
+            [['bool' => ['filter' => [['term' => ['priority' => ['value' => 'high']]]]]]],
+            $this->getFilterQueries($wizard->boolQuery())
+        );
+    }
+
+    #[Test]
+    public function a_disallowed_group_does_not_conflict_with_schema_defaults(): void
+    {
+        $wizard = $this
+            ->createElasticWizardWithFilters([])
+            ->schema($this->groupSchema(['status' => 'published'], withSecondGroup: true))
+            ->disallowedFilters('b');
+        $wizard->build();
+
+        $this->assertSame(
+            [['bool' => ['filter' => [['term' => ['status' => ['value' => 'published']]]]]]],
+            $this->getFilterQueries($wizard->boolQuery())
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $defaults
+     */
+    private function groupSchema(array $defaults, bool $withSecondGroup = false): ResourceSchema
+    {
+        return new class($defaults, $withSecondGroup) extends ResourceSchema
+        {
+            /**
+             * @param  array<string, mixed>  $defaults
+             */
+            public function __construct(private readonly array $defaults, private readonly bool $withSecondGroup) {}
+
+            public function model(): string
+            {
+                return TestModel::class;
+            }
+
+            public function filters(QueryWizardInterface $wizard): array
+            {
+                return array_filter([
+                    ElasticGroup::bool('a')->children([ElasticFilter::term('status'), ElasticFilter::term('priority')]),
+                    $this->withSecondGroup ? ElasticGroup::bool('b')->inMustNot()->children([ElasticFilter::term('status')]) : null,
+                ]);
+            }
+
+            public function defaultFilters(QueryWizardInterface $wizard): array
+            {
+                return $this->defaults;
+            }
+        };
     }
 }

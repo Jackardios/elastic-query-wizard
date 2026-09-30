@@ -125,7 +125,8 @@ class PostSchema extends ResourceSchema
 
     /**
      * Default filter values applied when not present in request.
-     * Keys are filter names (or aliases), values are default values.
+     * Keys are filter names (or aliases), values are default values. A filter
+     * inside a group is keyed by its own name, not the group's.
      */
     public function defaultFilters(QueryWizardInterface $wizard): array
     {

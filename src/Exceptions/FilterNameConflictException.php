@@ -5,20 +5,10 @@ declare(strict_types=1);
 namespace Jackardios\ElasticQueryWizard\Exceptions;
 
 /**
- * Thrown when the allowed filters use a name twice in a way that would drop or
- * double a filter: a group named like another allowed filter replaces it, and a
- * leaf in two groups applies in both.
+ * Thrown when a leaf is in two groups, where one request value would apply in both.
  */
 class FilterNameConflictException extends \InvalidArgumentException
 {
-    public static function groupNameTaken(string $groupName): self
-    {
-        return new self(
-            "Group '{$groupName}' has the name of another allowed filter, which it would replace. "
-            .'Give the group a name no other allowed filter or group uses.'
-        );
-    }
-
     /**
      * @param  array<int, string>  $leafNames
      */
