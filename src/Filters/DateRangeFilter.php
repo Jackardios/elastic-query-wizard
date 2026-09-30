@@ -79,14 +79,6 @@ final class DateRangeFilter extends AbstractElasticFilter
         return $this;
     }
 
-    /**
-     * @deprecated Use esFormat(). It sets the Elasticsearch format, not the format of the request values.
-     */
-    public function dateFormat(string $format): static
-    {
-        return $this->esFormat($format);
-    }
-
     private function resolveEsFormat(): string
     {
         if ($this->esFormat === null || in_array(self::DEFAULT_ES_FORMAT, explode('||', $this->esFormat), true)) {

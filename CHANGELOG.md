@@ -46,8 +46,8 @@ made since those snapshots.
 - Date range bounds are read like `laravel-query-wizard` reads dates: a date or an ISO 8601 date-time (other values,
   epoch numbers and date math included, are 400s), in the application timezone or the filter's `timezone()`, with a
   date `to` covering the whole day. The bounds are sent as ISO 8601 date-times with an offset and
-  `format: strict_date_optional_time`; `dateFormat()` is deprecated in favor of `esFormat()`, whose format is sent
-  followed by `||strict_date_optional_time`.
+  `format: strict_date_optional_time`; `esFormat()` replaces `dateFormat()`, and its format is sent followed by
+  `||strict_date_optional_time`.
 - The text and pattern filters take one value: a list is a 400 for `prefix`, `wildcard`, `regexp`, `fuzzy`, the match
   family, `queryString` and `simpleQueryString` (the match family and the query string filters joined it with `,`).
   `moreLikeThis` reads a list as several texts.
@@ -95,6 +95,7 @@ made since those snapshots.
   `applyPostProcessingToResults()`, `finalizeSubject()`, `addBuildQueryModifier()` and the `HandlesSafeRelationSelect`
   and `HandlesRelationPostProcessing` traits. Models are shaped by `EloquentShape`; use `modifyQuery()`,
   `modifyModels()` and `tapSearchBuilder()`.
+- `DateRangeFilter::dateFormat()`; use `esFormat()`.
 
 ### Fixed
 

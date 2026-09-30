@@ -144,17 +144,15 @@ class DateRangeFilterQueryTest extends UnitTestCase
     #[Test]
     public function es_format_is_tried_before_the_iso_format_the_bounds_are_sent_in(): void
     {
-        foreach (['esFormat', 'dateFormat'] as $method) {
-            $wizard = $this
-                ->createElasticWizardWithFilters(['date' => ['from' => '2024-01-01']])
-                ->allowedFilters(DateRangeFilter::make('created_at', 'date')->{$method}('strict_date_time_no_millis'));
-            $wizard->build();
+        $wizard = $this
+            ->createElasticWizardWithFilters(['date' => ['from' => '2024-01-01']])
+            ->allowedFilters(DateRangeFilter::make('created_at', 'date')->esFormat('strict_date_time_no_millis'));
+        $wizard->build();
 
-            $this->assertSame(
-                ['gte' => '2024-01-01T00:00:00+00:00', 'format' => 'strict_date_time_no_millis||strict_date_optional_time'],
-                $this->getFilterQueries($wizard->boolQuery())[0]['range']['created_at']
-            );
-        }
+        $this->assertSame(
+            ['gte' => '2024-01-01T00:00:00+00:00', 'format' => 'strict_date_time_no_millis||strict_date_optional_time'],
+            $this->getFilterQueries($wizard->boolQuery())[0]['range']['created_at']
+        );
     }
 
     #[Test]

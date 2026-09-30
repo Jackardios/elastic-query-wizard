@@ -1295,7 +1295,6 @@ ElasticFilter::dateRange('created_at')
 | `toKey(string)` | Change the key for the upper bound (default: `to`) |
 | `timezone(string)` | Timezone for bounds without an offset (default: the application's); an unknown one throws `InvalidArgumentException` |
 | `esFormat(string)` | Elasticsearch `format` tried on the bounds before `strict_date_optional_time`, which is appended so the ISO 8601 bounds are always read (default: `strict_date_optional_time` alone). It does not change which request values are accepted |
-| `dateFormat(string)` | Deprecated alias of `esFormat()` |
 
 `withParameters()` refuses `format`, `time_zone`, `gt`, `gte`, `lt` and `lte` with an `InvalidArgumentException`: the
 filter sets them from `esFormat()`, the bounds' offsets and the request.
