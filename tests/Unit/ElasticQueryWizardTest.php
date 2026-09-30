@@ -18,6 +18,7 @@ use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\QueryWizard\Enums\SortDirection;
+use Jackardios\QueryWizard\Exceptions\InvalidFilterQuery;
 use Jackardios\QueryWizard\Filters\AbstractFilter;
 use Jackardios\QueryWizard\Schema\ResourceSchema;
 use Jackardios\QueryWizard\Values\Sort;
@@ -354,5 +355,53 @@ class ElasticQueryWizardTest extends UnitTestCase
         $this->expectExceptionMessage('The wizard cannot be reconfigured while it builds.');
 
         $wizard->build();
+    }
+
+    #[Test]
+    public function a_build_that_failed_after_the_bool_query_was_changed_cannot_be_retried(): void
+    {
+        $wizard = $this->createElasticWizardWithFilters(['nope' => 'x'])->allowedFilters('category');
+        $wizard->boolQuery()->filter(ElasticQuery::term('tenant_id', 7));
+
+        try {
+            $wizard->build();
+            $this->fail('The build accepted a filter that is not allowed.');
+        } catch (InvalidFilterQuery) {
+        }
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Change the bool query in tapSearchBuilder()');
+
+        $wizard->allowedFilters('category', 'nope')->build();
+    }
+
+    #[Test]
+    public function a_build_that_failed_can_be_retried_when_the_bool_query_was_not_changed(): void
+    {
+        $wizard = $this->createElasticWizardWithFilters(['nope' => 'x'])->allowedFilters('category');
+
+        try {
+            $wizard->build();
+            $this->fail('The build accepted a filter that is not allowed.');
+        } catch (InvalidFilterQuery) {
+        }
+
+        $body = $wizard->allowedFilters('category', 'nope')->build()->toArray()['body'];
+
+        $this->assertSame([['term' => ['nope' => ['value' => 'x']]]], $body['query']['bool']['filter']);
+    }
+
+    #[Test]
+    public function the_bool_query_read_through_the_proxy_locks_configuration_changes(): void
+    {
+        $wizard = $this->createElasticWizardWithFilters(['category' => 'a'])->allowedFilters('category');
+        $boolQuery = $wizard->getBoolQuery();
+        $this->assertNotNull($boolQuery);
+        $boolQuery->filter(ElasticQuery::term('tenant_id', 7));
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Cannot modify query wizard configuration after calling query builder methods.');
+
+        $wizard->allowedSorts('id');
     }
 }

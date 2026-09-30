@@ -102,6 +102,12 @@ class ElasticQueryWizard extends BaseQueryWizard
     private bool $boolQueryChangedBeforeBuild = false;
 
     /**
+     * Set when a build fails after boolQuery() was called: the rollback
+     * restores the original subject, without the change.
+     */
+    private bool $boolQueryChangeRolledBack = false;
+
+    /**
      * @param  class-string<Model>  $subject  A model class using the `Jackardios\EsScoutDriver\Searchable` trait
      *
      * @throws \InvalidArgumentException When the class is not a searchable model, or the schema describes another model
@@ -156,7 +162,8 @@ class ElasticQueryWizard extends BaseQueryWizard
     /**
      * The root bool query of the search. A configuration change after the build
      * throws a `LogicException`, since the rebuild would drop what was changed
-     * here; use `tapSearchBuilder()` for a change that survives rebuilds.
+     * here, and so does a build after one that failed; use `tapSearchBuilder()`
+     * for a change that survives rebuilds.
      */
     public function boolQuery(): BoolQuery
     {
@@ -419,8 +426,26 @@ class ElasticQueryWizard extends BaseQueryWizard
         }
     }
 
+    protected function rollbackFailedBuild(): void
+    {
+        $this->boolQueryChangeRolledBack = $this->boolQueryChangedBeforeBuild;
+
+        parent::rollbackFailedBuild();
+    }
+
+    /**
+     * @throws \LogicException When an earlier build failed after boolQuery() was
+     *                         called, whose change the rollback dropped
+     */
     protected function prepareBuild(): void
     {
+        if ($this->boolQueryChangeRolledBack) {
+            throw new \LogicException(
+                'Cannot rebuild a wizard whose bool query was changed before a failed build: the rollback dropped the '
+                .'change. Change the bool query in tapSearchBuilder(), which runs on every build.'
+            );
+        }
+
         $this->shapeIncludes = [];
         $this->shapeRootFields = null;
         $this->shape = null;
@@ -574,7 +599,7 @@ class ElasticQueryWizard extends BaseQueryWizard
         $this->build();
         $result = $this->subject->$name(...$arguments);
 
-        if ($result === $this->subject) {
+        if ($result === $this->subject || $result instanceof BoolQuery) {
             $this->proxyModified = true;
 
             return $this;
