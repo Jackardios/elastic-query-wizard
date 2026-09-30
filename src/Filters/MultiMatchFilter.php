@@ -4,32 +4,23 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Filters;
 
-use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
-use Jackardios\ElasticQueryWizard\Concerns\LimitsValueLength;
 use Jackardios\ElasticQueryWizard\Enums\BoolClause;
-use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Query\FullText\MultiMatchQuery;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Support\Query;
 
-final class MultiMatchFilter extends AbstractElasticFilter
+final class MultiMatchFilter extends AbstractTextFilter
 {
-    use HasParameters;
-    use LimitsValueLength;
-
     /** @var string[] */
     protected array $fields;
 
     /**
-     * The value is one text, which may contain the separator; a list is a 400.
-     *
      * @param  string[]  $fields
      */
     protected function __construct(string $property, array $fields, ?string $alias = null)
     {
         parent::__construct($property, $alias);
 
-        $this->withoutValueSplitting();
         $this->fields = $fields;
     }
 
@@ -47,33 +38,13 @@ final class MultiMatchFilter extends AbstractElasticFilter
         return [MultiMatchQuery::class];
     }
 
-    public function validateValueShape(mixed $value): ?string
-    {
-        return $this->validateScalarOrBlankValueShape($value);
-    }
-
     protected function getDefaultClause(): BoolClause
     {
         return BoolClause::Must;
     }
 
-    public function buildQuery(mixed $value): ?QueryInterface
+    protected function buildTextQuery(string $text): QueryInterface
     {
-        $prepared = FilterValueSanitizer::text($value, $this);
-
-        if ($prepared === null || $prepared === '') {
-            return null;
-        }
-
-        $this->assertValueLength($prepared);
-
-        $query = Query::multiMatch($this->fields, $prepared);
-
-        return $this->applyParametersOnQuery($query);
-    }
-
-    protected function supportsBooleanValues(): bool
-    {
-        return false;
+        return Query::multiMatch($this->fields, $text);
     }
 }

@@ -7,7 +7,10 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit;
 use Jackardios\ElasticQueryWizard\Exceptions\InvalidGeoBoundingBoxValue;
 use Jackardios\ElasticQueryWizard\Exceptions\InvalidGeoDistanceValue;
 use Jackardios\ElasticQueryWizard\Exceptions\InvalidRangeValue;
+use Jackardios\ElasticQueryWizard\Filters\MatchFilter;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
+use Jackardios\QueryWizard\Exceptions\InvalidFilterValue;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -184,47 +187,49 @@ class FilterValueSanitizerTest extends TestCase
     }
 
     #[Test]
-    public function to_string_returns_string_for_string_input(): void
+    public function text_returns_a_string_as_given(): void
     {
-        $this->assertEquals('hello', FilterValueSanitizer::toString('hello'));
-        $this->assertEquals('test value', FilterValueSanitizer::toString('test value'));
+        $this->assertSame('hello', FilterValueSanitizer::text('hello', MatchFilter::make('title')));
+        $this->assertSame(' test value ', FilterValueSanitizer::text(' test value ', MatchFilter::make('title')));
     }
 
     #[Test]
-    public function to_string_returns_null_for_blank_strings(): void
+    public function text_returns_null_for_a_blank_value(): void
     {
-        $this->assertNull(FilterValueSanitizer::toString(''));
-        $this->assertNull(FilterValueSanitizer::toString('   '));
+        foreach ([null, '', '   ', [], [''], [null, ' ']] as $value) {
+            $this->assertNull(FilterValueSanitizer::text($value, MatchFilter::make('title')));
+        }
     }
 
     #[Test]
-    public function to_string_converts_numeric_to_string(): void
+    public function text_converts_a_number_to_a_string(): void
     {
-        $this->assertEquals('123', FilterValueSanitizer::toString(123));
-        $this->assertEquals('45.67', FilterValueSanitizer::toString(45.67));
-        $this->assertEquals('0', FilterValueSanitizer::toString(0));
+        $this->assertSame('123', FilterValueSanitizer::text(123, MatchFilter::make('title')));
+        $this->assertSame('45.67', FilterValueSanitizer::text(45.67, MatchFilter::make('title')));
+        $this->assertSame('0', FilterValueSanitizer::text(0, MatchFilter::make('title')));
+    }
+
+    /**
+     * @return array<string, array{0: mixed}>
+     */
+    public static function valuesThatAreNotTexts(): array
+    {
+        return [
+            'true' => [true],
+            'false' => [false],
+            'list' => [['first', 'second']],
+            'list of one' => [['only']],
+        ];
     }
 
     #[Test]
-    public function to_string_extracts_first_element_from_array(): void
+    #[DataProvider('valuesThatAreNotTexts')]
+    public function text_refuses_a_value_that_is_not_a_text(mixed $value): void
     {
-        $this->assertEquals('first', FilterValueSanitizer::toString(['first', 'second']));
-        $this->assertEquals('only', FilterValueSanitizer::toString(['only']));
-        $this->assertEquals('123', FilterValueSanitizer::toString([123]));
-    }
+        $this->expectException(InvalidFilterValue::class);
+        $this->expectExceptionMessage('Expected text.');
 
-    #[Test]
-    public function to_string_returns_null_for_empty_array(): void
-    {
-        $this->assertNull(FilterValueSanitizer::toString([]));
-    }
-
-    #[Test]
-    public function to_string_returns_null_for_null_and_bool(): void
-    {
-        $this->assertNull(FilterValueSanitizer::toString(null));
-        $this->assertNull(FilterValueSanitizer::toString(true));
-        $this->assertNull(FilterValueSanitizer::toString(false));
+        FilterValueSanitizer::text($value, MatchFilter::make('title'));
     }
 
     #[Test]

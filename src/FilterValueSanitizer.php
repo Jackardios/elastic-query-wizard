@@ -244,36 +244,23 @@ class FilterValueSanitizer
     /**
      * The value of a text filter, or null when blank.
      *
-     * @throws InvalidFilterValue For a boolean, which a JSON body can send
+     * @throws InvalidFilterValue For a value that is neither a text nor a number, such as a boolean a JSON body sends
      */
     public static function text(mixed $value, FilterInterface $filter): ?string
     {
-        if (is_bool($value)) {
-            throw InvalidFilterValue::make($value, $filter, 'Expected text.');
-        }
-
-        return self::toString($value);
-    }
-
-    /**
-     * Converts a value to a string, returning null for non-stringable values.
-     */
-    public static function toString(mixed $value): ?string
-    {
-        if (is_array($value)) {
-            $extracted = reset($value);
-            $value = $extracted !== false ? $extracted : '';
+        if (FilterValueParser::isBlank($value)) {
+            return null;
         }
 
         if (is_string($value)) {
-            return FilterValueParser::isBlank($value) ? null : $value;
+            return $value;
         }
 
-        if (is_numeric($value)) {
+        if (is_int($value) || is_float($value)) {
             return (string) $value;
         }
 
-        return null;
+        throw InvalidFilterValue::make($value, $filter, 'Expected text.');
     }
 
     /**

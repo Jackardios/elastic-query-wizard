@@ -5,10 +5,7 @@ declare(strict_types=1);
 namespace Jackardios\ElasticQueryWizard\Filters;
 
 use Illuminate\Support\Str;
-use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
-use Jackardios\ElasticQueryWizard\Concerns\LimitsValueLength;
 use Jackardios\ElasticQueryWizard\Enums\BoolClause;
-use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Query\FullText\QueryStringQuery;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Support\Query;
@@ -22,27 +19,14 @@ use Jackardios\QueryWizard\Exceptions\InvalidFilterValue;
  * `default_field`, and refuses a term that starts with a wildcard unless it
  * sets `allow_leading_wildcard`.
  */
-final class QueryStringFilter extends AbstractElasticFilter
+final class QueryStringFilter extends AbstractTextFilter
 {
-    use HasParameters;
-    use LimitsValueLength;
-
     /**
      * The characters Lucene's query parser reads as neither part of a term nor
      * a wildcard: its whitespace (space, tab, CR, LF, and U+3000, which the
      * scan replaces by a space) and its syntax characters, except the escape.
      */
     private const SEPARATORS = " \t\n\r()!:^~\"[]{}/";
-
-    /**
-     * The value is one text, which may contain the separator; a list is a 400.
-     */
-    protected function __construct(string $property, ?string $alias = null)
-    {
-        parent::__construct($property, $alias);
-
-        $this->withoutValueSplitting();
-    }
 
     public static function make(string $property, ?string $alias = null): static
     {
@@ -55,37 +39,24 @@ final class QueryStringFilter extends AbstractElasticFilter
         return [QueryStringQuery::class];
     }
 
-    public function validateValueShape(mixed $value): ?string
-    {
-        return $this->validateScalarOrBlankValueShape($value);
-    }
-
     protected function getDefaultClause(): BoolClause
     {
         return BoolClause::Must;
     }
 
-    public function buildQuery(mixed $value): ?QueryInterface
+    protected function buildTextQuery(string $text): QueryInterface
     {
-        $prepared = FilterValueSanitizer::text($value, $this);
-
-        if ($prepared === null || $prepared === '') {
-            return null;
+        if (! $this->allowsLeadingWildcard() && self::hasLeadingWildcard($text)) {
+            throw InvalidFilterValue::make($text, $this, 'A term may not start with `*` or `?`.');
         }
 
-        $this->assertValueLength($prepared);
-
-        if (! $this->allowsLeadingWildcard() && self::hasLeadingWildcard($prepared)) {
-            throw InvalidFilterValue::make($value, $this, 'A term may not start with `*` or `?`.');
-        }
-
-        $query = Query::queryString($prepared)->allowLeadingWildcard(false);
+        $query = Query::queryString($text)->allowLeadingWildcard(false);
 
         if (! $this->hasQueryParameter('fields', 'default_field')) {
             $query->fields([$this->property]);
         }
 
-        return $this->applyParametersOnQuery($query);
+        return $query;
     }
 
     private function allowsLeadingWildcard(): bool
@@ -200,10 +171,5 @@ final class QueryStringFilter extends AbstractElasticFilter
         }
 
         return $length - 1;
-    }
-
-    protected function supportsBooleanValues(): bool
-    {
-        return false;
     }
 }

@@ -20,7 +20,7 @@ class ZeroValueTest extends UnitTestCase
     public function fuzzy_filter_handles_zero_integer_value(): void
     {
         $filter = ElasticFilter::fuzzy('field');
-        $query = $filter->buildQuery([0]);
+        $query = $filter->buildQuery(0);
 
         $this->assertNotNull($query);
         $array = $query->toArray();
@@ -34,7 +34,7 @@ class ZeroValueTest extends UnitTestCase
     public function fuzzy_filter_handles_zero_string_value(): void
     {
         $filter = ElasticFilter::fuzzy('field');
-        $query = $filter->buildQuery(['0']);
+        $query = $filter->buildQuery('0');
 
         $this->assertNotNull($query);
         $array = $query->toArray();
@@ -48,7 +48,7 @@ class ZeroValueTest extends UnitTestCase
     public function prefix_filter_handles_zero_integer_value(): void
     {
         $filter = ElasticFilter::prefix('field');
-        $query = $filter->buildQuery([0]);
+        $query = $filter->buildQuery(0);
 
         $this->assertNotNull($query);
         $array = $query->toArray();
@@ -62,7 +62,7 @@ class ZeroValueTest extends UnitTestCase
     public function prefix_filter_handles_zero_string_value(): void
     {
         $filter = ElasticFilter::prefix('field');
-        $query = $filter->buildQuery(['0']);
+        $query = $filter->buildQuery('0');
 
         $this->assertNotNull($query);
         $array = $query->toArray();
@@ -76,7 +76,7 @@ class ZeroValueTest extends UnitTestCase
     public function regexp_filter_handles_zero_integer_value(): void
     {
         $filter = ElasticFilter::regexp('field');
-        $query = $filter->buildQuery([0]);
+        $query = $filter->buildQuery(0);
 
         $this->assertNotNull($query);
         $array = $query->toArray();
@@ -90,7 +90,7 @@ class ZeroValueTest extends UnitTestCase
     public function regexp_filter_handles_zero_string_value(): void
     {
         $filter = ElasticFilter::regexp('field');
-        $query = $filter->buildQuery(['0']);
+        $query = $filter->buildQuery('0');
 
         $this->assertNotNull($query);
         $array = $query->toArray();
@@ -104,7 +104,7 @@ class ZeroValueTest extends UnitTestCase
     public function wildcard_filter_handles_zero_integer_value(): void
     {
         $filter = ElasticFilter::wildcard('field');
-        $query = $filter->buildQuery([0]);
+        $query = $filter->buildQuery(0);
 
         $this->assertNotNull($query);
         $array = $query->toArray();
@@ -118,7 +118,7 @@ class ZeroValueTest extends UnitTestCase
     public function wildcard_filter_handles_zero_string_value(): void
     {
         $filter = ElasticFilter::wildcard('field');
-        $query = $filter->buildQuery(['0']);
+        $query = $filter->buildQuery('0');
 
         $this->assertNotNull($query);
         $array = $query->toArray();

@@ -4,19 +4,13 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Filters;
 
-use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
-use Jackardios\ElasticQueryWizard\Concerns\LimitsValueLength;
 use Jackardios\ElasticQueryWizard\Enums\BoolClause;
-use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Query\Term\FuzzyQuery;
 use Jackardios\EsScoutDriver\Support\Query;
 
-final class FuzzyFilter extends AbstractElasticFilter
+final class FuzzyFilter extends AbstractTextFilter
 {
-    use HasParameters;
-    use LimitsValueLength;
-
     /**
      * Elasticsearch builds an automaton per term that costs tens of kilobytes
      * of memory for each character, so a long term can trip a circuit breaker.
@@ -24,14 +18,10 @@ final class FuzzyFilter extends AbstractElasticFilter
      */
     private const DEFAULT_MAX_LENGTH = 256;
 
-    /**
-     * The value is one pattern, which may contain the separator; a list is a 400.
-     */
     protected function __construct(string $property, ?string $alias = null)
     {
         parent::__construct($property, $alias);
 
-        $this->withoutValueSplitting();
         $this->maxLength = self::DEFAULT_MAX_LENGTH;
     }
 
@@ -46,33 +36,13 @@ final class FuzzyFilter extends AbstractElasticFilter
         return [FuzzyQuery::class];
     }
 
-    public function validateValueShape(mixed $value): ?string
-    {
-        return $this->validateScalarOrBlankValueShape($value);
-    }
-
     protected function getDefaultClause(): BoolClause
     {
         return BoolClause::Must;
     }
 
-    public function buildQuery(mixed $value): ?QueryInterface
+    protected function buildTextQuery(string $text): QueryInterface
     {
-        $prepared = FilterValueSanitizer::text($value, $this);
-
-        if ($prepared === null || $prepared === '') {
-            return null;
-        }
-
-        $this->assertValueLength($prepared);
-
-        $query = Query::fuzzy($this->property, $prepared);
-
-        return $this->applyParametersOnQuery($query);
-    }
-
-    protected function supportsBooleanValues(): bool
-    {
-        return false;
+        return Query::fuzzy($this->property, $text);
     }
 }

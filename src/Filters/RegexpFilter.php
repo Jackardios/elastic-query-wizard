@@ -4,18 +4,12 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Filters;
 
-use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
-use Jackardios\ElasticQueryWizard\Concerns\LimitsValueLength;
-use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Query\Term\RegexpQuery;
 use Jackardios\EsScoutDriver\Support\Query;
 
-final class RegexpFilter extends AbstractElasticFilter
+final class RegexpFilter extends AbstractTextFilter
 {
-    use HasParameters;
-    use LimitsValueLength;
-
     /**
      * Elasticsearch's default `index.max_regex_length`: a longer pattern fails
      * the search, so it is refused with a 400 first. maxLength() changes it
@@ -23,14 +17,10 @@ final class RegexpFilter extends AbstractElasticFilter
      */
     private const ES_MAX_REGEX_LENGTH = 1000;
 
-    /**
-     * The value is one pattern, which may contain the separator; a list is a 400.
-     */
     protected function __construct(string $property, ?string $alias = null)
     {
         parent::__construct($property, $alias);
 
-        $this->withoutValueSplitting();
         $this->maxLength = self::ES_MAX_REGEX_LENGTH;
     }
 
@@ -45,28 +35,8 @@ final class RegexpFilter extends AbstractElasticFilter
         return [RegexpQuery::class];
     }
 
-    public function validateValueShape(mixed $value): ?string
+    protected function buildTextQuery(string $text): QueryInterface
     {
-        return $this->validateScalarOrBlankValueShape($value);
-    }
-
-    public function buildQuery(mixed $value): ?QueryInterface
-    {
-        $prepared = FilterValueSanitizer::text($value, $this);
-
-        if ($prepared === null || $prepared === '') {
-            return null;
-        }
-
-        $this->assertValueLength($prepared);
-
-        $query = Query::regexp($this->property, $prepared);
-
-        return $this->applyParametersOnQuery($query);
-    }
-
-    protected function supportsBooleanValues(): bool
-    {
-        return false;
+        return Query::regexp($this->property, $text);
     }
 }
