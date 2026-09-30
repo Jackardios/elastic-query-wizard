@@ -1,4 +1,4 @@
-.PHONY: up up-es down down-es wait wait-es test unit-test feature-test coverage lint format-check format static-analysis ci ci-full test-es8 test-es9 test-matrix test-full-matrix install update clean help build-images
+.PHONY: up up-es down down-es wait wait-es test unit-test feature-test coverage lint format-check format static-analysis ci ci-full test-es8 test-es9 test-matrix test-full-matrix test-lowest install update clean help build-images
 
 .DEFAULT_GOAL := help
 
@@ -171,7 +171,7 @@ test-full-matrix: build-images ## Run full test matrix (PHP × Laravel × ES) vi
 					-w /app \
 					-e ELASTIC_HOST=127.0.0.1:$(ES_HOST_PORT) \
 					$(DOCKER_IMAGE_PREFIX):$$php_version sh -c "\
-						cp -r /src/. /app/ && \
+						tar -C /src --exclude=./vendor --exclude=./composer.lock --exclude=./.git -cf - . | tar -C /app -xf - && \
 						composer update \
 							--with='laravel/framework:^$$laravel_version.0' \
 							--with='orchestra/testbench:^$$testbench_version.0' \
@@ -196,6 +196,28 @@ test-full-matrix: build-images ## Run full test matrix (PHP × Laravel × ES) vi
 	printf "$(CYAN)════════════════════════════════════════════════════════════$(RESET)\n"; \
 	[ $$failed -eq 0 ]
 
+test-lowest: build-images ## Run tests with the lowest supported dependencies (PHP 8.2 / Laravel 12 / ES 8)
+	@$(MAKE) down 2>/dev/null || true
+	@ES_VERSION=8.19.22 $(MAKE) up-es wait-es
+	@printf "$(YELLOW)→ Running tests with lowest dependencies$(RESET)\n"
+	@docker run --rm \
+		--network host \
+		-v "$$(pwd):/src:ro" \
+		-v $(COMPOSER_CACHE_VOLUME):/root/.composer/cache \
+		-w /app \
+		-e ELASTIC_HOST=127.0.0.1:$(ES_HOST_PORT) \
+		$(DOCKER_IMAGE_PREFIX):8.2 sh -c "\
+			tar -C /src --exclude=./vendor --exclude=./composer.lock --exclude=./.git -cf - . | tar -C /app -xf - && \
+			composer update \
+				--with='elasticsearch/elasticsearch:^8.0' \
+				--with='guzzlehttp/psr7:^2.0' \
+				--prefer-lowest --prefer-stable --prefer-dist --no-interaction --no-progress && \
+			vendor/bin/phpunit --colors=always \
+		"; status=$$?; \
+	$(MAKE) down; \
+	[ $$status -eq 0 ] && printf "$(GREEN)✔ Lowest dependencies passed$(RESET)\n"; \
+	exit $$status
+
 ##@ Code Quality
 
 lint: format-check static-analysis ## Quick lint check (no tests)
@@ -212,7 +234,7 @@ format: ## Fix code style
 
 static-analysis: ## Run PHPStan static analysis
 	@printf "$(YELLOW)→ Running static analysis$(RESET)\n"
-	@vendor/bin/phpstan analyse --memory-limit=512M
+	@vendor/bin/phpstan analyse --memory-limit=1G
 	@printf "$(GREEN)✔ Static analysis passed$(RESET)\n"
 
 ##@ CI
