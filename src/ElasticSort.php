@@ -34,11 +34,11 @@ final class ElasticSort
     }
 
     public static function script(
-        string $scriptSource,
         string $property,
+        string $scriptSource,
         ?string $alias = null
     ): ScriptSort {
-        return ScriptSort::make($scriptSource, $property, $alias);
+        return ScriptSort::make($property, $scriptSource, $alias);
     }
 
     public static function score(?string $alias = null): ScoreSort
@@ -49,17 +49,17 @@ final class ElasticSort
     /**
      * Sort by a field within nested documents.
      *
+     * @param  string  $property  The sort property name
      * @param  string  $path  The nested document path (e.g., 'variants', 'offers')
      * @param  string  $nestedField  The field within the nested document
-     * @param  string  $property  The sort property name
      */
     public static function nested(
+        string $property,
         string $path,
         string $nestedField,
-        string $property,
         ?string $alias = null
     ): NestedSort {
-        return NestedSort::make($path, $nestedField, $property, $alias);
+        return NestedSort::make($property, $path, $nestedField, $alias);
     }
 
     /**

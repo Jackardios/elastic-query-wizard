@@ -82,7 +82,7 @@ class FilterParametersTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithFilters(['name' => 'john'])
             ->allowedFilters(
-                ElasticFilter::multiMatch(['name^10', 'country_name^4'], 'name')->withParameters([
+                ElasticFilter::multiMatch('name', ['name^10', 'country_name^4'])->withParameters([
                     'type' => 'most_fields',
                     'operator' => 'or',
                     'tie_breaker' => 0.3,

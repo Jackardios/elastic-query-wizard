@@ -50,7 +50,7 @@ class NestedGroupTest extends TestCase
         $filter = ['author' => 'jane', 'rating' => '5'];
 
         $this->assertSame([], $this->names($this->hits($filter, $this->commentsGroup())));
-        $this->assertSame(['A'], $this->names($this->hits($filter, NestedFilter::make('comments', 'author'), NestedFilter::make('comments', 'rating'))));
+        $this->assertSame(['A'], $this->names($this->hits($filter, NestedFilter::make('author', 'comments'), NestedFilter::make('rating', 'comments'))));
     }
 
     #[Test]

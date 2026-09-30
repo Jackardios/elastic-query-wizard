@@ -127,7 +127,7 @@ class PostSchema extends ResourceSchema
         return [
             'status',
             ElasticFilter::match('title'),
-            ElasticFilter::multiMatch(['title^2', 'body'], 'search'),
+            ElasticFilter::multiMatch('search', ['title^2', 'body']),
         ];
     }
 
@@ -182,7 +182,7 @@ use Jackardios\ElasticQueryWizard\ElasticAggregation;
 $results = ElasticQueryWizard::for(Article::class)
     ->allowedFilters([
         ElasticFilter::term('status'),
-        ElasticFilter::multiMatch(['title^3', 'body'], 'search'),
+        ElasticFilter::multiMatch('search', ['title^3', 'body']),
     ])
     ->query(ElasticQuery::match('language', 'en'))
     ->must(ElasticQuery::range('published_at')->gte('2024-01-01'))
@@ -218,7 +218,7 @@ $places = ElasticQueryWizard::for(Place::class)
 
 $articles = ElasticQueryWizard::for(Article::class)
     ->allowedFilters([
-        ElasticFilter::multiMatch(['title^2', 'body', 'tags'], 'search')
+        ElasticFilter::multiMatch('search', ['title^2', 'body', 'tags'])
             ->withParameters([
                 'type' => 'best_fields',
                 'fuzziness' => 'AUTO',

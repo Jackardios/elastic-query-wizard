@@ -23,7 +23,10 @@ made since those snapshots.
   `UnsupportedFilterInGroup` (an `InvalidArgumentException`, was a `RuntimeException`), and the `dev-master`
   `FilterNameConflictException` is `FilterNameConflict`. They are made through their static factories, and their
   messages quote names in backticks.
-
+- The factories that take more than a name take the name first, like `laravel-query-wizard`'s:
+  `ElasticFilter::multiMatch($property, $fields)`, `moreLikeThis($property, $fields)`, `nested($property, $path)`,
+  `ElasticSort::script($property, $scriptSource)` and `ElasticSort::nested($property, $path, $nestedField)`, and the
+  `make()` methods of their classes.
 - `BoolClause` cases are PascalCase (`Filter`, `Must`, `Should`, `MustNot`; were `FILTER`, … `MUST_NOT`), like
   `laravel-query-wizard`'s enums and those of `es-scout-driver`.
 - `AbstractElasticSort::handle()` and `apply()` take a `SortDirection` (was `'asc'`/`'desc'`), following

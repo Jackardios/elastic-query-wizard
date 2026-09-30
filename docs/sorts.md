@@ -240,7 +240,7 @@ Use `ScoreSort` when you want to explicitly control relevance-based sorting:
 ```php
 ElasticQueryWizard::for(Article::class)
     ->allowedFilters([
-        ElasticFilter::multiMatch(['title^2', 'body'], 'search'),
+        ElasticFilter::multiMatch('search', ['title^2', 'body']),
     ])
     ->allowedSorts([
         ElasticSort::score('relevance'),
@@ -260,8 +260,8 @@ Sorting based on computed values using Painless scripts.
 
 ```php
 ElasticSort::script(
-    scriptSource: "doc['price'].value * params.factor",
     property: 'weighted_price',  // Internal name
+    scriptSource: "doc['price'].value * params.factor",
     alias: 'custom'              // Parameter name in API
 )->params(['factor' => 1.2])
 ```
@@ -306,7 +306,7 @@ GET /products?sort=-custom
 #### Sort by Computed Price
 
 ```php
-ElasticSort::script("doc['price'].value * params.discount", 'discounted_price')
+ElasticSort::script('discounted_price', "doc['price'].value * params.discount")
     ->params(['discount' => 0.9])
     ->type('number')
 ```
@@ -314,7 +314,7 @@ ElasticSort::script("doc['price'].value * params.discount", 'discounted_price')
 #### Case-insensitive String Sorting
 
 ```php
-ElasticSort::script("doc['title.keyword'].value.toLowerCase()", 'title_lower')
+ElasticSort::script('title_lower', "doc['title.keyword'].value.toLowerCase()")
     ->type('string')
 ```
 
@@ -322,10 +322,10 @@ ElasticSort::script("doc['title.keyword'].value.toLowerCase()", 'title_lower')
 
 ```php
 ElasticSort::script(
+    'smart_distance',
     "def distance = doc['location'].arcDistance(params.lat, params.lon); " .
     "def bonus = doc['is_premium'].value ? 0 : 1000; " .
-    "return distance + bonus;",
-    'smart_distance'
+    "return distance + bonus;"
 )
     ->params(['lat' => 55.75, 'lon' => 37.62])
     ->type('number')
@@ -335,8 +335,8 @@ ElasticSort::script(
 
 ```php
 ElasticSort::script(
-    "doc['featured_at'].size() > 0 ? 0 : 1",
-    'featured_first'
+    'featured_first',
+    "doc['featured_at'].size() > 0 ? 0 : 1"
 )
     ->type('number')
 ```
@@ -351,9 +351,9 @@ Sort by a field within nested documents.
 
 ```php
 ElasticSort::nested(
+    property: 'lowest_price',
     path: 'variants',      // Nested document path
     nestedField: 'price',  // Field within nested document
-    property: 'lowest_price',
     alias: 'price'         // Optional alias
 )
 ```
@@ -385,7 +385,7 @@ GET /products?sort=-price
 ### With Options
 
 ```php
-ElasticSort::nested('variants', 'price', 'lowest_price')
+ElasticSort::nested('lowest_price', 'variants', 'price')
     ->mode('min')          // Mode for multi-valued: min, max, avg, sum, median
     ->missingLast()        // Place docs without field at end
     ->unmappedType('long') // Fallback type for unmapped field
@@ -398,7 +398,7 @@ Only consider specific nested documents for sorting:
 ```php
 use Jackardios\EsScoutDriver\Support\Query;
 
-ElasticSort::nested('offers', 'discount', 'best_offer')
+ElasticSort::nested('best_offer', 'offers', 'discount')
     ->mode('max')
     ->nestedFilter(Query::term('offers.active', true))
     ->maxChildren(10)
@@ -421,7 +421,7 @@ ElasticSort::nested('offers', 'discount', 'best_offer')
 #### Sort by Minimum Variant Price
 
 ```php
-ElasticSort::nested('variants', 'price', 'lowest_price')
+ElasticSort::nested('lowest_price', 'variants', 'price')
     ->mode('min')
     ->missingLast()
 ```
@@ -429,7 +429,7 @@ ElasticSort::nested('variants', 'price', 'lowest_price')
 #### Sort by Best Active Offer
 
 ```php
-ElasticSort::nested('offers', 'discount', 'best_offer')
+ElasticSort::nested('best_offer', 'offers', 'discount')
     ->mode('max')
     ->nestedFilter(fn() => Query::bool()
         ->must(Query::term('offers.active', true))

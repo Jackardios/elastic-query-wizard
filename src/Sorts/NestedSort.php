@@ -36,9 +36,9 @@ final class NestedSort extends AbstractElasticSort
     protected ?int $maxChildren = null;
 
     protected function __construct(
+        string $property,
         string $path,
         string $nestedField,
-        string $property,
         ?string $alias = null
     ) {
         parent::__construct($property, $alias);
@@ -47,12 +47,12 @@ final class NestedSort extends AbstractElasticSort
     }
 
     public static function make(
+        string $property,
         string $path,
         string $nestedField,
-        string $property,
         ?string $alias = null
     ): static {
-        return new self($path, $nestedField, $property, $alias);
+        return new self($property, $path, $nestedField, $alias);
     }
 
     /**

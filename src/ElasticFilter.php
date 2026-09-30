@@ -55,9 +55,9 @@ final class ElasticFilter
     /**
      * @param  string[]  $fields  The Elasticsearch fields to search across
      */
-    public static function multiMatch(array $fields, string $property, ?string $alias = null): MultiMatchFilter
+    public static function multiMatch(string $property, array $fields, ?string $alias = null): MultiMatchFilter
     {
-        return MultiMatchFilter::make($fields, $property, $alias);
+        return MultiMatchFilter::make($property, $fields, $alias);
     }
 
     public static function geoBoundingBox(string $property, ?string $alias = null): GeoBoundingBoxFilter
@@ -141,12 +141,12 @@ final class ElasticFilter
     }
 
     /**
-     * @param  string  $path  The nested document path (e.g., 'comments', 'variants')
      * @param  string  $property  The field within the nested document to filter on
+     * @param  string  $path  The nested document path (e.g., 'comments', 'variants')
      */
-    public static function nested(string $path, string $property, ?string $alias = null): NestedFilter
+    public static function nested(string $property, string $path, ?string $alias = null): NestedFilter
     {
-        return NestedFilter::make($path, $property, $alias);
+        return NestedFilter::make($property, $path, $alias);
     }
 
     /**
@@ -154,9 +154,9 @@ final class ElasticFilter
      *
      * @param  string[]  $fields  Fields to analyze for similarity
      */
-    public static function moreLikeThis(array $fields, string $property, ?string $alias = null): MoreLikeThisFilter
+    public static function moreLikeThis(string $property, array $fields, ?string $alias = null): MoreLikeThisFilter
     {
-        return MoreLikeThisFilter::make($fields, $property, $alias);
+        return MoreLikeThisFilter::make($property, $fields, $alias);
     }
 
     /**

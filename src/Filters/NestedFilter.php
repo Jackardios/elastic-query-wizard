@@ -28,15 +28,15 @@ final class NestedFilter extends AbstractElasticFilter
 
     protected ?bool $ignoreUnmapped = null;
 
-    protected function __construct(string $path, string $property, ?string $alias = null)
+    protected function __construct(string $property, string $path, ?string $alias = null)
     {
         parent::__construct($property, $alias);
         $this->path = $path;
     }
 
-    public static function make(string $path, string $property, ?string $alias = null): static
+    public static function make(string $property, string $path, ?string $alias = null): static
     {
-        return new self($path, $property, $alias);
+        return new self($property, $path, $alias);
     }
 
     /**

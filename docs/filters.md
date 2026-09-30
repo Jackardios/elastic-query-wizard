@@ -47,7 +47,7 @@ Filters allow you to limit Elasticsearch query results based on query parameters
 | `exists` | Field presence check | `ElasticFilter::exists('thumbnail')` |
 | `null` | NULL/NOT NULL check | `ElasticFilter::null('deleted_at')` |
 | `notNull` | NOT NULL/NULL check | `ElasticFilter::notNull('thumbnail')` |
-| `multiMatch` | Search across multiple fields | `ElasticFilter::multiMatch(['title', 'body'], 'q')` |
+| `multiMatch` | Search across multiple fields | `ElasticFilter::multiMatch('q', ['title', 'body'])` |
 | `wildcard` | Pattern matching (`*`, `?`) — see [warning](#wildcard-filter) | `ElasticFilter::wildcard('sku')` |
 | `prefix` | Prefix-based search (autocomplete) | `ElasticFilter::prefix('username')` |
 | `fuzzy` | Typo-tolerant search | `ElasticFilter::fuzzy('name')` |
@@ -60,8 +60,8 @@ Filters allow you to limit Elasticsearch query results based on query parameters
 | `geoDistance` | Distance from point | `ElasticFilter::geoDistance('location')` |
 | `geoBoundingBox` | Rectangle on map | `ElasticFilter::geoBoundingBox('location')` |
 | `geoShape` | Geographic shape queries | `ElasticFilter::geoShape('boundary')` |
-| `nested` | Nested document fields | `ElasticFilter::nested('comments', 'author')` |
-| `moreLikeThis` | Similar documents | `ElasticFilter::moreLikeThis(['title'], 'similar')` |
+| `nested` | Nested document fields | `ElasticFilter::nested('author', 'comments')` |
+| `moreLikeThis` | Similar documents | `ElasticFilter::moreLikeThis('similar', ['title'])` |
 | `trashed` | Soft delete handling | `ElasticFilter::trashed()` |
 | `dateRange` | Date range with from/to keys | `ElasticFilter::dateRange('created_at')` |
 | `callback` | Custom filter logic | `ElasticFilter::callback('custom', fn(...) => ...)` |
@@ -470,10 +470,10 @@ Search across multiple fields simultaneously. Ideal for implementing site-wide s
 
 ```php
 // Search across title, body, and tags fields
-ElasticFilter::multiMatch(['title', 'body', 'tags'], 'search')
+ElasticFilter::multiMatch('search', ['title', 'body', 'tags'])
 
 // With boost for specific fields
-ElasticFilter::multiMatch(['title^3', 'body^2', 'tags'], 'search')
+ElasticFilter::multiMatch('search', ['title^3', 'body^2', 'tags'])
 ```
 
 ### Query Parameters
@@ -496,7 +496,7 @@ GET /articles?filter[search]=elasticsearch tutorial
 ### With Additional Parameters
 
 ```php
-ElasticFilter::multiMatch(['title', 'body'], 'search')->withParameters([
+ElasticFilter::multiMatch('search', ['title', 'body'])->withParameters([
     'type' => 'best_fields',      // Search strategy
     'tie_breaker' => 0.3,         // Influence of other fields
     'operator' => 'and',
@@ -1023,8 +1023,8 @@ Filter by fields within nested documents.
 ### Usage
 
 ```php
-ElasticFilter::nested('comments', 'author')
-ElasticFilter::nested('variants', 'sku', 'variant_sku')
+ElasticFilter::nested('author', 'comments')
+ElasticFilter::nested('sku', 'variants', 'variant_sku')
 ```
 
 ### Query Parameters
@@ -1050,7 +1050,7 @@ GET /posts?filter[variant_sku]=ABC123,DEF456
 ### With Options
 
 ```php
-ElasticFilter::nested('comments', 'author')
+ElasticFilter::nested('author', 'comments')
     ->scoreMode('avg')     // Score mode: avg, max, min, sum, none
     ->ignoreUnmapped()     // Ignore if path is unmapped
 ```
@@ -1061,14 +1061,14 @@ ElasticFilter::nested('comments', 'author')
 use Jackardios\EsScoutDriver\Support\Query;
 
 // Custom inner query with closure (receives filter value)
-ElasticFilter::nested('offers', 'discount')
+ElasticFilter::nested('discount', 'offers')
     ->innerQuery(fn($value) => Query::bool()
         ->must(Query::range('offers.discount')->gte($value))
         ->must(Query::term('offers.active', true))
     )
 
 // Static inner query (ignores filter value)
-ElasticFilter::nested('comments', 'active')
+ElasticFilter::nested('active', 'comments')
     ->innerQuery(Query::term('comments.active', true))
 ```
 
@@ -1092,7 +1092,7 @@ Find documents similar to provided text or documents.
 
 ```php
 // Search across title and body fields for similar content
-ElasticFilter::moreLikeThis(['title', 'body'], 'similar')
+ElasticFilter::moreLikeThis('similar', ['title', 'body'])
 ```
 
 ### Query Parameters
@@ -1111,7 +1111,7 @@ A document of the searched index can stand for a text, but only when the filter 
 returns 400 (`InvalidFilterValue`):
 
 ```php
-ElasticFilter::moreLikeThis(['title', 'body'], 'similar')->allowDocumentReferences()
+ElasticFilter::moreLikeThis('similar', ['title', 'body'])->allowDocumentReferences()
 ```
 
 ```
@@ -1144,7 +1144,7 @@ documents of another index. Any other key (`_index`, `_routing`, …) returns 40
 ### With Options
 
 ```php
-ElasticFilter::moreLikeThis(['title', 'body'], 'similar')
+ElasticFilter::moreLikeThis('similar', ['title', 'body'])
     ->minTermFreq(2)           // Min term frequency in source doc
     ->maxQueryTerms(25)        // Max query terms to select
     ->minDocFreq(5)            // Min document frequency for terms

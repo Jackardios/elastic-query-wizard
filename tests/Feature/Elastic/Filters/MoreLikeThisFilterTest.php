@@ -55,7 +55,7 @@ class MoreLikeThisFilterTest extends TestCase
                 'similar' => 'JavaScript programming guide developers',
             ])
             ->allowedFilters(
-                MoreLikeThisFilter::make(['name'], 'similar')
+                MoreLikeThisFilter::make('similar', ['name'])
                     ->minTermFreq(1)
                     ->minDocFreq(1)
             )
@@ -79,7 +79,7 @@ class MoreLikeThisFilterTest extends TestCase
                 'similar' => 'programming developers guide beginners',
             ])
             ->allowedFilters(
-                MoreLikeThisFilter::make(['name'], 'similar')
+                MoreLikeThisFilter::make('similar', ['name'])
                     ->minTermFreq(1)
                     ->minDocFreq(1)
             )
@@ -99,7 +99,7 @@ class MoreLikeThisFilterTest extends TestCase
                 'similar' => 'quantum physics black holes universe cosmology astronomy',
             ])
             ->allowedFilters(
-                MoreLikeThisFilter::make(['name'], 'similar')
+                MoreLikeThisFilter::make('similar', ['name'])
                     ->minTermFreq(1)
                     ->minDocFreq(1)
             )
@@ -119,7 +119,7 @@ class MoreLikeThisFilterTest extends TestCase
                 'similar' => '',
             ])
             ->allowedFilters(
-                MoreLikeThisFilter::make(['name'], 'similar')
+                MoreLikeThisFilter::make('similar', ['name'])
             )
             ->build()
             ->execute()
@@ -136,7 +136,7 @@ class MoreLikeThisFilterTest extends TestCase
                 'similar' => 'programming developers',
             ])
             ->allowedFilters(
-                MoreLikeThisFilter::make(['name', 'category'], 'similar')
+                MoreLikeThisFilter::make('similar', ['name', 'category'])
                     ->minTermFreq(1)
                     ->minDocFreq(1)
             )
@@ -156,7 +156,7 @@ class MoreLikeThisFilterTest extends TestCase
                 'similar' => 'programming developers',
             ])
             ->allowedFilters(
-                MoreLikeThisFilter::make(['name'], 'similar')
+                MoreLikeThisFilter::make('similar', ['name'])
                     ->minTermFreq(1)
                     ->minDocFreq(2) // Term must appear in at least 2 docs
             )
@@ -176,7 +176,7 @@ class MoreLikeThisFilterTest extends TestCase
                 'similar' => 'JavaScript programming guide for beginners developers advanced techniques',
             ])
             ->allowedFilters(
-                MoreLikeThisFilter::make(['name'], 'similar')
+                MoreLikeThisFilter::make('similar', ['name'])
                     ->minTermFreq(1)
                     ->minDocFreq(1)
                     ->maxQueryTerms(5)
@@ -196,7 +196,7 @@ class MoreLikeThisFilterTest extends TestCase
                 'like' => 'programming developers',
             ])
             ->allowedFilters(
-                MoreLikeThisFilter::make(['name'], 'similar', 'like')
+                MoreLikeThisFilter::make('similar', ['name'], 'like')
                     ->minTermFreq(1)
                     ->minDocFreq(1)
             )
@@ -215,7 +215,7 @@ class MoreLikeThisFilterTest extends TestCase
                 'similar' => 'programming developers',
             ])
             ->allowedFilters(
-                MoreLikeThisFilter::make(['name'], 'similar')
+                MoreLikeThisFilter::make('similar', ['name'])
                     ->minTermFreq(1)
                     ->minDocFreq(1)
                     ->minimumShouldMatch('30%')
@@ -235,7 +235,7 @@ class MoreLikeThisFilterTest extends TestCase
                 'similar' => 'programming developers guide',
             ])
             ->allowedFilters(
-                MoreLikeThisFilter::make(['name'], 'similar')
+                MoreLikeThisFilter::make('similar', ['name'])
                     ->minTermFreq(1)
                     ->minDocFreq(1)
                     ->minWordLength(5) // Skip short words

@@ -64,7 +64,7 @@ class NestedSortTest extends TestCase
     {
         $result = $this
             ->createElasticWizardWithSorts('price', NestedModel::class)
-            ->allowedSorts(NestedSort::make('variants', 'price', 'price')->mode('min'))
+            ->allowedSorts(NestedSort::make('price', 'variants', 'price')->mode('min'))
             ->build()
             ->execute()
             ->models();
@@ -79,7 +79,7 @@ class NestedSortTest extends TestCase
     {
         $result = $this
             ->createElasticWizardWithSorts('-price', NestedModel::class)
-            ->allowedSorts(NestedSort::make('variants', 'price', 'price')->mode('max'))
+            ->allowedSorts(NestedSort::make('price', 'variants', 'price')->mode('max'))
             ->build()
             ->execute()
             ->models();
@@ -94,7 +94,7 @@ class NestedSortTest extends TestCase
     {
         $result = $this
             ->createElasticWizardWithSorts('lowest_price', NestedModel::class)
-            ->allowedSorts(NestedSort::make('variants', 'price', 'lowest_price')->mode('min'))
+            ->allowedSorts(NestedSort::make('lowest_price', 'variants', 'price')->mode('min'))
             ->build()
             ->execute()
             ->models();
@@ -109,7 +109,7 @@ class NestedSortTest extends TestCase
     {
         $result = $this
             ->createElasticWizardWithSorts('highest_price', NestedModel::class)
-            ->allowedSorts(NestedSort::make('variants', 'price', 'highest_price')->mode('max'))
+            ->allowedSorts(NestedSort::make('highest_price', 'variants', 'price')->mode('max'))
             ->build()
             ->execute()
             ->models();
@@ -124,7 +124,7 @@ class NestedSortTest extends TestCase
     {
         $result = $this
             ->createElasticWizardWithSorts('avg_price', NestedModel::class)
-            ->allowedSorts(NestedSort::make('variants', 'price', 'avg_price')->mode('avg'))
+            ->allowedSorts(NestedSort::make('avg_price', 'variants', 'price')->mode('avg'))
             ->build()
             ->execute()
             ->models();
@@ -139,7 +139,7 @@ class NestedSortTest extends TestCase
     {
         $result = $this
             ->createElasticWizardWithSorts('rating', NestedModel::class)
-            ->allowedSorts(NestedSort::make('comments', 'rating', 'rating'))
+            ->allowedSorts(NestedSort::make('rating', 'comments', 'rating'))
             ->build()
             ->execute()
             ->models();
@@ -154,7 +154,7 @@ class NestedSortTest extends TestCase
     {
         $result = $this
             ->createElasticWizardWithSorts('-best_rating', NestedModel::class)
-            ->allowedSorts(NestedSort::make('comments', 'rating', 'rating', 'best_rating'))
+            ->allowedSorts(NestedSort::make('rating', 'comments', 'rating', 'best_rating'))
             ->build()
             ->execute()
             ->models();
@@ -170,7 +170,7 @@ class NestedSortTest extends TestCase
         $result = $this
             ->createElasticWizardWithSorts('active_price', NestedModel::class)
             ->allowedSorts(
-                NestedSort::make('variants', 'price', 'active_price')
+                NestedSort::make('active_price', 'variants', 'price')
                     ->mode('min')
                     ->nestedFilter(Query::term('variants.active', true))
             )
@@ -195,7 +195,7 @@ class NestedSortTest extends TestCase
         $result = $this
             ->createElasticWizardWithSorts('price', NestedModel::class)
             ->allowedSorts(
-                NestedSort::make('variants', 'price', 'price')
+                NestedSort::make('price', 'variants', 'price')
                     ->mode('min')
                     ->missingLast()
             )
@@ -220,7 +220,7 @@ class NestedSortTest extends TestCase
         $result = $this
             ->createElasticWizardWithSorts('price', NestedModel::class)
             ->allowedSorts(
-                NestedSort::make('variants', 'price', 'price')
+                NestedSort::make('price', 'variants', 'price')
                     ->mode('min')
                     ->missingFirst()
             )
@@ -239,7 +239,7 @@ class NestedSortTest extends TestCase
         $result = $this
             ->createElasticWizardWithSorts('price', NestedModel::class)
             ->allowedSorts(
-                NestedSort::make('variants', 'price', 'price')
+                NestedSort::make('price', 'variants', 'price')
                     ->mode('min')
                     ->maxChildren(1)
             )
@@ -257,7 +257,7 @@ class NestedSortTest extends TestCase
         $result = $this
             ->createElasticWizardWithSorts('-active_price', NestedModel::class)
             ->allowedSorts(
-                NestedSort::make('variants', 'price', 'active_price')
+                NestedSort::make('active_price', 'variants', 'price')
                     ->mode('max')
                     ->missingLast()
                     ->nestedFilter(Query::term('variants.active', true))

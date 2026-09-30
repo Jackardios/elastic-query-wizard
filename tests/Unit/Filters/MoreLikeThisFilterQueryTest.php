@@ -20,7 +20,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
     {
         $wizard = $this
             ->createElasticWizardWithFilters(['similar' => 'elasticsearch distributed search'])
-            ->allowedFilters(MoreLikeThisFilter::make(['title', 'body'], 'similar'));
+            ->allowedFilters(MoreLikeThisFilter::make('similar', ['title', 'body']));
         $wizard->build();
 
         $queries = $this->getMustQueries($wizard->boolQuery());
@@ -43,7 +43,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
                     '_id' => '123',
                 ],
             ])
-            ->allowedFilters(MoreLikeThisFilter::make(['title', 'body'], 'similar')->allowDocumentReferences());
+            ->allowedFilters(MoreLikeThisFilter::make('similar', ['title', 'body'])->allowDocumentReferences());
         $wizard->build();
 
         $queries = $this->getMustQueries($wizard->boolQuery());
@@ -66,7 +66,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
             ->createElasticWizardWithFilters([
                 'similar' => ['elasticsearch', 'search engine', 'distributed'],
             ])
-            ->allowedFilters(MoreLikeThisFilter::make(['title'], 'similar'));
+            ->allowedFilters(MoreLikeThisFilter::make('similar', ['title']));
         $wizard->build();
 
         $queries = $this->getMustQueries($wizard->boolQuery());
@@ -86,7 +86,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithFilters(['similar' => 'test'])
             ->allowedFilters(
-                MoreLikeThisFilter::make(['title'], 'similar')->minTermFreq(2)
+                MoreLikeThisFilter::make('similar', ['title'])->minTermFreq(2)
             );
         $wizard->build();
 
@@ -108,7 +108,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithFilters(['similar' => 'test'])
             ->allowedFilters(
-                MoreLikeThisFilter::make(['title'], 'similar')->maxQueryTerms(25)
+                MoreLikeThisFilter::make('similar', ['title'])->maxQueryTerms(25)
             );
         $wizard->build();
 
@@ -130,7 +130,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithFilters(['similar' => 'test'])
             ->allowedFilters(
-                MoreLikeThisFilter::make(['title'], 'similar')
+                MoreLikeThisFilter::make('similar', ['title'])
                     ->minDocFreq(5)
                     ->maxDocFreq(1000)
             );
@@ -155,7 +155,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithFilters(['similar' => 'test'])
             ->allowedFilters(
-                MoreLikeThisFilter::make(['title'], 'similar')
+                MoreLikeThisFilter::make('similar', ['title'])
                     ->minWordLength(3)
                     ->maxWordLength(20)
             );
@@ -180,7 +180,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithFilters(['similar' => 'test'])
             ->allowedFilters(
-                MoreLikeThisFilter::make(['title'], 'similar')->analyzer('english')
+                MoreLikeThisFilter::make('similar', ['title'])->analyzer('english')
             );
         $wizard->build();
 
@@ -202,7 +202,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithFilters(['similar' => 'test'])
             ->allowedFilters(
-                MoreLikeThisFilter::make(['title'], 'similar')->minimumShouldMatch(2)
+                MoreLikeThisFilter::make('similar', ['title'])->minimumShouldMatch(2)
             );
         $wizard->build();
 
@@ -224,7 +224,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithFilters(['similar' => 'test'])
             ->allowedFilters(
-                MoreLikeThisFilter::make(['title'], 'similar')->minimumShouldMatch('30%')
+                MoreLikeThisFilter::make('similar', ['title'])->minimumShouldMatch('30%')
             );
         $wizard->build();
 
@@ -246,7 +246,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithFilters(['similar' => 'test'])
             ->allowedFilters(
-                MoreLikeThisFilter::make(['title'], 'similar')->boost(1.5)
+                MoreLikeThisFilter::make('similar', ['title'])->boost(1.5)
             );
         $wizard->build();
 
@@ -268,7 +268,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithFilters(['similar' => 'test'])
             ->allowedFilters(
-                MoreLikeThisFilter::make(['title'], 'similar')->include(true)
+                MoreLikeThisFilter::make('similar', ['title'])->include(true)
             );
         $wizard->build();
 
@@ -290,7 +290,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithFilters(['similar' => 'test'])
             ->allowedFilters(
-                MoreLikeThisFilter::make(['title'], 'similar')->boostTerms(2.0)
+                MoreLikeThisFilter::make('similar', ['title'])->boostTerms(2.0)
             );
         $wizard->build();
 
@@ -311,7 +311,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
     {
         $wizard = $this
             ->createElasticWizardWithFilters(['similar' => ''])
-            ->allowedFilters(MoreLikeThisFilter::make(['title'], 'similar'));
+            ->allowedFilters(MoreLikeThisFilter::make('similar', ['title']));
         $wizard->build();
 
         $queries = $this->getMustQueries($wizard->boolQuery());
@@ -324,7 +324,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
     {
         $wizard = $this
             ->createElasticWizardWithFilters(['similar' => null])
-            ->allowedFilters(MoreLikeThisFilter::make(['title'], 'similar'));
+            ->allowedFilters(MoreLikeThisFilter::make('similar', ['title']));
         $wizard->build();
 
         $queries = $this->getMustQueries($wizard->boolQuery());
@@ -337,7 +337,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
     {
         $wizard = $this
             ->createElasticWizardWithFilters(['similar' => '   '])
-            ->allowedFilters(MoreLikeThisFilter::make(['title'], 'similar'));
+            ->allowedFilters(MoreLikeThisFilter::make('similar', ['title']));
         $wizard->build();
 
         $queries = $this->getMustQueries($wizard->boolQuery());
@@ -350,7 +350,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
     {
         $wizard = $this
             ->createElasticWizardWithFilters(['similar' => []])
-            ->allowedFilters(MoreLikeThisFilter::make(['title'], 'similar'));
+            ->allowedFilters(MoreLikeThisFilter::make('similar', ['title']));
         $wizard->build();
 
         $queries = $this->getMustQueries($wizard->boolQuery());
@@ -365,7 +365,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
             ->createElasticWizardWithFilters([
                 'similar' => ['elasticsearch', '', null, 'search'],
             ])
-            ->allowedFilters(MoreLikeThisFilter::make(['title'], 'similar'));
+            ->allowedFilters(MoreLikeThisFilter::make('similar', ['title']));
         $wizard->build();
 
         $queries = $this->getMustQueries($wizard->boolQuery());
@@ -384,7 +384,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
     {
         $wizard = $this
             ->createElasticWizardWithFilters(['related' => 'test'])
-            ->allowedFilters(MoreLikeThisFilter::make(['title', 'body'], 'similar', 'related'));
+            ->allowedFilters(MoreLikeThisFilter::make('similar', ['title', 'body'], 'related'));
         $wizard->build();
 
         $queries = $this->getMustQueries($wizard->boolQuery());
@@ -404,7 +404,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithFilters(['similar' => 'test query'])
             ->allowedFilters(
-                MoreLikeThisFilter::make(['title', 'body'], 'similar')
+                MoreLikeThisFilter::make('similar', ['title', 'body'])
                     ->minTermFreq(2)
                     ->maxQueryTerms(25)
                     ->minDocFreq(5)
@@ -446,7 +446,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
     {
         $like = fn (mixed $value): mixed => $this->getMustQueries(
             tap($this->createElasticWizardWithFilters(['similar' => $value])
-                ->allowedFilters(MoreLikeThisFilter::make(['title'], 'similar')->allowDocumentReferences()))->build()->boolQuery()
+                ->allowedFilters(MoreLikeThisFilter::make('similar', ['title'])->allowDocumentReferences()))->build()->boolQuery()
         )[0]['more_like_this']['like'];
 
         $this->assertSame('red, blue', $like('red, blue'));
@@ -460,7 +460,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         $this->expectException(InvalidFilterValue::class);
 
         $this->createElasticWizardWithFilters(['similar' => ['red', 'blue']])
-            ->allowedFilters(MoreLikeThisFilter::make(['title'], 'similar')->maxLength(3))
+            ->allowedFilters(MoreLikeThisFilter::make('similar', ['title'])->maxLength(3))
             ->build();
     }
 
@@ -470,7 +470,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         foreach ([['_index' => 'users', '_id' => '1'], [['_id' => '1', '_routing' => 'x']], ['_id' => ['1']], ['_id' => '1', 'x' => '']] as $value) {
             try {
                 $this->createElasticWizardWithFilters(['similar' => $value])
-                    ->allowedFilters(MoreLikeThisFilter::make(['title'], 'similar')->allowDocumentReferences())
+                    ->allowedFilters(MoreLikeThisFilter::make('similar', ['title'])->allowDocumentReferences())
                     ->build();
                 $this->fail('The reference was accepted: '.json_encode($value));
             } catch (InvalidFilterValue $exception) {
@@ -498,7 +498,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         $this->expectExceptionMessage('Expected a text or a list of texts: this filter does not take document references.');
 
         $this->createElasticWizardWithFilters(['similar' => $value])
-            ->allowedFilters(MoreLikeThisFilter::make(['title'], 'similar'))
+            ->allowedFilters(MoreLikeThisFilter::make('similar', ['title']))
             ->build();
     }
 }

@@ -61,7 +61,7 @@ final class MoreLikeThisFilter extends AbstractElasticFilter
      *
      * @param  string[]  $fields  Fields to analyze for similarity
      */
-    protected function __construct(array $fields, string $property, ?string $alias = null)
+    protected function __construct(string $property, array $fields, ?string $alias = null)
     {
         parent::__construct($property, $alias);
         $this->fields = $fields;
@@ -73,9 +73,9 @@ final class MoreLikeThisFilter extends AbstractElasticFilter
     /**
      * @param  string[]  $fields  Fields to analyze for similarity
      */
-    public static function make(array $fields, string $property, ?string $alias = null): static
+    public static function make(string $property, array $fields, ?string $alias = null): static
     {
-        return new self($fields, $property, $alias);
+        return new self($property, $fields, $alias);
     }
 
     /**

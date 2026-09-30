@@ -18,7 +18,7 @@ class ScriptSortQueryTest extends UnitTestCase
     {
         $wizard = $this
             ->createElasticWizardWithSorts('custom')
-            ->allowedSorts(ScriptSort::make("doc['price'].value * 1.1", 'custom'));
+            ->allowedSorts(ScriptSort::make('custom', "doc['price'].value * 1.1"));
         $wizard->build();
 
         $sorts = $this->getSorts($wizard->getSubject());
@@ -40,7 +40,7 @@ class ScriptSortQueryTest extends UnitTestCase
     {
         $wizard = $this
             ->createElasticWizardWithSorts('-custom')
-            ->allowedSorts(ScriptSort::make("doc['price'].value * 1.1", 'custom'));
+            ->allowedSorts(ScriptSort::make('custom', "doc['price'].value * 1.1"));
         $wizard->build();
 
         $sorts = $this->getSorts($wizard->getSubject());
@@ -63,7 +63,7 @@ class ScriptSortQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithSorts('custom')
             ->allowedSorts(
-                ScriptSort::make("doc['title'].value.toLowerCase()", 'custom')->type('string')
+                ScriptSort::make('custom', "doc['title'].value.toLowerCase()")->type('string')
             );
         $wizard->build();
 
@@ -87,7 +87,7 @@ class ScriptSortQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithSorts('custom')
             ->allowedSorts(
-                ScriptSort::make("doc['price'].value * params.factor", 'custom')
+                ScriptSort::make('custom', "doc['price'].value * params.factor")
                     ->params(['factor' => 1.2])
             );
         $wizard->build();
@@ -113,7 +113,7 @@ class ScriptSortQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithSorts('custom')
             ->allowedSorts(
-                ScriptSort::make("doc['scores'].stream().sum()", 'custom')->mode('avg')
+                ScriptSort::make('custom', "doc['scores'].stream().sum()")->mode('avg')
             );
         $wizard->build();
 
@@ -138,7 +138,7 @@ class ScriptSortQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithSorts('custom')
             ->allowedSorts(
-                ScriptSort::make("doc['price'].value", 'custom')->nested(['path' => 'offers'])
+                ScriptSort::make('custom', "doc['price'].value")->nested(['path' => 'offers'])
             );
         $wizard->build();
 
@@ -163,7 +163,7 @@ class ScriptSortQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithSorts('custom')
             ->allowedSorts(
-                ScriptSort::make("doc['price'].value * params.factor + params.bonus", 'custom')
+                ScriptSort::make('custom', "doc['price'].value * params.factor + params.bonus")
                     ->type('number')
                     ->params(['factor' => 1.5, 'bonus' => 100])
                     ->mode('sum')

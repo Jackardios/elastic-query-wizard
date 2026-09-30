@@ -82,6 +82,26 @@ apply without being allowed, and duplicate public names throw. See its UPGRADE.m
 
 ---
 
+## Factory Argument Order
+
+The factories that take more than a name take the name first, like `laravel-query-wizard`'s, and so do the `make()`
+methods of their classes:
+
+| v2 | v3 |
+|----|-----|
+| `ElasticFilter::multiMatch(['title', 'body'], 'q')` | `ElasticFilter::multiMatch('q', ['title', 'body'])` |
+| `ElasticFilter::moreLikeThis(['title'], 'similar')` | `ElasticFilter::moreLikeThis('similar', ['title'])` |
+| `ElasticFilter::nested('comments', 'author')` | `ElasticFilter::nested('author', 'comments')` |
+| `ElasticSort::script($source, 'weighted')` | `ElasticSort::script('weighted', $source)` |
+| `ElasticSort::nested('variants', 'price', 'lowest_price')` | `ElasticSort::nested('lowest_price', 'variants', 'price')` |
+
+> **Warning:** `multiMatch()` and `moreLikeThis()` calls in the old order fail with a `TypeError`, but `nested()` and
+> `script()` take strings only, so an old call still runs with the arguments swapped: the filter reads the path as its
+> name and the name as its path. Search the code for these four calls; named arguments
+> (`ElasticFilter::nested(property: 'author', path: 'comments')`) work in both versions.
+
+---
+
 ## Query DSL API Changes (es-scout-driver)
 
 The Query DSL API changed from builder pattern to static factories:

@@ -54,7 +54,7 @@ class ElasticSortFactoryTest extends TestCase
     #[Test]
     public function script_creates_script_sort(): void
     {
-        $sort = ElasticSort::script("doc['price'].value", 'custom', 'alias');
+        $sort = ElasticSort::script('custom', "doc['price'].value", 'alias');
 
         $this->assertInstanceOf(ScriptSort::class, $sort);
         $this->assertEquals('custom', $sort->getProperty());
@@ -84,7 +84,7 @@ class ElasticSortFactoryTest extends TestCase
     #[Test]
     public function nested_creates_nested_sort(): void
     {
-        $sort = ElasticSort::nested('variants', 'price', 'lowest_price', 'price');
+        $sort = ElasticSort::nested('lowest_price', 'variants', 'price', 'price');
 
         $this->assertInstanceOf(NestedSort::class, $sort);
         $this->assertEquals('lowest_price', $sort->getProperty());

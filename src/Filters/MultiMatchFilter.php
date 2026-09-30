@@ -25,7 +25,7 @@ final class MultiMatchFilter extends AbstractElasticFilter
      *
      * @param  string[]  $fields
      */
-    protected function __construct(array $fields, string $property, ?string $alias = null)
+    protected function __construct(string $property, array $fields, ?string $alias = null)
     {
         parent::__construct($property, $alias);
 
@@ -36,9 +36,9 @@ final class MultiMatchFilter extends AbstractElasticFilter
     /**
      * @param  string[]  $fields  The Elasticsearch fields to search across
      */
-    public static function make(array $fields, string $property, ?string $alias = null): static
+    public static function make(string $property, array $fields, ?string $alias = null): static
     {
-        return new self($fields, $property, $alias);
+        return new self($property, $fields, $alias);
     }
 
     /** @return list<class-string> */

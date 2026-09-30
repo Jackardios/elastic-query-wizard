@@ -37,7 +37,7 @@ class MultiMatchFilterTest extends TestCase
             ->createElasticWizardWithFilters([
                 'search' => 'new testing',
             ])
-            ->allowedFilters(MultiMatchFilter::make(['name', 'category'], 'search'))
+            ->allowedFilters(MultiMatchFilter::make('search', ['name', 'category']))
             ->build()
             ->execute()
             ->models();
@@ -53,7 +53,7 @@ class MultiMatchFilterTest extends TestCase
             ->createElasticWizardWithFilters([
                 'search' => '',
             ])
-            ->allowedFilters(MultiMatchFilter::make(['name', 'category'], 'search'))
+            ->allowedFilters(MultiMatchFilter::make('search', ['name', 'category']))
             ->build()
             ->execute()
             ->models();
@@ -74,7 +74,7 @@ class MultiMatchFilterTest extends TestCase
                 'search' => 'UniqueSearchPhrase',
             ])
             ->allowedFilters(
-                MultiMatchFilter::make(['name', 'category'], 'search')
+                MultiMatchFilter::make('search', ['name', 'category'])
                     ->withParameters(['type' => 'best_fields'])
             )
             ->build()
@@ -91,7 +91,7 @@ class MultiMatchFilterTest extends TestCase
         $model1 = TestModel::factory()->create(['name' => 'UniqueJohn Doe']);
         $model2 = TestModel::factory()->create(['name' => 'Some Deer']);
 
-        $filter = MultiMatchFilter::make(['name', 'category'], 'search')->default('UniqueJohn');
+        $filter = MultiMatchFilter::make('search', ['name', 'category'])->default('UniqueJohn');
 
         $modelsResult = $this
             ->createElasticWizardWithFilters([])

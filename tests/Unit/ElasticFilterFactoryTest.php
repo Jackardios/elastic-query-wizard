@@ -80,7 +80,7 @@ class ElasticFilterFactoryTest extends TestCase
     #[Test]
     public function multi_match_creates_multi_match_filter(): void
     {
-        $filter = ElasticFilter::multiMatch(['field1', 'field2'], 'search', 'alias');
+        $filter = ElasticFilter::multiMatch('search', ['field1', 'field2'], 'alias');
 
         $this->assertInstanceOf(MultiMatchFilter::class, $filter);
         $this->assertEquals('search', $filter->getProperty());
@@ -251,7 +251,7 @@ class ElasticFilterFactoryTest extends TestCase
     #[Test]
     public function nested_creates_nested_filter(): void
     {
-        $filter = ElasticFilter::nested('comments', 'author', 'comment_author');
+        $filter = ElasticFilter::nested('author', 'comments', 'comment_author');
 
         $this->assertInstanceOf(NestedFilter::class, $filter);
         $this->assertEquals('author', $filter->getProperty());
@@ -271,7 +271,7 @@ class ElasticFilterFactoryTest extends TestCase
     #[Test]
     public function more_like_this_creates_more_like_this_filter(): void
     {
-        $filter = ElasticFilter::moreLikeThis(['title', 'body'], 'similar', 'related');
+        $filter = ElasticFilter::moreLikeThis('similar', ['title', 'body'], 'related');
 
         $this->assertInstanceOf(MoreLikeThisFilter::class, $filter);
         $this->assertEquals('similar', $filter->getProperty());

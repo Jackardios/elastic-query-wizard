@@ -66,7 +66,7 @@ class PostSchema extends ResourceSchema
             'status',
             ElasticFilter::match('title'),
             ElasticFilter::range('created_at'),
-            ElasticFilter::multiMatch(['title^2', 'body'], 'search'),
+            ElasticFilter::multiMatch('search', ['title^2', 'body']),
             ElasticFilter::trashed(),
         ];
     }
@@ -955,7 +955,7 @@ ElasticSort::random('random')->seed($request->session()->getId())
    ElasticFilter::term('comments.author')
 
    // Correct: use nested filter
-   ElasticFilter::nested('comments', 'author')
+   ElasticFilter::nested('author', 'comments')
    ```
 
 3. **Index not synced** — Ensure your Elasticsearch index is up to date:

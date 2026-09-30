@@ -78,10 +78,10 @@ class ValueLengthTest extends UnitTestCase
             ElasticFilter::match('name'),
             ElasticFilter::matchPhrase('name'),
             ElasticFilter::matchPhrasePrefix('name'),
-            ElasticFilter::multiMatch(['name'], 'name'),
+            ElasticFilter::multiMatch('name', ['name']),
             ElasticFilter::queryString('name'),
             ElasticFilter::simpleQueryString('name'),
-            ElasticFilter::moreLikeThis(['title'], 'name'),
+            ElasticFilter::moreLikeThis('name', ['title']),
         ];
 
         foreach ($filters as $filter) {

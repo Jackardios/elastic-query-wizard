@@ -50,7 +50,7 @@ class ValueSplittingTest extends UnitTestCase
     {
         $this->assertSame(
             [['nested' => ['path' => 'comments', 'query' => ['term' => ['comments.name' => ['value' => 'Smith, John']]]]]],
-            $this->filterQueries(ElasticFilter::nested('comments', 'name')->withoutValueSplitting(), 'Smith, John')
+            $this->filterQueries(ElasticFilter::nested('name', 'comments')->withoutValueSplitting(), 'Smith, John')
         );
     }
 
@@ -81,7 +81,7 @@ class ValueSplittingTest extends UnitTestCase
         yield 'match' => [ElasticFilter::match('title'), 'red, blue', ['match' => ['title' => ['query' => 'red, blue']]]];
         yield 'match phrase' => [ElasticFilter::matchPhrase('title'), 'Hello, world', ['match_phrase' => ['title' => ['query' => 'Hello, world']]]];
         yield 'match phrase prefix' => [ElasticFilter::matchPhrasePrefix('title'), 'Hello, wor', ['match_phrase_prefix' => ['title' => ['query' => 'Hello, wor']]]];
-        yield 'multi match' => [ElasticFilter::multiMatch(['title', 'body'], 'title'), 'red, blue', ['multi_match' => ['fields' => ['title', 'body'], 'query' => 'red, blue']]];
+        yield 'multi match' => [ElasticFilter::multiMatch('title', ['title', 'body']), 'red, blue', ['multi_match' => ['fields' => ['title', 'body'], 'query' => 'red, blue']]];
         yield 'query string' => [ElasticFilter::queryString('title'), 'a, b', ['query_string' => ['query' => 'a, b', 'fields' => ['title'], 'allow_leading_wildcard' => false]]];
         yield 'simple query string' => [ElasticFilter::simpleQueryString('title'), 'a, b', ['simple_query_string' => ['query' => 'a, b', 'fields' => ['title']]]];
     }
@@ -107,7 +107,7 @@ class ValueSplittingTest extends UnitTestCase
         yield 'match' => [ElasticFilter::match('title')];
         yield 'match phrase' => [ElasticFilter::matchPhrase('title')];
         yield 'match phrase prefix' => [ElasticFilter::matchPhrasePrefix('title')];
-        yield 'multi match' => [ElasticFilter::multiMatch(['title', 'body'], 'title')];
+        yield 'multi match' => [ElasticFilter::multiMatch('title', ['title', 'body'])];
         yield 'query string' => [ElasticFilter::queryString('title')];
         yield 'simple query string' => [ElasticFilter::simpleQueryString('title')];
     }
@@ -124,7 +124,7 @@ class ValueSplittingTest extends UnitTestCase
     #[Test]
     public function a_more_like_this_list_is_several_texts(): void
     {
-        $filter = ElasticFilter::moreLikeThis(['title'], 'similar');
+        $filter = ElasticFilter::moreLikeThis('similar', ['title']);
 
         $this->assertSame(
             ['red, green', 'blue'],

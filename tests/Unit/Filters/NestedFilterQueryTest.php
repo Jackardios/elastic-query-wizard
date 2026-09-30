@@ -19,7 +19,7 @@ class NestedFilterQueryTest extends UnitTestCase
     {
         $wizard = $this
             ->createElasticWizardWithFilters(['author' => 'john'])
-            ->allowedFilters(NestedFilter::make('comments', 'author'));
+            ->allowedFilters(NestedFilter::make('author', 'comments'));
         $wizard->build();
 
         $queries = $this->getFilterQueries($wizard->boolQuery());
@@ -40,7 +40,7 @@ class NestedFilterQueryTest extends UnitTestCase
     {
         $wizard = $this
             ->createElasticWizardWithFilters(['author' => ['john', 'jane']])
-            ->allowedFilters(NestedFilter::make('comments', 'author'));
+            ->allowedFilters(NestedFilter::make('author', 'comments'));
         $wizard->build();
 
         $queries = $this->getFilterQueries($wizard->boolQuery());
@@ -62,7 +62,7 @@ class NestedFilterQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithFilters(['author' => 'john'])
             ->allowedFilters(
-                NestedFilter::make('comments', 'author')->scoreMode('avg')
+                NestedFilter::make('author', 'comments')->scoreMode('avg')
             );
         $wizard->build();
 
@@ -86,7 +86,7 @@ class NestedFilterQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithFilters(['author' => 'john'])
             ->allowedFilters(
-                NestedFilter::make('comments', 'author')->ignoreUnmapped()
+                NestedFilter::make('author', 'comments')->ignoreUnmapped()
             );
         $wizard->build();
 
@@ -110,7 +110,7 @@ class NestedFilterQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithFilters(['min_rating' => 4])
             ->allowedFilters(
-                NestedFilter::make('reviews', 'min_rating')
+                NestedFilter::make('min_rating', 'reviews')
                     ->innerQuery(fn ($value) => Query::range('reviews.rating')->gte($value))
             );
         $wizard->build();
@@ -134,7 +134,7 @@ class NestedFilterQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithFilters(['active' => true])
             ->allowedFilters(
-                NestedFilter::make('comments', 'active')
+                NestedFilter::make('active', 'comments')
                     ->innerQuery(Query::term('comments.active', true))
             );
         $wizard->build();
@@ -157,7 +157,7 @@ class NestedFilterQueryTest extends UnitTestCase
     {
         $wizard = $this
             ->createElasticWizardWithFilters(['author' => ''])
-            ->allowedFilters(NestedFilter::make('comments', 'author'));
+            ->allowedFilters(NestedFilter::make('author', 'comments'));
         $wizard->build();
 
         $queries = $this->getFilterQueries($wizard->boolQuery());
@@ -170,7 +170,7 @@ class NestedFilterQueryTest extends UnitTestCase
     {
         $wizard = $this
             ->createElasticWizardWithFilters(['author' => null])
-            ->allowedFilters(NestedFilter::make('comments', 'author'));
+            ->allowedFilters(NestedFilter::make('author', 'comments'));
         $wizard->build();
 
         $queries = $this->getFilterQueries($wizard->boolQuery());
@@ -183,7 +183,7 @@ class NestedFilterQueryTest extends UnitTestCase
     {
         $wizard = $this
             ->createElasticWizardWithFilters(['author' => []])
-            ->allowedFilters(NestedFilter::make('comments', 'author'));
+            ->allowedFilters(NestedFilter::make('author', 'comments'));
         $wizard->build();
 
         $queries = $this->getFilterQueries($wizard->boolQuery());
@@ -196,7 +196,7 @@ class NestedFilterQueryTest extends UnitTestCase
     {
         $wizard = $this
             ->createElasticWizardWithFilters(['comment_author' => 'john'])
-            ->allowedFilters(NestedFilter::make('comments', 'author', 'comment_author'));
+            ->allowedFilters(NestedFilter::make('author', 'comments', 'comment_author'));
         $wizard->build();
 
         $queries = $this->getFilterQueries($wizard->boolQuery());
@@ -218,7 +218,7 @@ class NestedFilterQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithFilters(['author' => 'john'])
             ->allowedFilters(
-                NestedFilter::make('comments', 'author')
+                NestedFilter::make('author', 'comments')
                     ->scoreMode('max')
                     ->ignoreUnmapped(true)
             );
@@ -244,7 +244,7 @@ class NestedFilterQueryTest extends UnitTestCase
     {
         $wizard = $this
             ->createElasticWizardWithFilters(['author' => ['john', '', null]])
-            ->allowedFilters(NestedFilter::make('comments', 'author'));
+            ->allowedFilters(NestedFilter::make('author', 'comments'));
         $wizard->build();
 
         $queries = $this->getFilterQueries($wizard->boolQuery());

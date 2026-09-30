@@ -74,7 +74,7 @@ class FilterClauseTest extends UnitTestCase
     #[Test]
     public function multi_match_filter_defaults_to_must_clause(): void
     {
-        $filter = MultiMatchFilter::make(['title', 'content'], 'search');
+        $filter = MultiMatchFilter::make('search', ['title', 'content']);
 
         $this->assertEquals(BoolClause::Must, $filter->getEffectiveClause());
     }
@@ -122,7 +122,7 @@ class FilterClauseTest extends UnitTestCase
     #[Test]
     public function more_like_this_filter_defaults_to_must_clause(): void
     {
-        $filter = MoreLikeThisFilter::make(['title', 'content'], 'similar');
+        $filter = MoreLikeThisFilter::make('similar', ['title', 'content']);
 
         $this->assertEquals(BoolClause::Must, $filter->getEffectiveClause());
     }

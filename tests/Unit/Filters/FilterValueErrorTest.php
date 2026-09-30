@@ -56,7 +56,7 @@ class FilterValueErrorTest extends UnitTestCase
             'match boolean' => [ElasticFilter::match('title', 'cost'), true, InvalidFilterValue::class],
             'match phrase boolean' => [ElasticFilter::matchPhrase('title', 'cost'), false, InvalidFilterValue::class],
             'match phrase prefix boolean' => [ElasticFilter::matchPhrasePrefix('title', 'cost'), true, InvalidFilterValue::class],
-            'multi match boolean' => [ElasticFilter::multiMatch(['title'], 'cost'), true, InvalidFilterValue::class],
+            'multi match boolean' => [ElasticFilter::multiMatch('cost', ['title']), true, InvalidFilterValue::class],
             'prefix boolean' => [ElasticFilter::prefix('title', 'cost'), true, InvalidFilterValue::class],
             'wildcard boolean' => [ElasticFilter::wildcard('title', 'cost'), true, InvalidFilterValue::class],
             'regexp boolean' => [ElasticFilter::regexp('title', 'cost'), true, InvalidFilterValue::class],

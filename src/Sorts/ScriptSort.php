@@ -30,15 +30,15 @@ final class ScriptSort extends AbstractElasticSort
     /** @var array<string, mixed>|null */
     protected ?array $nested = null;
 
-    protected function __construct(string $scriptSource, string $property, ?string $alias = null)
+    protected function __construct(string $property, string $scriptSource, ?string $alias = null)
     {
         parent::__construct($property, $alias);
         $this->scriptSource = $scriptSource;
     }
 
-    public static function make(string $scriptSource, string $property, ?string $alias = null): static
+    public static function make(string $property, string $scriptSource, ?string $alias = null): static
     {
-        return new self($scriptSource, $property, $alias);
+        return new self($property, $scriptSource, $alias);
     }
 
     public function type(string $type): static

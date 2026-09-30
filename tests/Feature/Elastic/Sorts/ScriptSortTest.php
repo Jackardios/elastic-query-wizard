@@ -38,7 +38,7 @@ class ScriptSortTest extends TestCase
         $result = $this
             ->createElasticWizardWithSorts('name_length')
             ->allowedSorts(
-                ScriptSort::make("doc['name.keyword'].value.length()", 'name_length')
+                ScriptSort::make('name_length', "doc['name.keyword'].value.length()")
             )
             ->build()
             ->execute()
@@ -55,7 +55,7 @@ class ScriptSortTest extends TestCase
         $result = $this
             ->createElasticWizardWithSorts('-name_length')
             ->allowedSorts(
-                ScriptSort::make("doc['name.keyword'].value.length()", 'name_length')
+                ScriptSort::make('name_length', "doc['name.keyword'].value.length()")
             )
             ->build()
             ->execute()
@@ -72,7 +72,7 @@ class ScriptSortTest extends TestCase
         $result = $this
             ->createElasticWizardWithSorts('custom')
             ->allowedSorts(
-                ScriptSort::make("doc['name.keyword'].value.length() * params.multiplier", 'custom')
+                ScriptSort::make('custom', "doc['name.keyword'].value.length() * params.multiplier")
                     ->params(['multiplier' => 2])
             )
             ->build()
@@ -91,8 +91,8 @@ class ScriptSortTest extends TestCase
             ->createElasticWizardWithSorts('priority')
             ->allowedSorts(
                 ScriptSort::make(
-                    "params.priorities.containsKey(doc['category'].value) ? params.priorities[doc['category'].value] : 999",
-                    'priority'
+                    'priority',
+                    "params.priorities.containsKey(doc['category'].value) ? params.priorities[doc['category'].value] : 999"
                 )->params([
                     'priorities' => [
                         'electronics' => 1,
@@ -116,7 +116,7 @@ class ScriptSortTest extends TestCase
         $result = $this
             ->createElasticWizardWithSorts('first_letter')
             ->allowedSorts(
-                ScriptSort::make("doc['name.keyword'].value.substring(0, 1)", 'first_letter')
+                ScriptSort::make('first_letter', "doc['name.keyword'].value.substring(0, 1)")
                     ->type('string')
             )
             ->build()
@@ -134,7 +134,7 @@ class ScriptSortTest extends TestCase
         $result = $this
             ->createElasticWizardWithSorts('len')
             ->allowedSorts(
-                ScriptSort::make("doc['name.keyword'].value.length()", 'name_length', 'len')
+                ScriptSort::make('name_length', "doc['name.keyword'].value.length()", 'len')
             )
             ->build()
             ->execute()
@@ -150,7 +150,7 @@ class ScriptSortTest extends TestCase
         $result = $this
             ->createElasticWizardWithSorts('-composite')
             ->allowedSorts(
-                ScriptSort::make("doc['id'].value * params.weight", 'composite')
+                ScriptSort::make('composite', "doc['id'].value * params.weight")
                     ->params(['weight' => 10])
             )
             ->build()

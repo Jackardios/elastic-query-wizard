@@ -61,7 +61,7 @@ class NestedFilterTest extends TestCase
     {
         $result = $this
             ->createElasticWizardWithFilters(['author' => 'john'], NestedModel::class)
-            ->allowedFilters(NestedFilter::make('comments', 'author'))
+            ->allowedFilters(NestedFilter::make('author', 'comments'))
             ->build()
             ->execute()
             ->models();
@@ -78,7 +78,7 @@ class NestedFilterTest extends TestCase
     {
         $result = $this
             ->createElasticWizardWithFilters(['author' => 'john,mike'], NestedModel::class)
-            ->allowedFilters(NestedFilter::make('comments', 'author'))
+            ->allowedFilters(NestedFilter::make('author', 'comments'))
             ->build()
             ->execute()
             ->models();
@@ -91,7 +91,7 @@ class NestedFilterTest extends TestCase
     {
         $result = $this
             ->createElasticWizardWithFilters(['author' => 'nonexistent'], NestedModel::class)
-            ->allowedFilters(NestedFilter::make('comments', 'author'))
+            ->allowedFilters(NestedFilter::make('author', 'comments'))
             ->build()
             ->execute()
             ->models();
@@ -104,7 +104,7 @@ class NestedFilterTest extends TestCase
     {
         $result = $this
             ->createElasticWizardWithFilters(['sku' => 'SKU-001'], NestedModel::class)
-            ->allowedFilters(NestedFilter::make('variants', 'sku'))
+            ->allowedFilters(NestedFilter::make('sku', 'variants'))
             ->build()
             ->execute()
             ->models();
@@ -119,7 +119,7 @@ class NestedFilterTest extends TestCase
         $result = $this
             ->createElasticWizardWithFilters(['active' => 'true'], NestedModel::class)
             ->allowedFilters(
-                NestedFilter::make('variants', 'active')
+                NestedFilter::make('active', 'variants')
                     ->innerQuery(fn ($value) => Query::term('variants.active', $value === 'true'))
             )
             ->build()
@@ -139,7 +139,7 @@ class NestedFilterTest extends TestCase
         $result = $this
             ->createElasticWizardWithFilters(['min_rating' => 4], NestedModel::class)
             ->allowedFilters(
-                NestedFilter::make('comments', 'min_rating')
+                NestedFilter::make('min_rating', 'comments')
                     ->innerQuery(fn ($value) => Query::range('comments.rating')->gte((int) $value))
             )
             ->build()
@@ -156,7 +156,7 @@ class NestedFilterTest extends TestCase
         $result = $this
             ->createElasticWizardWithFilters(['author' => 'john'], NestedModel::class)
             ->allowedFilters(
-                NestedFilter::make('comments', 'author')->scoreMode('avg')
+                NestedFilter::make('author', 'comments')->scoreMode('avg')
             )
             ->build()
             ->execute()
@@ -170,7 +170,7 @@ class NestedFilterTest extends TestCase
     {
         $result = $this
             ->createElasticWizardWithFilters(['author' => ''], NestedModel::class)
-            ->allowedFilters(NestedFilter::make('comments', 'author'))
+            ->allowedFilters(NestedFilter::make('author', 'comments'))
             ->build()
             ->execute()
             ->models();
@@ -183,7 +183,7 @@ class NestedFilterTest extends TestCase
     {
         $result = $this
             ->createElasticWizardWithFilters(['comment_author' => 'mike'], NestedModel::class)
-            ->allowedFilters(NestedFilter::make('comments', 'author', 'comment_author'))
+            ->allowedFilters(NestedFilter::make('author', 'comments', 'comment_author'))
             ->build()
             ->execute()
             ->models();
@@ -198,7 +198,7 @@ class NestedFilterTest extends TestCase
         $result = $this
             ->createElasticWizardWithFilters(['max_price' => 120], NestedModel::class)
             ->allowedFilters(
-                NestedFilter::make('variants', 'max_price')
+                NestedFilter::make('max_price', 'variants')
                     ->innerQuery(fn ($value) => Query::range('variants.price')->lte((float) $value))
             )
             ->build()

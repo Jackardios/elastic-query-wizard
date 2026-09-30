@@ -19,7 +19,7 @@ class MultiMatchFilterQueryTest extends UnitTestCase
     {
         $wizard = $this
             ->createElasticWizardWithFilters(['search' => 'hello'])
-            ->allowedFilters(MultiMatchFilter::make(['name', 'category'], 'search'));
+            ->allowedFilters(MultiMatchFilter::make('search', ['name', 'category']));
         $wizard->build();
 
         $queries = $this->getMustQueries($wizard->boolQuery());
@@ -38,7 +38,7 @@ class MultiMatchFilterQueryTest extends UnitTestCase
     {
         $wizard = $this
             ->createElasticWizardWithFilters(['search' => ''])
-            ->allowedFilters(MultiMatchFilter::make(['name', 'category'], 'search'));
+            ->allowedFilters(MultiMatchFilter::make('search', ['name', 'category']));
         $wizard->build();
 
         $queries = $this->getMustQueries($wizard->boolQuery());
@@ -52,7 +52,7 @@ class MultiMatchFilterQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithFilters(['search' => 'hello'])
             ->allowedFilters(
-                MultiMatchFilter::make(['name', 'category'], 'search')
+                MultiMatchFilter::make('search', ['name', 'category'])
                     ->withParameters(['fuzziness' => 'AUTO'])
             );
         $wizard->build();
@@ -74,7 +74,7 @@ class MultiMatchFilterQueryTest extends UnitTestCase
     {
         $wizard = $this
             ->createElasticWizardWithFilters(['search' => 'hello'])
-            ->allowedFilters(ElasticFilter::multiMatch(['name', 'category'], 'search'));
+            ->allowedFilters(ElasticFilter::multiMatch('search', ['name', 'category']));
         $wizard->build();
 
         $queries = $this->getMustQueries($wizard->boolQuery());

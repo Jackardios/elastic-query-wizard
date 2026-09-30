@@ -19,7 +19,7 @@ class NestedSortQueryTest extends UnitTestCase
     {
         $wizard = $this
             ->createElasticWizardWithSorts('price')
-            ->allowedSorts(NestedSort::make('variants', 'price', 'price'));
+            ->allowedSorts(NestedSort::make('price', 'variants', 'price'));
         $wizard->build();
 
         $sorts = $this->getSorts($wizard->getSubject());
@@ -39,7 +39,7 @@ class NestedSortQueryTest extends UnitTestCase
     {
         $wizard = $this
             ->createElasticWizardWithSorts('-price')
-            ->allowedSorts(NestedSort::make('variants', 'price', 'price'));
+            ->allowedSorts(NestedSort::make('price', 'variants', 'price'));
         $wizard->build();
 
         $sorts = $this->getSorts($wizard->getSubject());
@@ -60,7 +60,7 @@ class NestedSortQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithSorts('lowest_price')
             ->allowedSorts(
-                NestedSort::make('variants', 'price', 'lowest_price')->mode('min')
+                NestedSort::make('lowest_price', 'variants', 'price')->mode('min')
             );
         $wizard->build();
 
@@ -83,7 +83,7 @@ class NestedSortQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithSorts('price')
             ->allowedSorts(
-                NestedSort::make('variants', 'price', 'price')->missingFirst()
+                NestedSort::make('price', 'variants', 'price')->missingFirst()
             );
         $wizard->build();
 
@@ -106,7 +106,7 @@ class NestedSortQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithSorts('price')
             ->allowedSorts(
-                NestedSort::make('variants', 'price', 'price')->missingLast()
+                NestedSort::make('price', 'variants', 'price')->missingLast()
             );
         $wizard->build();
 
@@ -129,7 +129,7 @@ class NestedSortQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithSorts('price')
             ->allowedSorts(
-                NestedSort::make('variants', 'price', 'price')->unmappedType('long')
+                NestedSort::make('price', 'variants', 'price')->unmappedType('long')
             );
         $wizard->build();
 
@@ -152,7 +152,7 @@ class NestedSortQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithSorts('price')
             ->allowedSorts(
-                NestedSort::make('offers', 'price', 'price')
+                NestedSort::make('price', 'offers', 'price')
                     ->nestedFilter(Query::term('offers.active', true))
             );
         $wizard->build();
@@ -180,7 +180,7 @@ class NestedSortQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithSorts('price')
             ->allowedSorts(
-                NestedSort::make('offers', 'price', 'price')
+                NestedSort::make('price', 'offers', 'price')
                     ->nestedFilter(fn () => Query::term('offers.active', true))
             );
         $wizard->build();
@@ -208,7 +208,7 @@ class NestedSortQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithSorts('price')
             ->allowedSorts(
-                NestedSort::make('offers', 'price', 'price')
+                NestedSort::make('price', 'offers', 'price')
                     ->nestedFilter(['term' => ['offers.active' => ['value' => true]]])
             );
         $wizard->build();
@@ -236,7 +236,7 @@ class NestedSortQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithSorts('price')
             ->allowedSorts(
-                NestedSort::make('variants', 'price', 'price')->maxChildren(10)
+                NestedSort::make('price', 'variants', 'price')->maxChildren(10)
             );
         $wizard->build();
 
@@ -261,7 +261,7 @@ class NestedSortQueryTest extends UnitTestCase
         $wizard = $this
             ->createElasticWizardWithSorts('best_price')
             ->allowedSorts(
-                NestedSort::make('offers', 'price', 'best_price')
+                NestedSort::make('best_price', 'offers', 'price')
                     ->mode('min')
                     ->missingLast()
                     ->unmappedType('float')
@@ -296,7 +296,7 @@ class NestedSortQueryTest extends UnitTestCase
     {
         $wizard = $this
             ->createElasticWizardWithSorts('lowest')
-            ->allowedSorts(NestedSort::make('variants', 'price', 'price', 'lowest'));
+            ->allowedSorts(NestedSort::make('price', 'variants', 'price', 'lowest'));
         $wizard->build();
 
         $sorts = $this->getSorts($wizard->getSubject());
