@@ -503,6 +503,19 @@ class ElasticQueryWizardTest extends UnitTestCase
     }
 
     #[Test]
+    public function a_proxy_call_after_the_build_is_not_kept_for_later_builds(): void
+    {
+        $wizard = ElasticQueryWizard::for(TestModel::class);
+        $wizard->size(3);
+        $wizard->build();
+        $wizard->from(6);
+        $wizard->tapSearchBuilder(static fn (SearchBuilder $builder) => $builder->minScore(0.5));
+
+        $this->assertCount(1, (new \ReflectionProperty(ElasticQueryWizard::class, 'searchBuilderModifiers'))->getValue($wizard));
+        $this->assertSame(0.5, $wizard->getSubject()->toArray()['body']['min_score']);
+    }
+
+    #[Test]
     public function a_getter_with_a_union_return_type_returns_the_builder_value_and_keeps_the_wizard_configurable(): void
     {
         $wizard = ElasticQueryWizard::for(TestModel::class)->trackTotalHits(100);
