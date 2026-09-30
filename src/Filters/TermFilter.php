@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jackardios\ElasticQueryWizard\Filters;
 
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
+use Jackardios\ElasticQueryWizard\Concerns\ReadsNumbers;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Query\Term\TermQuery;
@@ -14,6 +15,7 @@ use Jackardios\EsScoutDriver\Support\Query;
 final class TermFilter extends AbstractElasticFilter
 {
     use HasParameters;
+    use ReadsNumbers;
 
     public static function make(string $property, ?string $alias = null): static
     {
@@ -38,6 +40,8 @@ final class TermFilter extends AbstractElasticFilter
         if ($prepared === []) {
             return null;
         }
+
+        $prepared = $this->readNumbers($prepared);
 
         $query = count($prepared) === 1
             ? Query::term($this->property, $prepared[0])

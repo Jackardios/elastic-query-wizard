@@ -150,18 +150,20 @@ class FilterValueSanitizer
      * Legacy operators (from, to, include_lower, include_upper) will throw InvalidRangeValue.
      *
      * Each bound is a decimal number or an ISO 8601 date (see laravel-query-wizard's
-     * `FilterValueParser::comparable()`), or a `DateTimeInterface` from a default.
+     * `FilterValueParser::comparable()`), or a `DateTimeInterface` from a default;
+     * with $numbersOnly, only a decimal number.
      * A date keeps its meaning, for Elasticsearch to read with the field's format
      * and the query's `time_zone`, and is written with `T` and `Z` in upper case,
      * the only ISO 8601 syntax the default `strict_date_optional_time` accepts.
      *
      * @param  mixed  $value  raw filter value
      * @param  string|FilterInterface  $filter  the filter or its public name, for the exception
+     * @param  bool  $numbersOnly  whether a date is refused
      * @return array{gt?: string|int|float, gte?: string|int|float, lt?: string|int|float, lte?: string|int|float}
      *
      * @throws InvalidRangeValue
      */
-    public static function rangeFilterValue(mixed $value, string|FilterInterface $filter): array
+    public static function rangeFilterValue(mixed $value, string|FilterInterface $filter, bool $numbersOnly = false): array
     {
         if (! is_array($value)) {
             throw InvalidRangeValue::invalidBounds($value, $filter);
@@ -177,6 +179,10 @@ class FilterValueSanitizer
                 throw InvalidRangeValue::invalidBounds($value, $filter);
             }
 
+            if ($itemValue instanceof \DateTimeInterface && $numbersOnly) {
+                throw InvalidRangeValue::make($value, $filter, "Expected a decimal number for `{$itemKey}`.");
+            }
+
             if ($itemValue instanceof \DateTimeInterface) {
                 $prepared[$itemKey] = $itemValue->format(DATE_ATOM);
 
@@ -184,7 +190,9 @@ class FilterValueSanitizer
             }
 
             try {
-                $bound = FilterValueParser::comparable($itemValue, $filter, FilterValueParser::defaultTimezone(), $itemKey);
+                $bound = $numbersOnly
+                    ? FilterValueParser::number($itemValue, $filter, $itemKey)
+                    : FilterValueParser::comparable($itemValue, $filter, FilterValueParser::defaultTimezone(), $itemKey);
             } catch (InvalidFilterValue $exception) {
                 throw InvalidRangeValue::make($value, $filter, $exception->reason);
             }

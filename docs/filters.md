@@ -230,6 +230,21 @@ ElasticFilter::term('status')->withParameters([
 
 A term filter builds a `terms` query for several values, and `terms` has no `case_insensitive` option, so `withParameters()` refuses it; for case-insensitive matching, index the field as a `keyword` with a lowercase normalizer.
 
+### Numeric Fields
+
+The value is sent as the client wrote it, and Elasticsearch fails the search when text meets a numeric field
+(`?filter[id]=abc` on an `integer` field). `asNumber()` reads each value as a decimal number (digits with an optional
+sign and fraction, no exponent) and returns 400 (`InvalidFilterValue`) for anything else:
+
+```php
+ElasticFilter::term('id')->asNumber()
+```
+
+```json
+// GET /posts?filter[id]=5,7
+{ "terms": { "id": [5, 7] } }
+```
+
 ---
 
 ## Match Filter
@@ -336,6 +351,18 @@ ElasticFilter::range('created_at')->withParameters([
     'time_zone' => '+03:00',
 ])
 ```
+
+### Numeric Fields
+
+A bound may be a number or a date, and Elasticsearch fails the search on a date or text bound for a numeric field.
+`asNumber()` accepts decimal numbers only and returns 400 (`InvalidRangeValue`) for anything else:
+
+```php
+ElasticFilter::range('price')->asNumber()
+```
+
+A number outside the field type, such as `gte=3000000000` on an `integer` field, still fails the search: see
+[Syntax Elasticsearch Refuses](#syntax-elasticsearch-refuses), or bound it with `prepareValueWith()`.
 
 ---
 
@@ -635,6 +662,13 @@ ElasticFilter::ids('_id')
 
 ```
 GET /posts?filter[_id]=1,2,3
+```
+
+Document ids are text, so any value is a valid id. For models with integer keys, `asNumber()` returns 400
+(`InvalidFilterValue`) for a value that is not a decimal number instead of searching for it:
+
+```php
+ElasticFilter::ids('_id')->asNumber()
 ```
 
 ---
@@ -1631,6 +1665,7 @@ carries the value (`$exception->filterValue`) and what was expected (`$exception
 | `geoShape` | an unknown type; a key other than `type` and `coordinates` (`type` and `id` for an indexed shape); coordinates that do not form the shape | `InvalidGeoShapeValue` |
 | `exists`, `null` | not a boolean (`true`, `false`, `1`, `0`, `yes`, `no`, `on`, `off`, in any letter case) | `InvalidFilterValue` |
 | `trashed` | not `with`, `only`, `without`, `true` or `false` | `InvalidFilterValue` |
+| `term`, `ids` with `asNumber()` | a value that is not a decimal number | `InvalidFilterValue` |
 | text and pattern filters, `ids` | a JSON boolean (with `request_data_source` set to `body`); a value longer than `maxLength()` | `InvalidFilterValue` |
 
 A value of the wrong shape for the filter (for example a list for `exists`) is rejected earlier with 400
@@ -1659,6 +1694,9 @@ use Elastic\Elasticsearch\Exception\ClientResponseException;
     });
 })
 ```
+
+A range bound outside a numeric field's type (`gte=3000000000` on an `integer` field) fails the same way, and so does
+text in a `term`, `range` or `ids` filter on a numeric field without `asNumber()`.
 
 A 400 from Elasticsearch can also mean a mistake in the application, such as a query on a field of the wrong type, so
 log it before answering.

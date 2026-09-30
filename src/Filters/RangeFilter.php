@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jackardios\ElasticQueryWizard\Filters;
 
 use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
+use Jackardios\ElasticQueryWizard\Concerns\ReadsNumbers;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Query\Term\RangeQuery;
@@ -23,6 +24,7 @@ use Jackardios\EsScoutDriver\Support\Query;
 final class RangeFilter extends AbstractElasticFilter
 {
     use HasParameters;
+    use ReadsNumbers;
 
     public static function make(string $property, ?string $alias = null): static
     {
@@ -41,7 +43,7 @@ final class RangeFilter extends AbstractElasticFilter
             return null;
         }
 
-        $rangeFilters = FilterValueSanitizer::rangeFilterValue($value, $this);
+        $rangeFilters = FilterValueSanitizer::rangeFilterValue($value, $this, $this->readsNumbers);
 
         if (empty($rangeFilters)) {
             return null;

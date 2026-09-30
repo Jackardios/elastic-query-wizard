@@ -74,8 +74,10 @@ made since those snapshots.
 - `GeoShapeFilter::indexedShapes()`.
 - `DateRangeFilter::esFormat()`.
 - `withParameters(['boost' => …])` on prefix and exists filters (their `es-scout-driver` queries gained `boost()`).
-- `maxLength()` on the text, pattern and more-like-this filters; a longer value is a 400. `regexp` defaults to 1000 characters,
-  Elasticsearch's `index.max_regex_length`.
+- `maxLength()` on the text, pattern and more-like-this filters; a longer value is a 400. `regexp` and `prefix` default
+  to 1000 characters, Elasticsearch's `index.max_regex_length`, and `fuzzy` to 256.
+- `asNumber()` on `term`, `range` and `ids` filters reads values as decimal numbers and returns 400 for anything else,
+  such as text or a date for a numeric field, where Elasticsearch fails the search.
 - `ElasticQueryWizard::paginate()` answers a page that ends past the result window with 400 `MaxResultWindowExceeded`
   instead of letting Elasticsearch refuse it with a 500. The window is `elastic-query-wizard.max_result_window`
   (10000, `null` turns the check off).
