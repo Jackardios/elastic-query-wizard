@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\LazyCollection;
-use Jackardios\ElasticQueryWizard\Exceptions\FilterNameConflictException;
+use Jackardios\ElasticQueryWizard\Exceptions\FilterNameConflict;
 use Jackardios\ElasticQueryWizard\Exceptions\MaxResultWindowExceeded;
 use Jackardios\ElasticQueryWizard\Filters\TermFilter;
 use Jackardios\ElasticQueryWizard\Groups\GroupInterface;
@@ -322,9 +322,9 @@ class ElasticQueryWizard extends BaseQueryWizard
      * @param  array<string, FilterInterface>  $filters
      * @return array<string, true>
      *
-     * @throws FilterNameConflictException When a leaf is in more than one group,
-     *                                     where one request value would apply in each,
-     *                                     or a shadowed root filter has a default
+     * @throws FilterNameConflict When a leaf is in more than one group,
+     *                            where one request value would apply in each,
+     *                            or a shadowed root filter has a default
      */
     protected function resolveShadowedFilterNames(array $filters): array
     {
@@ -343,7 +343,7 @@ class ElasticQueryWizard extends BaseQueryWizard
         $sharedLeaves = array_keys(array_filter($groupsByLeaf, static fn (array $groups): bool => count($groups) > 1));
 
         if ($sharedLeaves !== []) {
-            throw FilterNameConflictException::leavesInSeveralGroups($sharedLeaves);
+            throw FilterNameConflict::leavesInSeveralGroups($sharedLeaves);
         }
 
         $shadowed = [];
@@ -351,7 +351,7 @@ class ElasticQueryWizard extends BaseQueryWizard
         foreach ($filters as $name => $filter) {
             if (! $filter instanceof GroupInterface && isset($groupsByLeaf[$name])) {
                 if ($filter->getDefault() !== null) {
-                    throw FilterNameConflictException::shadowedDefault($filter->getName());
+                    throw FilterNameConflict::shadowedDefault($filter->getName());
                 }
 
                 $shadowed[$name] = true;

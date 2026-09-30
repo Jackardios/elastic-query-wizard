@@ -40,6 +40,8 @@ apply without being allowed, and duplicate public names throw. See its UPGRADE.m
 | `Includes\CallbackInclude` | Use `ElasticInclude::callback()` (from laravel-query-wizard) |
 | `Includes\RelationshipInclude` | Use `ElasticInclude::relationship()` (from laravel-query-wizard) |
 | `Includes\CountInclude` | Use `ElasticInclude::count()` (from laravel-query-wizard) |
+| `Exceptions\DuplicateGroupChildFilterNameException` | `Exceptions\DuplicateGroupChildFilterName` (final; create it with `forGroup()`) |
+| `Exceptions\UnsupportedFilterInGroupException` | `Exceptions\UnsupportedFilterInGroup` (final, an `InvalidArgumentException`; create it with `forFilter()`) |
 
 **New factory classes in v3:**
 - `ElasticFilter` — static factory for all filter types
@@ -458,8 +460,8 @@ The request is parsed by `laravel-query-wizard` v3, whose stricter rules apply t
   relevance score, and sorts by `_score`. Scoring filters such as `match` no longer affect the shuffled order.
 - **Bool groups** leave out `minimum_should_match` when the request fills none of their should children, so the other
   children still match. Group configuration errors no longer wait for a request that uses the group: `children()`
-  throws `UnsupportedFilterInGroupException` for a passthrough, callback or trashed child, and the build throws
-  `InvalidArgumentException` for a group named like another filter and `FilterNameConflictException` for a filter in
+  throws `UnsupportedFilterInGroup` for a passthrough, callback or trashed child, and the build throws
+  `InvalidArgumentException` for a group named like another filter and `FilterNameConflict` for a filter in
   two groups. A schema `defaultFilters()` key names a group's leaf, not the group.
 - **Unreadable values are 400s.** `InvalidRangeValue`, `InvalidGeoBoundingBoxValue`, `InvalidGeoDistanceValue` and
   `InvalidGeoShapeValue` extend `laravel-query-wizard`'s `InvalidFilterValue`: the status is 400 (was 422), the error

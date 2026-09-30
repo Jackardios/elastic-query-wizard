@@ -18,6 +18,12 @@ made since those snapshots.
 
 ### Changed
 
+- The exceptions drop the `Exception` suffix and are final, like `laravel-query-wizard`'s:
+  `DuplicateGroupChildFilterNameException` is `DuplicateGroupChildFilterName`, `UnsupportedFilterInGroupException` is
+  `UnsupportedFilterInGroup` (an `InvalidArgumentException`, was a `RuntimeException`), and the `dev-master`
+  `FilterNameConflictException` is `FilterNameConflict`. They are made through their static factories, and their
+  messages quote names in backticks.
+
 - `BoolClause` cases are PascalCase (`Filter`, `Must`, `Should`, `MustNot`; were `FILTER`, … `MUST_NOT`), like
   `laravel-query-wizard`'s enums and those of `es-scout-driver`.
 - `AbstractElasticSort::handle()` and `apply()` take a `SortDirection` (was `'asc'`/`'desc'`), following
@@ -126,7 +132,7 @@ made since those snapshots.
   the message.
 - Text and pattern filters and `ids` return 400 for a JSON boolean from a request body. Text filters ignored it, and
   `ids` searched for the id `1`.
-- A root filter with a `default()` that a group leaf of the same name shadows throws `FilterNameConflictException`;
+- A root filter with a `default()` that a group leaf of the same name shadows throws `FilterNameConflict`;
   its default was silently dropped.
 - A trashed filter throws a `LogicException` when `scout.soft_delete` is off: `only` returned live models, since Scout
   had not indexed which models are trashed.

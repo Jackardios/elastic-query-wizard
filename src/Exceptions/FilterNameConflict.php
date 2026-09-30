@@ -8,18 +8,18 @@ namespace Jackardios\ElasticQueryWizard\Exceptions;
  * Thrown when a leaf is in two groups, where one request value would apply in both,
  * or when a leaf shadows a root filter whose default would be dropped.
  */
-class FilterNameConflictException extends \InvalidArgumentException
+final class FilterNameConflict extends \InvalidArgumentException
 {
     /**
      * @param  array<int, string>  $leafNames
      */
     public static function leavesInSeveralGroups(array $leafNames): self
     {
-        $names = implode(', ', $leafNames);
+        $names = '`'.implode('`, `', $leafNames).'`';
 
         return new self(
-            "Filter(s) {$names} are in more than one group, so one request value would apply in each of them. "
-            .'Keep each filter in one group, or give the copies different aliases.'
+            "Filters {$names} are each in more than one group, so one request value would apply in each of them. "
+            .'Keep a filter in one group, or give the copies different aliases.'
         );
     }
 

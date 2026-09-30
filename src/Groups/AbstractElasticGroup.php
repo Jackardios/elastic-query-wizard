@@ -6,8 +6,8 @@ namespace Jackardios\ElasticQueryWizard\Groups;
 
 use Jackardios\ElasticQueryWizard\Concerns\HasBoolClause;
 use Jackardios\ElasticQueryWizard\Enums\BoolClause;
-use Jackardios\ElasticQueryWizard\Exceptions\DuplicateGroupChildFilterNameException;
-use Jackardios\ElasticQueryWizard\Exceptions\UnsupportedFilterInGroupException;
+use Jackardios\ElasticQueryWizard\Exceptions\DuplicateGroupChildFilterName;
+use Jackardios\ElasticQueryWizard\Exceptions\UnsupportedFilterInGroup;
 use Jackardios\ElasticQueryWizard\Filters\AbstractElasticFilter;
 use Jackardios\ElasticQueryWizard\Filters\TrashedFilter;
 use Jackardios\EsScoutDriver\Query\Compound\BoolQuery;
@@ -31,14 +31,14 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
     protected array $children = [];
 
     /**
-     * @throws UnsupportedFilterInGroupException When a child is not an Elasticsearch filter or group, or is a trashed filter
-     * @throws DuplicateGroupChildFilterNameException When two leaves of the tree share a name
+     * @throws UnsupportedFilterInGroup When a child is not an Elasticsearch filter or group, or is a trashed filter
+     * @throws DuplicateGroupChildFilterName When two leaves of the tree share a name
      */
     public function children(array $children): static
     {
         foreach ($children as $child) {
             if (! $child instanceof GroupInterface && (! $child instanceof AbstractElasticFilter || $child instanceof TrashedFilter)) {
-                throw UnsupportedFilterInGroupException::forFilter($child, $this->getName());
+                throw UnsupportedFilterInGroup::forFilter($child, $this->getName());
             }
         }
 
@@ -154,7 +154,7 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
      *
      * @param  array<string, mixed>  $childValues  Map of child filter names to their values
      *
-     * @throws UnsupportedFilterInGroupException When an unsupported filter is used in group context
+     * @throws UnsupportedFilterInGroup When an unsupported filter is used in group context
      */
     protected function applyChildrenToQuery(BoolQuery $innerBoolQuery, array $childValues): void
     {
@@ -182,7 +182,7 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
                 $child->handleInGroup($innerBoolQuery, $childValues[$childName]);
             } else {
                 // Non-elastic filters (CallbackFilter, PassthroughFilter) cannot be used in groups
-                throw UnsupportedFilterInGroupException::forFilter($child, $this->getName());
+                throw UnsupportedFilterInGroup::forFilter($child, $this->getName());
             }
         }
     }
@@ -292,7 +292,7 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
         $duplicates = array_keys(array_filter($nameCounts, static fn (int $count): bool => $count > 1));
 
         if ($duplicates !== []) {
-            throw DuplicateGroupChildFilterNameException::forGroup($this->getName(), $duplicates);
+            throw DuplicateGroupChildFilterName::forGroup($this->getName(), $duplicates);
         }
     }
 

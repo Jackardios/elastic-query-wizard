@@ -6,7 +6,7 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Groups;
 
 use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\ElasticGroup;
-use Jackardios\ElasticQueryWizard\Exceptions\FilterNameConflictException;
+use Jackardios\ElasticQueryWizard\Exceptions\FilterNameConflict;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use Jackardios\QueryWizard\Contracts\QueryWizardInterface;
@@ -314,7 +314,7 @@ class GroupIntegrationTest extends UnitTestCase
                 ElasticGroup::bool('advanced')->children([ElasticFilter::term('status')]),
             ]);
 
-        $this->expectException(FilterNameConflictException::class);
+        $this->expectException(FilterNameConflict::class);
         $this->expectExceptionMessage('Filter `status` has a default, but a group leaf of the same name reads its request key');
 
         $wizard->build();
@@ -415,8 +415,8 @@ class GroupIntegrationTest extends UnitTestCase
     #[Test]
     public function a_leaf_in_an_added_group_and_an_allowed_group_is_refused(): void
     {
-        $this->expectException(FilterNameConflictException::class);
-        $this->expectExceptionMessage('Filter(s) status are in more than one group');
+        $this->expectException(FilterNameConflict::class);
+        $this->expectExceptionMessage('Filters `status` are each in more than one group');
 
         $this
             ->createElasticWizardWithFilters(['status' => 'open'])
@@ -428,8 +428,8 @@ class GroupIntegrationTest extends UnitTestCase
     #[Test]
     public function a_leaf_in_two_groups_is_refused(): void
     {
-        $this->expectException(FilterNameConflictException::class);
-        $this->expectExceptionMessage('Filter(s) status are in more than one group');
+        $this->expectException(FilterNameConflict::class);
+        $this->expectExceptionMessage('Filters `status` are each in more than one group');
 
         $this
             ->createElasticWizardWithFilters(['status' => 'open'])

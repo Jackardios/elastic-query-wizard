@@ -1679,19 +1679,19 @@ Nested groups are resolved recursively and support arbitrary depth.
 
 3. **Group Names Are Routing-Only**: Group names are never used as filter value keys. Values are routed only by leaf filter aliases.
 
-4. **Unique Leaf Aliases Required**: Leaf filter aliases inside one group tree must be unique. Duplicate aliases throw `DuplicateGroupChildFilterNameException`.
+4. **Unique Leaf Aliases Required**: Leaf filter aliases inside one group tree must be unique. Duplicate aliases throw `DuplicateGroupChildFilterName`.
 
 5. **Root vs Group Deduplication**: If the same filter name appears both at root level and inside a group, only the
-   group version is applied. A root version with a `default()` throws `FilterNameConflictException` when the wizard
+   group version is applied. A root version with a `default()` throws `FilterNameConflict` when the wizard
    builds, since its default would never apply: set the default on the leaf.
 
 6. **Unsupported in Groups**: `ElasticFilter::trashed()`, `ElasticFilter::callback()`, `ElasticFilter::passthrough()` and
    any filter that is not an Elasticsearch filter or group cannot be used inside groups. `children()` throws
-   `UnsupportedFilterInGroupException` when the group is configured.
+   `UnsupportedFilterInGroup` when the group is configured.
 
 7. **Names Across Groups**: A group can't share its name with another allowed filter or group (a nested group's name
    defaults to its path, so two nested groups on one path need names): the build throws `laravel-query-wizard`'s
-   `InvalidArgumentException`. A leaf alias can be in only one group: the build throws `FilterNameConflictException`.
+   `InvalidArgumentException`. A leaf alias can be in only one group: the build throws `FilterNameConflict`.
    Before, the other filter was silently dropped or one value applied in both groups.
 
 8. **Defaults and Disallowing**: A schema `defaultFilters()` key names a leaf, as the request does; a key naming the
