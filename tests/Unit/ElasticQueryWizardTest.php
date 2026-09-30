@@ -318,4 +318,15 @@ class ElasticQueryWizardTest extends UnitTestCase
             return $collection;
         });
     }
+
+    #[Test]
+    public function a_search_joined_through_the_proxy_builds(): void
+    {
+        $wizard = ElasticQueryWizard::for(TestModel::class)->join(GeoModel::class);
+
+        $wizard->build();
+
+        $queryModifiers = (new \ReflectionProperty(SearchBuilder::class, 'queryModifiers'))->getValue($wizard->getSubject());
+        $this->assertSame([(new TestModel)->searchableAs()], array_keys($queryModifiers));
+    }
 }

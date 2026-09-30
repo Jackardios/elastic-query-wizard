@@ -485,7 +485,9 @@ class ElasticQueryWizard extends BaseQueryWizard
             return $shape->postProcess($collection);
         };
 
-        $this->subject->modifyQuery($modifyQuery)->modifyModels($modifyModels);
+        $this->subject
+            ->modifyQuery($modifyQuery, $this->modelClass)
+            ->modifyModels($modifyModels, $this->modelClass);
     }
 
     protected function invalidateBuild(): void

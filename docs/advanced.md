@@ -429,7 +429,8 @@ $boolQuery->addMustNot(ElasticQuery::term('is_hidden', true));
 Add callbacks that modify the Eloquent query before loading models.
 This API is consistent with `SearchBuilder::modifyQuery()` from `es-scout-driver`:
 the second callback argument receives raw Elasticsearch response array.
-Register callbacks before calling `build()`.
+Register callbacks before calling `build()`. The callbacks, includes, sparse fieldsets and appends apply to the
+wizard's model: when the search also covers another index through `join()`, that index's models load without them.
 
 ```php
 $wizard = ElasticQueryWizard::for(Post::class)
