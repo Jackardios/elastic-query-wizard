@@ -8,6 +8,7 @@ use BadMethodCallException;
 use Jackardios\ElasticQueryWizard\ElasticQuery;
 use Jackardios\EsScoutDriver\Query\Compound\BoolQuery;
 use Jackardios\EsScoutDriver\Query\FullText\MatchQuery;
+use Jackardios\EsScoutDriver\Support\Query;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -34,6 +35,18 @@ class ElasticQueryProxyTest extends TestCase
         $query = ElasticQuery::bool();
 
         $this->assertInstanceOf(BoolQuery::class, $query);
+    }
+
+    #[Test]
+    public function it_proxies_macros(): void
+    {
+        Query::macro('proxyTestMacro', static fn (string $field) => Query::exists($field));
+
+        try {
+            $this->assertSame(['exists' => ['field' => 'title']], ElasticQuery::proxyTestMacro('title')->toArray());
+        } finally {
+            Query::flushMacros();
+        }
     }
 
     #[Test]

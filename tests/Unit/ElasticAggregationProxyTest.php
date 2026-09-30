@@ -6,6 +6,7 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit;
 
 use BadMethodCallException;
 use Jackardios\ElasticQueryWizard\ElasticAggregation;
+use Jackardios\EsScoutDriver\Aggregations\Agg;
 use Jackardios\EsScoutDriver\Aggregations\Bucket\TermsAggregation;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
@@ -25,6 +26,18 @@ class ElasticAggregationProxyTest extends TestCase
             ['terms' => ['field' => 'category']],
             $aggregation->toArray()
         );
+    }
+
+    #[Test]
+    public function it_proxies_macros(): void
+    {
+        Agg::macro('proxyTestMacro', static fn (string $field) => Agg::max($field));
+
+        try {
+            $this->assertSame(['max' => ['field' => 'title']], ElasticAggregation::proxyTestMacro('title')->toArray());
+        } finally {
+            Agg::flushMacros();
+        }
     }
 
     #[Test]

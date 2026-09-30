@@ -366,7 +366,8 @@ ElasticQuery::multiMatch(['title^2', 'body'], 'laravel search');
 ElasticAggregation::stats('price');
 ```
 
-Both proxies expose the full underlying `es-scout-driver` factory surface.
+Both proxies forward every factory of those classes, and their macros. Each factory is declared with its return type,
+so IDEs and static analysis see the query or aggregation it creates.
 
 ---
 
