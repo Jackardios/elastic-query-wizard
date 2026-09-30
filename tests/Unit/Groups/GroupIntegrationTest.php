@@ -6,12 +6,14 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Groups;
 
 use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\ElasticGroup;
+use Jackardios\ElasticQueryWizard\Enums\BoolClause;
 use Jackardios\ElasticQueryWizard\Exceptions\FilterNameConflict;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use Jackardios\QueryWizard\Contracts\QueryWizardInterface;
 use Jackardios\QueryWizard\Exceptions\InvalidFilterQuery;
 use Jackardios\QueryWizard\Schema\ResourceSchema;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -141,10 +143,12 @@ class GroupIntegrationTest extends UnitTestCase
                     ]),
             ]);
 
-        // Should not throw an exception - 'status' is allowed via the group
         $wizard->build();
 
-        $this->assertTrue(true);
+        $this->assertSame(
+            [['bool' => ['filter' => [['term' => ['status' => ['value' => 'active']]]]]]],
+            $this->getFilterQueries($wizard->boolQuery())
+        );
     }
 
     #[Test]
@@ -193,6 +197,59 @@ class GroupIntegrationTest extends UnitTestCase
 
         $this->assertCount(1, $shouldQueries);
         $this->assertEmpty($filterQueries);
+    }
+
+    /**
+     * @return array<string, array{BoolClause, string}>
+     */
+    public static function innerGroupClauses(): array
+    {
+        return [
+            'filter' => [BoolClause::Filter, 'filter'],
+            'must' => [BoolClause::Must, 'must'],
+            'should' => [BoolClause::Should, 'should'],
+            'must_not' => [BoolClause::MustNot, 'must_not'],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('innerGroupClauses')]
+    public function a_group_inside_a_group_goes_to_its_own_clause(BoolClause $clause, string $key): void
+    {
+        $innerGroup = ElasticGroup::bool('inner')->children([ElasticFilter::term('status', 'status')]);
+        match ($clause) {
+            BoolClause::Filter => $innerGroup->inFilter(),
+            BoolClause::Must => $innerGroup->inMust(),
+            BoolClause::Should => $innerGroup->inShould(),
+            BoolClause::MustNot => $innerGroup->inMustNot(),
+        };
+
+        $wizard = $this
+            ->createElasticWizardWithFilters(['status' => 'active'])
+            ->allowedFilters(ElasticGroup::bool('outer')->children([$innerGroup]));
+        $wizard->build();
+
+        $this->assertSame(
+            [['bool' => [$key => [['bool' => ['filter' => [['term' => ['status' => ['value' => 'active']]]]]]]]]],
+            $this->getFilterQueries($wizard->boolQuery())
+        );
+    }
+
+    #[Test]
+    public function a_root_group_in_must_not_excludes_its_matches(): void
+    {
+        $wizard = $this
+            ->createElasticWizardWithFilters(['status' => 'archived'])
+            ->allowedFilters(
+                ElasticGroup::bool('hidden')->inMustNot()->children([ElasticFilter::term('status', 'status')])
+            );
+        $wizard->build();
+
+        $this->assertSame(
+            [['bool' => ['filter' => [['term' => ['status' => ['value' => 'archived']]]]]]],
+            $this->getMustNotQueries($wizard->boolQuery())
+        );
+        $this->assertEmpty($this->getFilterQueries($wizard->boolQuery()));
     }
 
     #[Test]

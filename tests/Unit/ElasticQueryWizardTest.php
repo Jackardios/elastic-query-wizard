@@ -172,18 +172,34 @@ class ElasticQueryWizardTest extends UnitTestCase
         yield 'range' => [fn () => ElasticFilter::range('price')];
         yield 'dateRange' => [fn () => ElasticFilter::dateRange('created_at')];
         yield 'geoDistance' => [fn () => ElasticFilter::geoDistance('location')];
+        yield 'geoBoundingBox' => [fn () => ElasticFilter::geoBoundingBox('location')];
+        yield 'geoShape' => [fn () => ElasticFilter::geoShape('area')];
         yield 'ids' => [fn () => ElasticFilter::ids('id')];
         yield 'trashed' => [fn () => ElasticFilter::trashed()];
+        yield 'fuzzy' => [fn () => ElasticFilter::fuzzy('name')];
+        yield 'matchPhrase' => [fn () => ElasticFilter::matchPhrase('name')];
+        yield 'matchPhrasePrefix' => [fn () => ElasticFilter::matchPhrasePrefix('name')];
+        yield 'multiMatch' => [fn () => ElasticFilter::multiMatch('search', ['name', 'category'])];
+        yield 'prefix' => [fn () => ElasticFilter::prefix('name')];
+        yield 'regexp' => [fn () => ElasticFilter::regexp('name')];
+        yield 'wildcard' => [fn () => ElasticFilter::wildcard('name')];
+        yield 'queryString' => [fn () => ElasticFilter::queryString('name')];
+        yield 'simpleQueryString' => [fn () => ElasticFilter::simpleQueryString('name')];
+        yield 'moreLikeThis' => [fn () => ElasticFilter::moreLikeThis('similar', ['name'])];
         yield 'bool group' => [fn () => ElasticGroup::bool('should')];
+        yield 'nested group' => [fn () => ElasticGroup::nested('comments')];
     }
 
     #[Test]
     #[DataProvider('filtersWithoutBooleans')]
     public function as_boolean_throws_on_filters_that_do_not_take_booleans(\Closure $make): void
     {
-        $this->expectException(\LogicException::class);
+        $filter = $make();
 
-        $make()->asBoolean();
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessageMatches(sprintf('/^Filter (group )?`%s`.*, so asBoolean\(\)/', preg_quote($filter->getName(), '/')));
+
+        $filter->asBoolean();
     }
 
     #[Test]
@@ -429,5 +445,68 @@ class ElasticQueryWizardTest extends UnitTestCase
         $this->expectExceptionMessage('The wizard cannot be reconfigured after its built search was changed through the wizard');
 
         $wizard->allowedSorts('id');
+    }
+
+    #[Test]
+    public function an_unknown_method_throws_a_bad_method_call_exception(): void
+    {
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Call to undefined method Jackardios\\ElasticQueryWizard\\ElasticQueryWizard::noSuchMethod()');
+
+        ElasticQueryWizard::for(TestModel::class)->noSuchMethod();
+    }
+
+    #[Test]
+    public function a_declarative_method_called_after_the_build_changes_the_built_search(): void
+    {
+        $wizard = ElasticQueryWizard::for(TestModel::class)->allowedSorts('name');
+        $builder = $wizard->build();
+
+        $this->assertSame($wizard, $wizard->size(7));
+        $this->assertSame(7, $builder->getSize());
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('The wizard cannot be reconfigured after its built search was changed through the wizard');
+
+        $wizard->allowedSorts('id');
+    }
+
+    #[Test]
+    public function a_declarative_method_called_before_the_build_survives_a_rebuild(): void
+    {
+        $wizard = ElasticQueryWizard::for(TestModel::class)->trackTotalHits(true);
+        $wizard->build();
+
+        $wizard->allowedSorts('name');
+
+        $this->assertTrue($wizard->build()->getTrackTotalHits());
+    }
+
+    #[Test]
+    public function a_method_without_a_fluent_return_type_that_returns_the_builder_returns_the_wizard(): void
+    {
+        $wizard = ElasticQueryWizard::for(TestModel::class);
+
+        $result = $wizard->when(true, static fn (SearchBuilder $builder) => $builder->size(3));
+
+        $this->assertSame($wizard, $result);
+        $this->assertSame(3, $wizard->getSubject()->getSize());
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('The wizard cannot be reconfigured after its built search was changed through the wizard');
+
+        $wizard->allowedSorts('name');
+    }
+
+    #[Test]
+    public function a_getter_with_a_union_return_type_returns_the_builder_value_and_keeps_the_wizard_configurable(): void
+    {
+        $wizard = ElasticQueryWizard::for(TestModel::class)->trackTotalHits(100);
+
+        $this->assertSame(100, $wizard->getTrackTotalHits());
+
+        $wizard->allowedSorts('name');
+
+        $this->assertSame(100, $wizard->build()->getTrackTotalHits());
     }
 }

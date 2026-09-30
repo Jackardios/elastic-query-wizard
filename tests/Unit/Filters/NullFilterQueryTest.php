@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Tests\Unit\Filters;
 
+use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\Filters\NullFilter;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use Jackardios\QueryWizard\Exceptions\InvalidFilterValue;
@@ -116,6 +117,21 @@ class NullFilterQueryTest extends UnitTestCase
         $this->assertCount(1, $filterQueries);
         $this->assertEquals(['exists' => ['field' => 'thumbnail']], $filterQueries[0]);
         $this->assertEmpty($mustNotQueries);
+    }
+
+    #[Test]
+    public function the_not_null_factory_matches_documents_with_the_field(): void
+    {
+        $wizard = $this
+            ->createElasticWizardWithFilters(['has_thumbnail' => 'true', 'no_thumbnail' => 'true'])
+            ->allowedFilters(
+                ElasticFilter::notNull('thumbnail', 'has_thumbnail'),
+                ElasticFilter::null('thumbnail', 'no_thumbnail'),
+            );
+        $wizard->build();
+
+        $this->assertSame([['exists' => ['field' => 'thumbnail']]], $this->getFilterQueries($wizard->boolQuery()));
+        $this->assertSame([['exists' => ['field' => 'thumbnail']]], $this->getMustNotQueries($wizard->boolQuery()));
     }
 
     #[Test]

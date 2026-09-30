@@ -295,6 +295,21 @@ class DateRangeFilterQueryTest extends UnitTestCase
     }
 
     #[Test]
+    public function a_bound_that_is_a_list_is_a_400(): void
+    {
+        try {
+            $this
+                ->createElasticWizardWithFilters(['date' => ['from' => ['2024-01-01', '2024-02-01']]])
+                ->allowedFilters(DateRangeFilter::make('created_at', 'date'))
+                ->build();
+            $this->fail('A list bound was accepted.');
+        } catch (InvalidFilterQuery $exception) {
+            $this->assertSame(400, $exception->getStatusCode());
+            $this->assertStringContainsString('Filter `date` expects a scalar value for `from`.', $exception->getMessage());
+        }
+    }
+
+    #[Test]
     public function a_bound_past_the_year_9999_in_the_filter_timezone_is_a_400(): void
     {
         $this->expectException(InvalidFilterValue::class);

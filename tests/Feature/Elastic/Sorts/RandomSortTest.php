@@ -73,24 +73,30 @@ class RandomSortTest extends TestCase
     #[Test]
     public function it_returns_different_order_with_different_seeds(): void
     {
-        $result1 = $this
+        $builder1 = $this
             ->createElasticWizardWithSorts('random')
             ->allowedSorts(RandomSort::make('random')->seed(111))
-            ->build()
-            ->execute()
-            ->models();
-
-        $result2 = $this
+            ->build();
+        $builder2 = $this
             ->createElasticWizardWithSorts('random')
             ->allowedSorts(RandomSort::make('random')->seed(222))
-            ->build()
-            ->execute()
-            ->models();
+            ->build();
 
-        // With high probability, different seeds produce different orders
-        // There's a tiny chance they could be the same, so we just check both have results
-        $this->assertCount(10, $result1);
-        $this->assertCount(10, $result2);
+        $this->assertSame(
+            ['seed' => 111, 'field' => '_seq_no'],
+            $builder1->getQuery()['function_score']['functions'][0]['random_score'] ?? null
+        );
+        $this->assertSame(
+            ['seed' => 222, 'field' => '_seq_no'],
+            $builder2->getQuery()['function_score']['functions'][0]['random_score'] ?? null
+        );
+
+        $ids1 = $builder1->execute()->models()->pluck('id')->all();
+        $ids2 = $builder2->execute()->models()->pluck('id')->all();
+
+        $this->assertEqualsCanonicalizing($this->models->pluck('id')->all(), $ids1);
+        $this->assertEqualsCanonicalizing($this->models->pluck('id')->all(), $ids2);
+        $this->assertNotSame($ids1, $ids2);
     }
 
     #[Test]
@@ -118,18 +124,23 @@ class RandomSortTest extends TestCase
     #[Test]
     public function it_can_specify_field_for_seeded_random(): void
     {
-        $result = $this
+        $builder = $this
             ->createElasticWizardWithSorts('random')
             ->allowedSorts(
                 RandomSort::make('random')
                     ->seed(12345)
-                    ->field('_seq_no')
+                    ->field('id')
             )
-            ->build()
-            ->execute()
-            ->models();
+            ->build();
 
-        $this->assertCount(10, $result);
+        $this->assertSame(
+            ['seed' => 12345, 'field' => 'id'],
+            $builder->getQuery()['function_score']['functions'][0]['random_score'] ?? null
+        );
+        $this->assertEqualsCanonicalizing(
+            $this->models->pluck('id')->all(),
+            $builder->execute()->models()->pluck('id')->all()
+        );
     }
 
     #[Test]

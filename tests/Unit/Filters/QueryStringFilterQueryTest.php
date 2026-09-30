@@ -150,6 +150,12 @@ class QueryStringFilterQueryTest extends UnitTestCase
             'lone star with a boost' => ['*^2', false],
             'open range' => ['{a TO *}', false],
             'star in a field phrase' => ['a:"*b"', false],
+            'star in an unclosed phrase' => ['"a *b', false],
+            'escaped quote in an unclosed phrase' => ['"a \\" *b', false],
+            'star in an unclosed range' => ['[a TO *b', false],
+            'star in an unclosed regular expression' => ['/a *b', false],
+            'unclosed group' => ['(*a', true],
+            'trailing escape' => ['a \\', false],
         ];
     }
 

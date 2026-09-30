@@ -207,6 +207,20 @@ class SortQueryTest extends UnitTestCase
         ], $this->getSorts($wizard->getSubject()));
     }
 
+    #[Test]
+    public function it_puts_documents_without_a_value_first(): void
+    {
+        $wizard = $this
+            ->createElasticWizardWithSorts('-price')
+            ->allowedSorts(FieldSort::make('price')->missingFirst());
+        $wizard->build();
+
+        $this->assertEquals(
+            [['price' => ['order' => 'desc', 'missing' => '_first']]],
+            $this->getSorts($wizard->getSubject())
+        );
+    }
+
     private function createCustomSort(): AbstractSort
     {
         return new class('custom_name') extends AbstractSort
