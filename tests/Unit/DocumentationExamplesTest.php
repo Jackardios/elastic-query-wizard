@@ -147,11 +147,6 @@ final class DocumentedCustomFilter extends AbstractElasticFilter
         return new self($property, $alias);
     }
 
-    public function getType(): string
-    {
-        return 'custom';
-    }
-
     protected function getDefaultClause(): BoolClause
     {
         return BoolClause::MUST;

@@ -190,11 +190,6 @@ final class MoreLikeThisFilter extends AbstractElasticFilter
         return $this;
     }
 
-    public function getType(): string
-    {
-        return 'more_like_this';
-    }
-
     protected function getDefaultClause(): BoolClause
     {
         return BoolClause::MUST;

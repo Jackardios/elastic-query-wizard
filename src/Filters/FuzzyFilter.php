@@ -27,11 +27,6 @@ final class FuzzyFilter extends AbstractElasticFilter
         return new self($property, $alias);
     }
 
-    public function getType(): string
-    {
-        return 'fuzzy';
-    }
-
     /** @return list<class-string> */
     protected function parameterQueryClasses(): array
     {

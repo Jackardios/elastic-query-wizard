@@ -139,11 +139,6 @@ class FilterTest extends TestCase
                 return new self($property, $alias);
             }
 
-            public function getType(): string
-            {
-                return 'custom';
-            }
-
             protected function getDefaultClause(): BoolClause
             {
                 return BoolClause::MUST;
@@ -247,11 +242,6 @@ class FilterTest extends TestCase
             public static function make(string $property, ?string $alias = null): static
             {
                 return new self($property, $alias);
-            }
-
-            public function getType(): string
-            {
-                return 'custom';
             }
 
             public function buildQuery(mixed $value): ?QueryInterface

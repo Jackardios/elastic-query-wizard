@@ -310,12 +310,4 @@ class NestedSortQueryTest extends UnitTestCase
             ],
         ], $sorts);
     }
-
-    #[Test]
-    public function it_returns_correct_type(): void
-    {
-        $sort = NestedSort::make('variants', 'price', 'price');
-
-        $this->assertEquals('nested', $sort->getType());
-    }
 }

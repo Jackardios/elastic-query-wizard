@@ -14,14 +14,6 @@ use PHPUnit\Framework\TestCase;
 class FieldSortTest extends TestCase
 {
     #[Test]
-    public function get_type_returns_field(): void
-    {
-        $sort = FieldSort::make('name');
-
-        $this->assertEquals('field', $sort->getType());
-    }
-
-    #[Test]
     public function get_property_returns_property(): void
     {
         $sort = FieldSort::make('name');

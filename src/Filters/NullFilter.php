@@ -53,11 +53,6 @@ final class NullFilter extends AbstractElasticFilter
         return $this;
     }
 
-    public function getType(): string
-    {
-        return 'null';
-    }
-
     public function validateValueShape(mixed $value): ?string
     {
         return $this->validateScalarOrBlankValueShape($value);

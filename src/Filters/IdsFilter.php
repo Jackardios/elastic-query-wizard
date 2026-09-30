@@ -19,11 +19,6 @@ final class IdsFilter extends AbstractElasticFilter
         return new self($property, $alias);
     }
 
-    public function getType(): string
-    {
-        return 'ids';
-    }
-
     /** @return list<class-string> */
     protected function parameterQueryClasses(): array
     {

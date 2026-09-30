@@ -51,11 +51,11 @@ class ValueLengthTest extends UnitTestCase
         ];
 
         foreach ($filters as $filter) {
-            $this->assertTrue($this->accepts($filter, str_repeat('a', 5000)), $filter->getType());
+            $this->assertTrue($this->accepts($filter, str_repeat('a', 5000)), $filter::class);
 
             try {
                 $this->accepts($filter->maxLength(3), 'abcd');
-                $this->fail("{$filter->getType()} accepted a value over its limit.");
+                $this->fail($filter::class.' accepted a value over its limit.');
             } catch (InvalidFilterValue $exception) {
                 $this->assertSame(400, $exception->getStatusCode());
             }

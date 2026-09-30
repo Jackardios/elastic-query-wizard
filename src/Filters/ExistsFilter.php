@@ -23,11 +23,6 @@ final class ExistsFilter extends AbstractElasticFilter
         return new self($property, $alias);
     }
 
-    public function getType(): string
-    {
-        return 'exists';
-    }
-
     /** @return list<class-string> */
     protected function parameterQueryClasses(): array
     {

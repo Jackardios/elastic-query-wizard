@@ -70,11 +70,6 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
         return $names;
     }
 
-    public function getType(): string
-    {
-        return 'group';
-    }
-
     /**
      * @throws LogicException A group has no value of its own; set a default on a child filter
      */

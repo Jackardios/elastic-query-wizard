@@ -73,11 +73,6 @@ final class BoolGroup extends AbstractElasticGroup
         return $this->boost;
     }
 
-    public function getType(): string
-    {
-        return 'bool_group';
-    }
-
     public function buildGroupQuery(array $childValues): ?QueryInterface
     {
         if (empty($childValues) || empty($this->children)) {

@@ -32,11 +32,6 @@ final class SimpleQueryStringFilter extends AbstractElasticFilter
         return new self($property, $alias);
     }
 
-    public function getType(): string
-    {
-        return 'simple_query_string';
-    }
-
     /** @return list<class-string> */
     protected function parameterQueryClasses(): array
     {

@@ -283,11 +283,6 @@ class SortTest extends TestCase
                 return new self($property, $alias);
             }
 
-            public function getType(): string
-            {
-                return 'custom';
-            }
-
             public function apply(mixed $subject, string $direction): mixed
             {
                 $subject->sort('name', $direction);

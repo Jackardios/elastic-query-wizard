@@ -29,11 +29,6 @@ final class RangeFilter extends AbstractElasticFilter
         return new self($property, $alias);
     }
 
-    public function getType(): string
-    {
-        return 'range';
-    }
-
     /** @return list<class-string> */
     protected function parameterQueryClasses(): array
     {

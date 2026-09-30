@@ -48,11 +48,6 @@ class AbstractElasticFilterTest extends TestCase
                 return new self($property, $alias);
             }
 
-            public function getType(): string
-            {
-                return 'test';
-            }
-
             public function buildQuery(mixed $value): ?QueryInterface
             {
                 return null;
@@ -72,14 +67,6 @@ class AbstractElasticFilterTest extends TestCase
         $this->assertSame($searchBuilder, $result);
         $this->assertTrue($filter->handleCalled);
         $this->assertEquals('test_value', $filter->capturedValue);
-    }
-
-    #[Test]
-    public function get_type_returns_correct_type(): void
-    {
-        $filter = $this->createFilter();
-
-        $this->assertEquals('test', $filter->getType());
     }
 
     #[Test]
@@ -113,11 +100,6 @@ class AbstractElasticFilterTest extends TestCase
                 return new self($property, $alias);
             }
 
-            public function getType(): string
-            {
-                return 'test';
-            }
-
             public function buildQuery(mixed $value): ?QueryInterface
             {
                 return null;
@@ -144,11 +126,6 @@ class AbstractElasticFilterTest extends TestCase
             public static function make(string $property, ?string $alias = null): static
             {
                 return new self($property, $alias);
-            }
-
-            public function getType(): string
-            {
-                return 'test';
             }
 
             public function buildQuery(mixed $value): ?QueryInterface

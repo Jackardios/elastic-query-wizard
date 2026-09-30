@@ -63,11 +63,6 @@ class AbstractElasticIncludeTest extends TestCase
                 return new self($relation, $alias);
             }
 
-            public function getType(): string
-            {
-                return 'test';
-            }
-
             public function handleEloquent(Builder $eloquentBuilder): void
             {
                 $this->handleCalled = true;
@@ -82,14 +77,6 @@ class AbstractElasticIncludeTest extends TestCase
         $this->assertTrue($include->handleCalled);
     }
 
-    #[Test]
-    public function get_type_returns_correct_type(): void
-    {
-        $include = $this->createInclude();
-
-        $this->assertEquals('test', $include->getType());
-    }
-
     private function createInclude(): AbstractElasticInclude
     {
         return new class('relation', 'alias') extends AbstractElasticInclude
@@ -102,11 +89,6 @@ class AbstractElasticIncludeTest extends TestCase
             public static function make(string $relation, ?string $alias = null): static
             {
                 return new self($relation, $alias);
-            }
-
-            public function getType(): string
-            {
-                return 'test';
             }
 
             public function handleEloquent(Builder $eloquentBuilder): void

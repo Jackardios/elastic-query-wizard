@@ -27,11 +27,6 @@ final class MatchPhrasePrefixFilter extends AbstractElasticFilter
         return new self($property, $alias);
     }
 
-    public function getType(): string
-    {
-        return 'match_phrase_prefix';
-    }
-
     /** @return list<class-string> */
     protected function parameterQueryClasses(): array
     {

@@ -283,12 +283,4 @@ class DateRangeFilterQueryTest extends UnitTestCase
 
         $this->assertEmpty($filterQueries);
     }
-
-    #[Test]
-    public function it_returns_correct_type(): void
-    {
-        $filter = DateRangeFilter::make('created_at', 'date');
-
-        $this->assertEquals('date_range', $filter->getType());
-    }
 }

@@ -20,11 +20,6 @@ final class TrashedFilter extends AbstractElasticFilter
         return new self($alias);
     }
 
-    public function getType(): string
-    {
-        return 'trashed';
-    }
-
     public function validateValueShape(mixed $value): ?string
     {
         return $this->validateScalarOrBlankValueShape($value);

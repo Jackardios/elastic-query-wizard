@@ -70,11 +70,6 @@ final class GeoShapeFilter extends AbstractElasticFilter
         return $this;
     }
 
-    public function getType(): string
-    {
-        return 'geo_shape';
-    }
-
     public function buildQuery(mixed $value): ?QueryInterface
     {
         if (FilterValueSanitizer::isBlank($value)) {

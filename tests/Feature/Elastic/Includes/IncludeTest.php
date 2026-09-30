@@ -447,11 +447,6 @@ class IncludeTest extends TestCase
                 return new self($relation, $alias);
             }
 
-            public function getType(): string
-            {
-                return 'custom';
-            }
-
             public function handleEloquent(Builder $eloquentBuilder): void
             {
                 $eloquentBuilder->withCount($this->getRelation());
@@ -482,11 +477,6 @@ class IncludeTest extends TestCase
             public static function make(string $relation, ?string $alias = null): static
             {
                 return new self($relation, $alias);
-            }
-
-            public function getType(): string
-            {
-                return 'custom';
             }
 
             public function handleEloquent(Builder $eloquentBuilder): void

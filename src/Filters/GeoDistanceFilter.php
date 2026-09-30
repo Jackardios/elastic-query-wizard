@@ -19,11 +19,6 @@ final class GeoDistanceFilter extends AbstractElasticFilter
         return new self($property, $alias);
     }
 
-    public function getType(): string
-    {
-        return 'geo_distance';
-    }
-
     /** @return list<class-string> */
     protected function parameterQueryClasses(): array
     {

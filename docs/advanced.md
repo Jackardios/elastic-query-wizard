@@ -559,11 +559,6 @@ class CustomFilter extends AbstractElasticFilter
         return new static($property, $alias);
     }
 
-    public function getType(): string
-    {
-        return 'custom';
-    }
-
     /**
      * Override default clause if needed (default is FILTER).
      */
@@ -648,11 +643,6 @@ class PopularitySort extends AbstractSort
         return new static($property, $viewsWeight, $likesWeight, $alias);
     }
 
-    public function getType(): string
-    {
-        return 'popularity';
-    }
-
     public function apply(mixed $subject, string $direction): mixed
     {
         $script = [
@@ -702,11 +692,6 @@ class HighlightedInclude extends AbstractElasticInclude
     public static function make(string $property, ?string $alias = null): static
     {
         return new static($property, $alias);
-    }
-
-    public function getType(): string
-    {
-        return 'highlighted';
     }
 
     public function handleEloquent(Builder $eloquentBuilder): void

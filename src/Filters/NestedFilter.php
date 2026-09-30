@@ -75,11 +75,6 @@ final class NestedFilter extends AbstractElasticFilter
         return $this;
     }
 
-    public function getType(): string
-    {
-        return 'nested';
-    }
-
     /**
      * Only the built-in term/terms inner query has a fixed value contract.
      * A custom innerQuery() decides for itself what the value may look like.

@@ -112,11 +112,6 @@ final class DateRangeFilter extends AbstractElasticFilter
         return $this;
     }
 
-    public function getType(): string
-    {
-        return 'date_range';
-    }
-
     /** @return list<class-string> */
     protected function parameterQueryClasses(): array
     {

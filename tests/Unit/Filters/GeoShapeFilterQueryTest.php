@@ -407,14 +407,6 @@ class GeoShapeFilterQueryTest extends UnitTestCase
     }
 
     #[Test]
-    public function it_returns_correct_type(): void
-    {
-        $filter = GeoShapeFilter::make('boundary');
-
-        $this->assertEquals('geo_shape', $filter->getType());
-    }
-
-    #[Test]
     public function it_combines_relation_and_ignore_unmapped(): void
     {
         $wizard = $this

@@ -102,14 +102,6 @@ class NullFilterQueryTest extends UnitTestCase
     }
 
     #[Test]
-    public function it_returns_correct_type(): void
-    {
-        $filter = NullFilter::make('deleted_at', 'is_null');
-
-        $this->assertEquals('null', $filter->getType());
-    }
-
-    #[Test]
     public function it_inverts_logic_for_truthy_value(): void
     {
         $wizard = $this

@@ -181,14 +181,6 @@ class RandomSortQueryTest extends UnitTestCase
     }
 
     #[Test]
-    public function it_returns_correct_type(): void
-    {
-        $sort = RandomSort::make('shuffle');
-
-        $this->assertEquals('random', $sort->getType());
-    }
-
-    #[Test]
     public function it_uses_default_property_name(): void
     {
         $sort = RandomSort::make();

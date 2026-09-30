@@ -43,11 +43,6 @@ final class MultiMatchFilter extends AbstractElasticFilter
         return new self($fields, $property, $alias);
     }
 
-    public function getType(): string
-    {
-        return 'multi_match';
-    }
-
     /** @return list<class-string> */
     protected function parameterQueryClasses(): array
     {

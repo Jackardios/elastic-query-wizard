@@ -126,11 +126,6 @@ final class NestedSort extends AbstractElasticSort
         return $this;
     }
 
-    public function getType(): string
-    {
-        return 'nested';
-    }
-
     public function handle(SearchBuilder $builder, string $direction): void
     {
         $fullField = $this->path.'.'.$this->nestedField;

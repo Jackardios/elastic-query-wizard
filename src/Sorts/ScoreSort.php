@@ -14,11 +14,6 @@ final class ScoreSort extends AbstractElasticSort
         return new self('_score', $alias);
     }
 
-    public function getType(): string
-    {
-        return 'score';
-    }
-
     public function handle(SearchBuilder $builder, string $direction): void
     {
         $builder->sort(Sort::score()->order($direction));

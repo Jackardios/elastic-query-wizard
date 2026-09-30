@@ -206,11 +206,6 @@ final class CustomFilter extends AbstractElasticFilter
         return new static($property, $alias);
     }
 
-    public function getType(): string
-    {
-        return 'custom';
-    }
-
     protected function getDefaultClause(): BoolClause
     {
         return BoolClause::MUST;
@@ -233,7 +228,6 @@ CustomFilter::make('property_name');
   to the filter's bool clause, so `inMust()`, `inShould()` and bool groups work with custom filters
 - The default clause is `filter`; override `getDefaultClause()` to change it
 - No more `getRootBoolQuery()`
-- Must implement `getType(): string` method
 - Access property via `$this->property` instead of `$this->getPropertyName()`
 - Static `::make()` factory required
 
@@ -268,11 +262,6 @@ final class CustomSort extends AbstractElasticSort
     public static function make(string $property, ?string $alias = null): static
     {
         return new static($property, $alias);
-    }
-
-    public function getType(): string
-    {
-        return 'custom';
     }
 
     public function handle(SearchBuilder $builder, string $direction): void
@@ -318,11 +307,6 @@ final class CustomInclude extends AbstractElasticInclude
         return new static($relation, $alias);
     }
 
-    public function getType(): string
-    {
-        return 'custom';
-    }
-
     public function handleEloquent(Builder $eloquentBuilder): void
     {
         $relationName = $this->relation;  // Not getInclude()!
@@ -338,7 +322,6 @@ CustomInclude::make('relation_name');
 - Base class: `ElasticInclude` → `AbstractElasticInclude`
 - Method: `handle()` → `handleEloquent()`
 - `$queryWizard` parameter removed
-- Must implement `getType(): string` method
 - Access relation via `$this->relation` instead of `$this->getInclude()`
 
 ---
@@ -852,7 +835,6 @@ v3 is compatible with ES 8.x and 9.x. Key notes:
 - [ ] Change base class: `ElasticFilter` → `AbstractElasticFilter`
 - [ ] Change base class: `ElasticSort` → `AbstractElasticSort`
 - [ ] Change base class: `ElasticInclude` → `AbstractElasticInclude`
-- [ ] Add `getType(): string` method to custom filters/sorts/includes
 - [ ] Update `handle()` signature: remove `$queryWizard` parameter
 - [ ] For includes: rename `handle()` → `handleEloquent()`
 - [ ] Replace `$this->getPropertyName()` → `$this->property`

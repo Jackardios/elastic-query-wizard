@@ -25,11 +25,6 @@ class RawQueryFilterTest extends UnitTestCase
                 parent::__construct($property, $alias);
             }
 
-            public function getType(): string
-            {
-                return 'raw_test';
-            }
-
             public function buildQuery(mixed $value): QueryInterface|array|null
             {
                 if ($value === null || $value === '') {
@@ -62,11 +57,6 @@ class RawQueryFilterTest extends UnitTestCase
             public function __construct(string $property, ?string $alias = null)
             {
                 parent::__construct($property, $alias);
-            }
-
-            public function getType(): string
-            {
-                return 'raw_test';
             }
 
             public function buildQuery(mixed $value): QueryInterface|array|null

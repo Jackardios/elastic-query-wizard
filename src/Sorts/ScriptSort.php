@@ -74,11 +74,6 @@ final class ScriptSort extends AbstractElasticSort
         return $this;
     }
 
-    public function getType(): string
-    {
-        return 'script';
-    }
-
     public function handle(SearchBuilder $builder, string $direction): void
     {
         $script = ['source' => $this->scriptSource];

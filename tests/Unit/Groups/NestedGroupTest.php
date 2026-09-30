@@ -22,7 +22,6 @@ class NestedGroupTest extends UnitTestCase
 
         $this->assertEquals('sides', $group->getName());
         $this->assertEquals('sides', $group->getPath());
-        $this->assertEquals('nested_group', $group->getType());
     }
 
     #[Test]

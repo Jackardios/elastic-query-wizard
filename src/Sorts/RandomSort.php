@@ -61,11 +61,6 @@ final class RandomSort extends AbstractElasticSort
         return $this;
     }
 
-    public function getType(): string
-    {
-        return 'random';
-    }
-
     public function handle(SearchBuilder $builder, string $direction): void
     {
         $functionScore = Query::functionScore($this->queryBuiltSoFar($builder))

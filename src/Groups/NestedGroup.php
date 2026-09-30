@@ -113,11 +113,6 @@ final class NestedGroup extends AbstractElasticGroup
         return $this->path;
     }
 
-    public function getType(): string
-    {
-        return 'nested_group';
-    }
-
     public function buildGroupQuery(array $childValues): ?QueryInterface
     {
         if (empty($childValues) || empty($this->children)) {

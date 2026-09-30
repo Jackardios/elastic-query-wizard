@@ -398,14 +398,6 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
     }
 
     #[Test]
-    public function it_returns_correct_type(): void
-    {
-        $filter = MoreLikeThisFilter::make(['title'], 'similar');
-
-        $this->assertEquals('more_like_this', $filter->getType());
-    }
-
-    #[Test]
     public function it_combines_all_options(): void
     {
         $wizard = $this

@@ -69,11 +69,6 @@ final class GeoDistanceSort extends AbstractElasticSort
         return $this;
     }
 
-    public function getType(): string
-    {
-        return 'geo_distance';
-    }
-
     public function handle(SearchBuilder $builder, string $direction): void
     {
         $sort = Sort::geoDistance($this->property, $this->lat, $this->lon)

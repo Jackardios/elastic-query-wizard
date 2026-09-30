@@ -22,7 +22,6 @@ class BoolGroupTest extends UnitTestCase
         $group = ElasticGroup::bool('advanced');
 
         $this->assertEquals('advanced', $group->getName());
-        $this->assertEquals('bool_group', $group->getType());
     }
 
     #[Test]

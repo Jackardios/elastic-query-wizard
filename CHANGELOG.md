@@ -72,6 +72,9 @@ made since those snapshots.
 
 ### Removed
 
+- `getType()` on filters, sorts, includes and groups, following `laravel-query-wizard`, which no longer reads it. A
+  custom include that eager loads its relation implements `laravel-query-wizard`'s `Contracts\EagerLoadsRelation` to
+  get relation fieldsets.
 - `case_insensitive` on the term filter: its multi-value `terms` query does not support it, and Elasticsearch rejected
   such a request. `withParameters(['case_insensitive' => …])` throws `InvalidArgumentException`.
 - The protected `ElasticQueryWizard` internals of the `dev-master` snapshots that subclasses could override:

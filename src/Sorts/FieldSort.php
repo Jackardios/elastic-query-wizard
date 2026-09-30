@@ -82,11 +82,6 @@ final class FieldSort extends AbstractElasticSort
         return $this;
     }
 
-    public function getType(): string
-    {
-        return 'field';
-    }
-
     public function handle(SearchBuilder $builder, string $direction): void
     {
         $sort = Sort::field($this->property)->order($direction);

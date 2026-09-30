@@ -40,11 +40,6 @@ final class RegexpFilter extends AbstractElasticFilter
         return new self($property, $alias);
     }
 
-    public function getType(): string
-    {
-        return 'regexp';
-    }
-
     /** @return list<class-string> */
     protected function parameterQueryClasses(): array
     {

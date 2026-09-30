@@ -213,14 +213,6 @@ class NestedFilterQueryTest extends UnitTestCase
     }
 
     #[Test]
-    public function it_returns_correct_type(): void
-    {
-        $filter = NestedFilter::make('comments', 'author');
-
-        $this->assertEquals('nested', $filter->getType());
-    }
-
-    #[Test]
     public function it_combines_all_options(): void
     {
         $wizard = $this

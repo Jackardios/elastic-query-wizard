@@ -27,11 +27,6 @@ final class MatchPhraseFilter extends AbstractElasticFilter
         return new self($property, $alias);
     }
 
-    public function getType(): string
-    {
-        return 'match_phrase';
-    }
-
     /** @return list<class-string> */
     protected function parameterQueryClasses(): array
     {

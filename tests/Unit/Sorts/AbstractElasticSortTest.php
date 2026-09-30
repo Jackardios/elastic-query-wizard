@@ -44,11 +44,6 @@ class AbstractElasticSortTest extends TestCase
                 return new self($property, $alias);
             }
 
-            public function getType(): string
-            {
-                return 'test';
-            }
-
             public function handle(SearchBuilder $builder, string $direction): void
             {
                 $this->handleCalled = true;
@@ -63,14 +58,6 @@ class AbstractElasticSortTest extends TestCase
         $this->assertSame($searchBuilder, $result);
         $this->assertTrue($sort->handleCalled);
         $this->assertEquals('desc', $sort->capturedDirection);
-    }
-
-    #[Test]
-    public function get_type_returns_correct_type(): void
-    {
-        $sort = $this->createSort();
-
-        $this->assertEquals('test', $sort->getType());
     }
 
     #[Test]
@@ -101,11 +88,6 @@ class AbstractElasticSortTest extends TestCase
             public static function make(string $property, ?string $alias = null): static
             {
                 return new self($property, $alias);
-            }
-
-            public function getType(): string
-            {
-                return 'test';
             }
 
             public function handle(SearchBuilder $builder, string $direction): void
