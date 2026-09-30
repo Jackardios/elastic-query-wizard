@@ -123,6 +123,8 @@ made since those snapshots.
   the message.
 - Text and pattern filters and `ids` return 400 for a JSON boolean from a request body. Text filters ignored it, and
   `ids` searched for the id `1`.
+- A root filter with a `default()` that a group leaf of the same name shadows throws `FilterNameConflictException`;
+  its default was silently dropped.
 - A range bound left empty is no bound; coordinates that overflow to infinity no longer fail the JSON encoding.
 - A clone of a wizard whose built search was changed keeps the change lock.
 - A configuration call after the build throws a `LogicException` when `boolQuery()` was used before the build; the

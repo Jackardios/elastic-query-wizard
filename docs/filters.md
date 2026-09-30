@@ -1597,7 +1597,9 @@ Nested groups are resolved recursively and support arbitrary depth.
 
 4. **Unique Leaf Aliases Required**: Leaf filter aliases inside one group tree must be unique. Duplicate aliases throw `DuplicateGroupChildFilterNameException`.
 
-5. **Root vs Group Deduplication**: If the same filter name appears both at root level and inside a group, only the group version is applied.
+5. **Root vs Group Deduplication**: If the same filter name appears both at root level and inside a group, only the
+   group version is applied. A root version with a `default()` throws `FilterNameConflictException` when the wizard
+   builds, since its default would never apply: set the default on the leaf.
 
 6. **Unsupported in Groups**: `ElasticFilter::trashed()`, `ElasticFilter::callback()`, `ElasticFilter::passthrough()` and
    any filter that is not an Elasticsearch filter or group cannot be used inside groups. `children()` throws

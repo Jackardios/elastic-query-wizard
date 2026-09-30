@@ -323,7 +323,8 @@ class ElasticQueryWizard extends BaseQueryWizard
      * @return array<string, true>
      *
      * @throws FilterNameConflictException When a leaf is in more than one group,
-     *                                     where one request value would apply in each
+     *                                     where one request value would apply in each,
+     *                                     or a shadowed root filter has a default
      */
     protected function resolveShadowedFilterNames(array $filters): array
     {
@@ -349,6 +350,10 @@ class ElasticQueryWizard extends BaseQueryWizard
 
         foreach ($filters as $name => $filter) {
             if (! $filter instanceof GroupInterface && isset($groupsByLeaf[$name])) {
+                if ($filter->getDefault() !== null) {
+                    throw FilterNameConflictException::shadowedDefault($filter->getName());
+                }
+
                 $shadowed[$name] = true;
             }
         }

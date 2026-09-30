@@ -305,6 +305,22 @@ class GroupIntegrationTest extends UnitTestCase
     }
 
     #[Test]
+    public function a_root_filter_whose_default_a_group_leaf_would_drop_throws(): void
+    {
+        $wizard = $this
+            ->createElasticWizardWithFilters([])
+            ->allowedFilters([
+                ElasticFilter::term('status')->default('active'),
+                ElasticGroup::bool('advanced')->children([ElasticFilter::term('status')]),
+            ]);
+
+        $this->expectException(FilterNameConflictException::class);
+        $this->expectExceptionMessage('Filter `status` has a default, but a group leaf of the same name reads its request key');
+
+        $wizard->build();
+    }
+
+    #[Test]
     public function it_does_not_apply_sibling_filter_when_group_name_matches_filter_name(): void
     {
         $wizard = $this
