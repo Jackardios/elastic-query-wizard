@@ -283,4 +283,42 @@ class DateRangeFilterQueryTest extends UnitTestCase
 
         $this->assertEmpty($filterQueries);
     }
+
+    #[Test]
+    public function a_key_other_than_the_bounds_is_a_400(): void
+    {
+        $this->expectException(InvalidFilterQuery::class);
+        $this->expectExceptionMessage('expects only the `from` and `to` keys');
+
+        $this
+            ->createElasticWizardWithFilters(['date' => ['form' => '2024-01-01', 'to' => '2024-01-31']])
+            ->allowedFilters(DateRangeFilter::make('created_at', 'date'))
+            ->build();
+    }
+
+    #[Test]
+    public function a_bound_past_the_year_9999_in_the_filter_timezone_is_a_400(): void
+    {
+        $this->expectException(InvalidFilterValue::class);
+        $this->expectExceptionMessage('Expected a date before the year 10000 for `from`');
+
+        $this
+            ->createElasticWizardWithFilters(['date' => ['from' => '9999-12-31T23:59:59-12:00']])
+            ->allowedFilters(DateRangeFilter::make('created_at', 'date'))
+            ->build();
+    }
+
+    #[Test]
+    public function the_parameters_the_filter_sets_itself_are_refused(): void
+    {
+        foreach (['format' => 'esFormat()', 'gte' => 'the request', 'time_zone' => 'timezone()'] as $name => $instead) {
+            try {
+                DateRangeFilter::make('created_at')->withParameters([$name => 'x']);
+                $this->fail("withParameters() accepted {$name}");
+            } catch (\InvalidArgumentException $e) {
+                $this->assertStringContainsString("Parameter \"{$name}\" is set by", $e->getMessage());
+                $this->assertStringContainsString($instead, $e->getMessage());
+            }
+        }
+    }
 }

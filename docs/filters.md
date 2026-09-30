@@ -1164,6 +1164,7 @@ GET /orders?filter[created_at][from]=2024-01-01T09:00&filter[created_at][to]=202
   an offset keeps its instant. Clients must send `+` in an offset as `%2B`.
 - A date names the whole day: `to=2024-12-31` becomes `lt` the start of 2025-01-01.
 - A `DateTimeInterface` works as a `default()` bound.
+- A key other than the two bounds, and a bound after the year 9999 once read in the filter's timezone, return 400.
 
 The bounds reach Elasticsearch as ISO 8601 date-times with an offset, read with the `strict_date_optional_time`
 format, so the field's own mapping format does not matter.
@@ -1200,6 +1201,9 @@ ElasticFilter::dateRange('created_at')
 | `timezone(string)` | Timezone for bounds without an offset (default: the application's); an unknown one throws `InvalidArgumentException` |
 | `esFormat(string)` | Elasticsearch `format` tried on the bounds before `strict_date_optional_time`, which is appended so the ISO 8601 bounds are always read (default: `strict_date_optional_time` alone). It does not change which request values are accepted |
 | `dateFormat(string)` | Deprecated alias of `esFormat()` |
+
+`withParameters()` refuses `format`, `time_zone`, `gt`, `gte`, `lt` and `lte` with an `InvalidArgumentException`: the
+filter sets them from `esFormat()`, the bounds' offsets and the request.
 
 ### With Custom Keys
 

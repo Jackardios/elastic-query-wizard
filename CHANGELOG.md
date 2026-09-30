@@ -111,6 +111,9 @@ made since those snapshots.
   whose top is not below its bottom; other values are 400s instead of 500s from Elasticsearch.
 - A more-like-this list with gaps in its keys (`filter[similar][1]=a&filter[similar][3]=b`) is read as texts instead
   of being refused as a document reference.
+- A date range filter returns 400 for keys other than its two bounds and for a bound after the year 9999, and
+  `withParameters()` refuses the range parameters it sets itself (`format`, `time_zone`, `gt`, `gte`, `lt`, `lte`)
+  instead of letting them replace the request's bounds or format.
 - A range bound left empty is no bound; coordinates that overflow to infinity no longer fail the JSON encoding.
 - A clone of a wizard whose built search was changed keeps the change lock.
 - A configuration call after the build throws a `LogicException` when `boolQuery()` was used before the build; the

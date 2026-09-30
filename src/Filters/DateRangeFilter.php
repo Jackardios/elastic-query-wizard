@@ -13,6 +13,7 @@ use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Query\Term\RangeQuery;
 use Jackardios\EsScoutDriver\Support\Query;
+use Jackardios\QueryWizard\Exceptions\InvalidFilterValue;
 use Jackardios\QueryWizard\Support\FilterValueParser;
 
 /**
@@ -118,6 +119,19 @@ final class DateRangeFilter extends AbstractElasticFilter
         return [RangeQuery::class];
     }
 
+    /** @return array<string, string> */
+    protected function reservedParameters(): array
+    {
+        return [
+            'format' => 'esFormat()',
+            'timeZone' => 'timezone(), since the bounds are sent with their offset',
+            'gt' => 'the request',
+            'gte' => 'the request',
+            'lt' => 'the request',
+            'lte' => 'the request',
+        ];
+    }
+
     /**
      * The value must carry at least one of the configured bounds, otherwise the
      * filter would silently do nothing.
@@ -137,6 +151,10 @@ final class DateRangeFilter extends AbstractElasticFilter
 
         if (! $hasFrom && ! $hasTo) {
             return "Filter `{$this->getName()}` expects at least one of the `{$this->fromKey}`, `{$this->toKey}` keys.";
+        }
+
+        if (count($value) > (int) $hasFrom + (int) $hasTo) {
+            return "Filter `{$this->getName()}` expects only the `{$this->fromKey}` and `{$this->toKey}` keys.";
         }
 
         foreach ([$this->fromKey, $this->toKey] as $key) {
@@ -167,24 +185,35 @@ final class DateRangeFilter extends AbstractElasticFilter
         $query = Query::range($this->property)->format($this->resolveEsFormat());
 
         if ($from !== null) {
-            $query->gte(self::isoDateTime($from->value));
+            $query->gte($this->isoDateTime($from->value, $value, $this->fromKey));
         }
 
         if ($to !== null) {
             [$operator, $end] = $to->upToBound();
 
             if ($operator === '<') {
-                $query->lt(self::isoDateTime($end->value));
+                $query->lt($this->isoDateTime($end->value, $value, $this->toKey));
             } else {
-                $query->lte(self::isoDateTime($end->value));
+                $query->lte($this->isoDateTime($end->value, $value, $this->toKey));
             }
         }
 
         return $this->applyParametersOnQuery($query);
     }
 
-    private static function isoDateTime(DateTimeImmutable $date): string
+    /**
+     * Elasticsearch reads years up to 9999; an offset can move a bound past it.
+     *
+     * @param  array<array-key, mixed>  $value
+     *
+     * @throws InvalidFilterValue When the bound falls after the year 9999
+     */
+    private function isoDateTime(DateTimeImmutable $date, array $value, string $key): string
     {
+        if ((int) $date->format('Y') > 9999) {
+            throw InvalidFilterValue::make($value, $this, "Expected a date before the year 10000 for `{$key}`.");
+        }
+
         return $date->format($date->format('u') === '000000' ? DATE_ATOM : 'Y-m-d\TH:i:s.uP');
     }
 

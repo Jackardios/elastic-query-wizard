@@ -83,9 +83,25 @@ trait HasParameters
         return [];
     }
 
+    /**
+     * Setters the filter calls itself, by setter name, with where their value
+     * comes from: withParameters() refuses them rather than override it.
+     *
+     * @return array<string, string>
+     */
+    protected function reservedParameters(): array
+    {
+        return [];
+    }
+
     private function assertParameterIsSupported(string $name): void
     {
         $methodName = Str::camel($name);
+        $source = $this->reservedParameters()[$methodName] ?? null;
+
+        if ($source !== null) {
+            throw new InvalidArgumentException(sprintf('Parameter "%s" is set by %s from %s.', $name, static::class, $source));
+        }
 
         foreach ($this->parameterQueryClasses() as $queryClass) {
             if (! self::isQuerySetter($queryClass, $methodName)) {
