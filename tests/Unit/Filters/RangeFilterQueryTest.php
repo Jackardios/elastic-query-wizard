@@ -187,4 +187,18 @@ class RangeFilterQueryTest extends UnitTestCase
             $this->getFilterQueries($wizard->boolQuery())
         );
     }
+
+    #[Test]
+    public function the_bounds_are_refused_as_parameters(): void
+    {
+        foreach (['gt', 'gte', 'lt', 'lte'] as $name) {
+            try {
+                RangeFilter::make('price')->withParameters([$name => 15]);
+                $this->fail("withParameters() accepted {$name}");
+            } catch (\InvalidArgumentException $e) {
+                $this->assertStringContainsString("Parameter `{$name}` is set by", $e->getMessage());
+                $this->assertStringContainsString('the request', $e->getMessage());
+            }
+        }
+    }
 }

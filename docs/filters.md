@@ -352,6 +352,9 @@ ElasticFilter::range('created_at')->withParameters([
 ])
 ```
 
+`withParameters()` refuses `gt`, `gte`, `lt` and `lte` with an `InvalidArgumentException`: the bounds come from the
+request.
+
 ### Numeric Fields
 
 A bound may be a number or a date, and Elasticsearch fails the search on a date or text bound for a numeric field.

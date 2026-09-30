@@ -37,6 +37,12 @@ final class RangeFilter extends AbstractElasticFilter
         return [RangeQuery::class];
     }
 
+    /** @return array<string, string> */
+    protected function reservedParameters(): array
+    {
+        return array_fill_keys(FilterValueSanitizer::RANGE_OPERATORS, 'the request');
+    }
+
     public function buildQuery(mixed $value): ?QueryInterface
     {
         if (FilterValueSanitizer::isBlank($value)) {
