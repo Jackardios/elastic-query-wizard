@@ -551,7 +551,6 @@ Custom filters should implement the `buildQuery()` method which returns the Elas
 
 ```php
 use Jackardios\ElasticQueryWizard\Filters\AbstractElasticFilter;
-use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
 use Jackardios\ElasticQueryWizard\Enums\BoolClause;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Support\Query;
@@ -560,8 +559,6 @@ use Jackardios\QueryWizard\Support\FilterValueParser;
 
 class CustomFilter extends AbstractElasticFilter
 {
-    use HasParameters;
-
     public static function make(string $property, ?string $alias = null): static
     {
         return new static($property, $alias);
@@ -592,12 +589,10 @@ class CustomFilter extends AbstractElasticFilter
         }
 
         // Your custom filter logic
-        $query = Query::bool()
+        return Query::bool()
             ->should(Query::term($this->property, $value))
             ->should(Query::match($this->property . '_text', $value))
             ->minimumShouldMatch(1);
-
-        return $this->applyParametersOnQuery($query);
     }
 }
 ```
@@ -605,6 +600,11 @@ class CustomFilter extends AbstractElasticFilter
 Read values with `laravel-query-wizard`'s `Support\FilterValueParser` (`isBlank()`, `number()`, `boolean()`,
 `isoDate()`, …): it returns null for a blank value and throws the 400 `InvalidFilterValue` for one it cannot read.
 `empty()` would also drop `0`.
+
+The hooks a custom filter may override or call are marked `@api`: `buildQuery()`, `getDefaultClause()`,
+`validateValueShape()` and `validateScalarOrBlankValueShape()`. The `Concerns` traits the built-in filters use
+(`HasParameters`, `LimitsValueLength`, …) are `@internal`; set the query's options in `buildQuery()` instead. A custom
+group extends `AbstractElasticGroup` and builds its query with `applyChildrenToQuery()`.
 
 ### Using Custom Filters
 

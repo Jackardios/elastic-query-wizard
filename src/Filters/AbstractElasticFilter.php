@@ -67,6 +67,8 @@ abstract class AbstractElasticFilter extends AbstractFilter
      *
      * Blank input is passed through as "not applied"; anything else non-scalar
      * would otherwise be silently coerced by taking its first element.
+     *
+     * @api
      */
     protected function validateScalarOrBlankValueShape(mixed $value): ?string
     {

@@ -9,6 +9,8 @@ use Jackardios\QueryWizard\Support\FilterValueParser;
 
 /**
  * An opt-in rule that a filter's values are decimal numbers.
+ *
+ * @internal
  */
 trait ReadsNumbers
 {

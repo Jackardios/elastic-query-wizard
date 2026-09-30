@@ -29,6 +29,11 @@ made since those snapshots.
   `make()` methods of their classes.
 - `tapSearchBuilder()`, `modifyQuery()` and `modifyModels()` take any callable (were `Closure` only), like
   `laravel-query-wizard`'s `tap()`.
+- `HasParameters::applyParametersOnQuery()` is protected; the `Concerns` traits, `AbstractElasticInclude::setSearchResult()`
+  and the protected internals of `ElasticQueryWizard` are `@internal`. The README's Backward Compatibility section lists
+  what 3.x keeps stable, following `laravel-query-wizard`.
+- `GroupInterface` requires `getEffectiveClause()`, so a group that implements it directly goes to the clause it names
+  inside another group (it always went to `filter`).
 - `BoolClause` cases are PascalCase (`Filter`, `Must`, `Should`, `MustNot`; were `FILTER`, … `MUST_NOT`), like
   `laravel-query-wizard`'s enums and those of `es-scout-driver`.
 - `AbstractElasticSort::handle()` and `apply()` take a `SortDirection` (was `'asc'`/`'desc'`), following

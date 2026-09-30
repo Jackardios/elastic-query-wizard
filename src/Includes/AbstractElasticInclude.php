@@ -18,6 +18,12 @@ abstract class AbstractElasticInclude extends AbstractInclude
 {
     protected ?SearchResult $searchResult = null;
 
+    /**
+     * Called by the wizard with the result of each search before the models
+     * are loaded; read it with getSearchResult() in handleEloquent().
+     *
+     * @internal
+     */
     public function setSearchResult(SearchResult $searchResult): static
     {
         $this->searchResult = $searchResult;

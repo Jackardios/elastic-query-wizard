@@ -17,6 +17,7 @@ A powerful Laravel package for building Elasticsearch queries with JSON:API styl
 - [Usage Examples](#usage-examples)
 - [Query Parameter Format](#query-parameter-format)
 - [Elasticsearch Version Compatibility](#elasticsearch-version-compatibility)
+- [Backward Compatibility](#backward-compatibility)
 - [Testing](#testing)
 - [License](#license)
 
@@ -417,6 +418,20 @@ This package supports both Elasticsearch 8.x and 9.x. The package handles most v
 | `random_score` seed without `field` | Reads `_seq_no` (8.x refuses it); `ElasticSort::random()` always sends `_seq_no` |
 
 For full details, migration guide, and safe usage examples, see [Elasticsearch Compatibility](docs/elasticsearch-compatibility.md).
+
+## Backward Compatibility
+
+From 3.0.0, breaking changes wait for a major version in:
+
+- public methods of classes, interfaces and enums not marked `@internal`;
+- protected members marked `@api`. A class-level `@api` (`AbstractElasticFilter`, `AbstractElasticSort`,
+  `AbstractElasticInclude`, `AbstractElasticGroup`) marks a class as meant to be extended; its protected members
+  without `@api` are not covered;
+- the `@api` interface `GroupInterface`, which gains no required methods in minor releases.
+
+Anything marked `@internal` may change in any release, and so may protected members without `@api`. The `Concerns`
+traits are `@internal`: the filter methods they provide are covered, using a trait in another class is not.
+`laravel-query-wizard`'s rules cover the wizard methods `ElasticQueryWizard` inherits.
 
 ## Testing
 

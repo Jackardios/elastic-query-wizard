@@ -9,6 +9,8 @@ use Jackardios\ElasticQueryWizard\Enums\BoolClause;
 /**
  * Provides fluent methods for specifying which bool clause a filter/group
  * should be added to (filter, must, should, must_not).
+ *
+ * @internal
  */
 trait HasBoolClause
 {
@@ -65,6 +67,8 @@ trait HasBoolClause
     /**
      * Get the default clause for this filter type.
      * Override in subclasses to change default behavior.
+     *
+     * @api
      */
     protected function getDefaultClause(): BoolClause
     {

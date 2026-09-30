@@ -40,7 +40,7 @@ class HasParametersTest extends TestCase
             }
         };
 
-        $result = $trait->applyParametersOnQuery($mockBuilder);
+        $result = $trait->applyTo($mockBuilder);
 
         $this->assertSame($mockBuilder, $result);
         $this->assertEquals(1.5, $mockBuilder->boost);
@@ -58,7 +58,7 @@ class HasParametersTest extends TestCase
         $this->expectException(BadMethodCallException::class);
         $this->expectExceptionMessage('Method "nonExistentMethod" does not exist');
 
-        $trait->applyParametersOnQuery($mockBuilder);
+        $trait->applyTo($mockBuilder);
     }
 
     #[Test]
@@ -97,7 +97,7 @@ class HasParametersTest extends TestCase
             }
         };
 
-        $trait->applyParametersOnQuery($mockBuilder);
+        $trait->applyTo($mockBuilder);
 
         $this->assertEquals(1.5, $mockBuilder->boost);
         $this->assertEquals('AUTO', $mockBuilder->fuzziness);
@@ -121,7 +121,7 @@ class HasParametersTest extends TestCase
             }
         };
 
-        $trait->applyParametersOnQuery($mockBuilder);
+        $trait->applyTo($mockBuilder);
 
         $this->assertEquals(50, $mockBuilder->maxExpansions);
     }
@@ -140,6 +140,11 @@ class HasParametersTest extends TestCase
         return new class
         {
             use HasParameters;
+
+            public function applyTo(object $queryBuilder): object
+            {
+                return $this->applyParametersOnQuery($queryBuilder);
+            }
         };
     }
 }

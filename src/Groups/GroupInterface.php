@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Groups;
 
+use Jackardios\ElasticQueryWizard\Enums\BoolClause;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\QueryWizard\Contracts\FilterInterface;
 
@@ -12,7 +13,11 @@ use Jackardios\QueryWizard\Contracts\FilterInterface;
  *
  * Groups allow nesting filters in bool or nested query structures.
  * Child filters are applied to an inner BoolQuery, which is then
- * wrapped and added to the parent query context.
+ * wrapped and added to the parent query context, in the clause
+ * getEffectiveClause() names. Extend AbstractElasticGroup rather than
+ * implementing this interface from scratch.
+ *
+ * @api
  */
 interface GroupInterface extends FilterInterface
 {
@@ -43,4 +48,9 @@ interface GroupInterface extends FilterInterface
      * @return array<int, string>
      */
     public function getChildFilterNames(): array;
+
+    /**
+     * The clause of the enclosing bool query that the group query goes to.
+     */
+    public function getEffectiveClause(): BoolClause;
 }

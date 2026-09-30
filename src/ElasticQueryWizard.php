@@ -59,13 +59,25 @@ class ElasticQueryWizard extends BaseQueryWizard
     /** @var SearchBuilder */
     protected mixed $subject;
 
-    /** @var array<int, callable(Builder<Model>, array<string, mixed>): mixed> */
+    /**
+     * @var array<int, callable(Builder<Model>, array<string, mixed>): mixed>
+     *
+     * @internal
+     */
     protected array $queryModifiers = [];
 
-    /** @var array<int, callable(Collection<int, Model>): Collection<int, Model>> */
+    /**
+     * @var array<int, callable(Collection<int, Model>): Collection<int, Model>>
+     *
+     * @internal
+     */
     protected array $modelModifiers = [];
 
-    /** @var array<int, Closure(SearchBuilder): mixed> */
+    /**
+     * @var array<int, Closure(SearchBuilder): mixed>
+     *
+     * @internal
+     */
     protected array $searchBuilderModifiers = [];
 
     /** @var class-string<Model> */
@@ -397,6 +409,8 @@ class ElasticQueryWizard extends BaseQueryWizard
      * Flatten a group tree down to its leaf filters.
      *
      * @return array<int, FilterInterface>
+     *
+     * @internal
      */
     protected function collectGroupLeafFilters(GroupInterface $group): array
     {
@@ -539,6 +553,7 @@ class ElasticQueryWizard extends BaseQueryWizard
         parent::invalidateBuild();
     }
 
+    /** @internal */
     protected function applySearchBuilderModifiers(): void
     {
         foreach ($this->searchBuilderModifiers as $callback) {
@@ -548,6 +563,8 @@ class ElasticQueryWizard extends BaseQueryWizard
 
     /**
      * @param  Closure(SearchBuilder): mixed  $callback
+     *
+     * @internal
      */
     protected function queueSearchBuilderMutation(Closure $callback): static
     {

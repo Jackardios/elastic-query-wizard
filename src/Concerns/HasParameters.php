@@ -9,18 +9,25 @@ use Illuminate\Support\Str;
 use InvalidArgumentException;
 use ReflectionMethod;
 
+/**
+ * withParameters(): the options of a built-in filter's Elasticsearch query.
+ *
+ * @internal
+ */
 trait HasParameters
 {
     /** @var array<string, mixed> */
     protected array $queryParameters = [];
 
     /**
+     * Call the setter of each parameter given to withParameters() on the query.
+     *
      * @template T of object
      *
      * @param  T  $queryBuilder
      * @return T
      */
-    public function applyParametersOnQuery(object $queryBuilder): object
+    protected function applyParametersOnQuery(object $queryBuilder): object
     {
         foreach ($this->queryParameters as $name => $value) {
             $methodName = Str::camel($name);

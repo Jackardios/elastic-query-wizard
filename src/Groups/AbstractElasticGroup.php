@@ -22,6 +22,8 @@ use LogicException;
  *
  * Groups contain child filters and apply them to an inner BoolQuery,
  * then wrap that query and add it to the parent context.
+ *
+ * @api
  */
 abstract class AbstractElasticGroup extends AbstractFilter implements GroupInterface
 {
@@ -155,6 +157,8 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
      * @param  array<string, mixed>  $childValues  Map of child filter names to their values
      *
      * @throws UnsupportedFilterInGroup When an unsupported filter is used in group context
+     *
+     * @api
      */
     protected function applyChildrenToQuery(BoolQuery $innerBoolQuery, array $childValues): void
     {
@@ -211,11 +215,9 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
      */
     protected function addQueryToBoolQuery(BoolQuery $boolQuery, FilterInterface $filter, QueryInterface $query): void
     {
-        $clause = BoolClause::Filter;
-
-        if ($filter instanceof AbstractElasticFilter || $filter instanceof AbstractElasticGroup) {
-            $clause = $filter->getEffectiveClause();
-        }
+        $clause = $filter instanceof AbstractElasticFilter || $filter instanceof GroupInterface
+            ? $filter->getEffectiveClause()
+            : BoolClause::Filter;
 
         match ($clause) {
             BoolClause::Filter => $boolQuery->addFilter($query),

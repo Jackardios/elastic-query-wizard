@@ -9,6 +9,8 @@ use Jackardios\QueryWizard\Exceptions\InvalidFilterValue;
 
 /**
  * An optional limit on the length of a text or pattern filter's value.
+ *
+ * @internal
  */
 trait LimitsValueLength
 {
