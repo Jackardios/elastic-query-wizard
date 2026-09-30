@@ -4,17 +4,14 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Sorts;
 
+use Jackardios\ElasticQueryWizard\Concerns\ConfiguresFieldSort;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Sort\Sort;
 use Jackardios\QueryWizard\Enums\SortDirection;
 
 final class FieldSort extends AbstractElasticSort
 {
-    protected string|int|float|bool|null $missing = null;
-
-    protected ?string $mode = null;
-
-    protected ?string $unmappedType = null;
+    use ConfiguresFieldSort;
 
     /** @var array<string, mixed>|null */
     protected ?array $nested = null;
@@ -26,37 +23,6 @@ final class FieldSort extends AbstractElasticSort
     public static function make(string $property, ?string $alias = null): static
     {
         return new self($property, $alias);
-    }
-
-    public function missing(string|int|float|bool $value): static
-    {
-        $this->missing = $value;
-
-        return $this;
-    }
-
-    public function missingFirst(): static
-    {
-        return $this->missing('_first');
-    }
-
-    public function missingLast(): static
-    {
-        return $this->missing('_last');
-    }
-
-    public function mode(string $mode): static
-    {
-        $this->mode = $mode;
-
-        return $this;
-    }
-
-    public function unmappedType(string $unmappedType): static
-    {
-        $this->unmappedType = $unmappedType;
-
-        return $this;
     }
 
     /**
@@ -85,19 +51,7 @@ final class FieldSort extends AbstractElasticSort
 
     public function handle(SearchBuilder $builder, SortDirection $direction): void
     {
-        $sort = Sort::field($this->property)->order($direction->value);
-
-        if ($this->missing !== null) {
-            $sort->missing($this->missing);
-        }
-
-        if ($this->mode !== null) {
-            $sort->mode($this->mode);
-        }
-
-        if ($this->unmappedType !== null) {
-            $sort->unmappedType($this->unmappedType);
-        }
+        $sort = $this->applyFieldSortOptions(Sort::field($this->property)->order($direction->value));
 
         if ($this->nested !== null) {
             $sort->nested($this->nested);

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jackardios\ElasticQueryWizard\Sorts;
 
 use Closure;
+use Jackardios\ElasticQueryWizard\Concerns\ConfiguresFieldSort;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Sort\Sort;
@@ -20,15 +21,11 @@ use Jackardios\QueryWizard\Enums\SortDirection;
  */
 final class NestedSort extends AbstractElasticSort
 {
+    use ConfiguresFieldSort;
+
     protected string $path;
 
     protected string $nestedField;
-
-    protected string|int|float|bool|null $missing = null;
-
-    protected ?string $mode = null;
-
-    protected ?string $unmappedType = null;
 
     /** @var QueryInterface|Closure(): QueryInterface|array<string, mixed>|null */
     protected QueryInterface|Closure|array|null $nestedFilter = null;
@@ -53,56 +50,6 @@ final class NestedSort extends AbstractElasticSort
         ?string $alias = null
     ): static {
         return new self($property, $path, $nestedField, $alias);
-    }
-
-    /**
-     * Value to use for documents missing the sort field.
-     *
-     * @param  string|int|float|bool  $value  Use '_first', '_last', or a specific value
-     */
-    public function missing(string|int|float|bool $value): static
-    {
-        $this->missing = $value;
-
-        return $this;
-    }
-
-    /**
-     * Sort missing values first.
-     */
-    public function missingFirst(): static
-    {
-        return $this->missing('_first');
-    }
-
-    /**
-     * Sort missing values last.
-     */
-    public function missingLast(): static
-    {
-        return $this->missing('_last');
-    }
-
-    /**
-     * Sort mode for multi-valued nested fields.
-     *
-     * @param  string  $mode  One of: 'min', 'max', 'avg', 'sum', 'median'
-     */
-    public function mode(string $mode): static
-    {
-        $this->mode = $mode;
-
-        return $this;
-    }
-
-    /**
-     * Type to use when the sort field is unmapped.
-     */
-    public function unmappedType(string $type): static
-    {
-        $this->unmappedType = $type;
-
-        return $this;
     }
 
     /**
@@ -131,22 +78,8 @@ final class NestedSort extends AbstractElasticSort
     {
         $fullField = $this->path.'.'.$this->nestedField;
 
-        $sort = Sort::field($fullField)->order($direction->value);
-
-        if ($this->missing !== null) {
-            $sort->missing($this->missing);
-        }
-
-        if ($this->mode !== null) {
-            $sort->mode($this->mode);
-        }
-
-        if ($this->unmappedType !== null) {
-            $sort->unmappedType($this->unmappedType);
-        }
-
-        $nestedConfig = $this->buildNestedConfig();
-        $sort->nested($nestedConfig);
+        $sort = $this->applyFieldSortOptions(Sort::field($fullField)->order($direction->value));
+        $sort->nested($this->buildNestedConfig());
 
         $builder->sort($sort);
     }
