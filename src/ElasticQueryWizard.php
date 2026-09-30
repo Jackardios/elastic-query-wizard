@@ -107,18 +107,6 @@ class ElasticQueryWizard extends BaseQueryWizard
     private bool $proxyModified = false;
 
     /**
-     * Set when boolQuery() is called before the build: the change lives on the
-     * subject, which a rebuild after a configuration change replaces.
-     */
-    private bool $boolQueryChangedBeforeBuild = false;
-
-    /**
-     * Set when a build fails after boolQuery() was called: the rollback
-     * restores the original subject, without the change.
-     */
-    private bool $boolQueryChangeRolledBack = false;
-
-    /**
      * @param  class-string<Model>  $subject  A model class using the `Jackardios\EsScoutDriver\Searchable` trait
      *
      * @throws \InvalidArgumentException When the class is not a searchable model, or the schema describes another model
@@ -171,18 +159,15 @@ class ElasticQueryWizard extends BaseQueryWizard
     }
 
     /**
-     * The root bool query of the search. A configuration change after the build
-     * throws a `LogicException`, since the rebuild would drop what was changed
-     * here, and so does a build after one that failed; use `tapSearchBuilder()`
-     * for a change that survives rebuilds.
+     * The root bool query of the built search; the wizard builds first. A later
+     * configuration change throws a `LogicException`, since the rebuild would
+     * drop what was changed here; use `tapSearchBuilder()` for a change that
+     * survives rebuilds.
      */
     public function boolQuery(): BoolQuery
     {
-        if ($this->isBuilt()) {
-            $this->proxyModified = true;
-        } else {
-            $this->boolQueryChangedBeforeBuild = true;
-        }
+        $this->build();
+        $this->proxyModified = true;
 
         return $this->subject->boolQuery();
     }
@@ -444,26 +429,8 @@ class ElasticQueryWizard extends BaseQueryWizard
         }
     }
 
-    protected function rollbackFailedBuild(): void
-    {
-        $this->boolQueryChangeRolledBack = $this->boolQueryChangedBeforeBuild;
-
-        parent::rollbackFailedBuild();
-    }
-
-    /**
-     * @throws \LogicException When an earlier build failed after boolQuery() was
-     *                         called, whose change the rollback dropped
-     */
     protected function prepareBuild(): void
     {
-        if ($this->boolQueryChangeRolledBack) {
-            throw new \LogicException(
-                'The wizard cannot be rebuilt: a failed build dropped the change made through boolQuery() before it. '
-                .'Change the bool query in tapSearchBuilder(), which runs on every build.'
-            );
-        }
-
         $this->shapeIncludes = [];
         $this->shapeRootFields = null;
         $this->shape = null;
@@ -539,13 +506,6 @@ class ElasticQueryWizard extends BaseQueryWizard
             throw new \LogicException(
                 'The wizard cannot be reconfigured after its built search was changed through the wizard: the rebuild '
                 .'would drop the change. Configure the wizard first, or change the search in tapSearchBuilder().'
-            );
-        }
-
-        if ($this->boolQueryChangedBeforeBuild && $this->isBuilt()) {
-            throw new \LogicException(
-                'The wizard cannot be reconfigured after its bool query was changed and the wizard built: the rebuild '
-                .'would drop the change. Change the bool query in tapSearchBuilder(), which runs on every build.'
             );
         }
 

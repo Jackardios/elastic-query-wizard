@@ -422,11 +422,10 @@ $boolQuery->minimumShouldMatch(1);
 $boolQuery->addMustNot(ElasticQuery::term('is_hidden', true));
 ```
 
-> **Note:** A change made through the wizard's `boolQuery()` or `getBoolQuery()` lives on the built search, which a
-> rebuild replaces. After the build, both lock the configuration: a later change throws a `LogicException`. Before the
-> build, the change is kept when the build succeeds; a failed build drops it, and the next build throws a
-> `LogicException`. A random sort moves the bool query into a `function_score`, so a reference kept from before the
-> build no longer changes the search. Use `tapSearchBuilder()` for a change that survives rebuilds.
+> **Note:** The wizard's `boolQuery()` and `getBoolQuery()` build the wizard first, like other `SearchBuilder` methods
+> that return a value, and return the built search's bool query. A change made there lives on the built search, which a
+> rebuild replaces, so both lock the configuration: a later change throws a `LogicException`. Use `tapSearchBuilder()`
+> for a change that survives rebuilds.
 
 ---
 

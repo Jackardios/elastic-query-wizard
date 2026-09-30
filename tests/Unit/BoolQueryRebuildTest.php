@@ -13,7 +13,7 @@ use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
 /**
- * A change made through boolQuery() lives on the built subject; a rebuild would drop it.
+ * boolQuery() builds the wizard and returns the built search's bool query; a rebuild would drop a change made there.
  */
 #[Group('unit')]
 class BoolQueryRebuildTest extends UnitTestCase
@@ -32,13 +32,35 @@ class BoolQueryRebuildTest extends UnitTestCase
     }
 
     #[Test]
-    public function configuring_before_the_first_build_keeps_the_change(): void
+    public function bool_query_builds_the_wizard_first(): void
     {
-        $wizard = $this->createElasticWizardWithFilters(['status' => 'x']);
+        $wizard = $this->createElasticWizardWithFilters(['status' => 'x'])->allowedFilters(ElasticFilter::term('status'));
+        $boolQuery = $wizard->boolQuery();
+
+        $this->assertSame($wizard->getSubject()->boolQuery(), $boolQuery);
+        $this->assertSame([['term' => ['status' => ['value' => 'x']]]], $this->getFilterQueries($boolQuery));
+    }
+
+    #[Test]
+    public function a_bool_query_change_follows_the_search_builder_calls_made_before_it(): void
+    {
+        $wizard = $this->createElasticWizardWithFilters([]);
+        $wizard->clearBoolQuery();
         $wizard->boolQuery()->addMust(Query::term('extra', 'y'));
-        $wizard->allowedFilters(ElasticFilter::term('status'));
 
         $this->assertSame([['term' => ['extra' => ['value' => 'y']]]], $this->getMustQueries($wizard->build()->boolQuery()));
+    }
+
+    #[Test]
+    public function configuring_after_a_bool_query_change_before_the_build_throws(): void
+    {
+        $wizard = $this->createElasticWizardWithFilters([]);
+        $wizard->boolQuery()->addMust(Query::term('extra', 'y'));
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('the rebuild would drop the change');
+
+        $wizard->allowedFilters(ElasticFilter::term('status'));
     }
 
     #[Test]

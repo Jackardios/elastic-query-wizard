@@ -401,21 +401,19 @@ class ElasticQueryWizardTest extends UnitTestCase
     }
 
     #[Test]
-    public function a_build_that_failed_after_the_bool_query_was_changed_cannot_be_retried(): void
+    public function bool_query_throws_the_error_of_the_build_and_leaves_the_wizard_configurable(): void
     {
         $wizard = $this->createElasticWizardWithFilters(['nope' => 'x'])->allowedFilters('category');
-        $wizard->boolQuery()->filter(ElasticQuery::term('tenant_id', 7));
 
         try {
-            $wizard->build();
+            $wizard->boolQuery();
             $this->fail('The build accepted a filter that is not allowed.');
         } catch (InvalidFilterQuery) {
         }
 
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Change the bool query in tapSearchBuilder()');
+        $body = $wizard->allowedFilters('category', 'nope')->build()->toArray()['body'];
 
-        $wizard->allowedFilters('category', 'nope')->build();
+        $this->assertSame([['term' => ['nope' => ['value' => 'x']]]], $body['query']['bool']['filter']);
     }
 
     #[Test]
