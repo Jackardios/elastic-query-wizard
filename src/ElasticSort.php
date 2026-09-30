@@ -10,6 +10,7 @@ use Jackardios\ElasticQueryWizard\Sorts\NestedSort;
 use Jackardios\ElasticQueryWizard\Sorts\RandomSort;
 use Jackardios\ElasticQueryWizard\Sorts\ScoreSort;
 use Jackardios\ElasticQueryWizard\Sorts\ScriptSort;
+use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\QueryWizard\Sorts\CallbackSort;
 
 final class ElasticSort
@@ -19,9 +20,24 @@ final class ElasticSort
         return FieldSort::make($property, $alias);
     }
 
+    /**
+     * @param  callable(SearchBuilder, string, string): mixed  $callback  Receives the direction as `asc` or `desc`
+     */
     public static function callback(string $name, callable $callback, ?string $alias = null): CallbackSort
     {
-        return CallbackSort::make($name, $callback, $alias);
+        $callback = $callback(...);
+
+        return CallbackSort::make(
+            $name,
+            static function (mixed $builder, string $direction, string $property) use ($callback): mixed {
+                if (! $builder instanceof SearchBuilder) {
+                    throw new \LogicException(sprintf('Callback sort `%s` expects a `%s` subject.', $property, SearchBuilder::class));
+                }
+
+                return $callback($builder, $direction, $property);
+            },
+            $alias
+        );
     }
 
     public static function geoDistance(

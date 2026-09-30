@@ -117,6 +117,9 @@ made since those snapshots.
 
 ### Fixed
 
+- `ElasticSort::callback()` throws a `LogicException` naming the sort when its subject is not a `SearchBuilder`, like
+  `ElasticFilter::callback()`.
+
 - Negated exists and null filters stay in the filter's clause, so they work in `inShould()`, `inMustNot()` and bool
   groups.
 - Random sorts wrap the whole query in a `function_score` and sort by the random score alone.

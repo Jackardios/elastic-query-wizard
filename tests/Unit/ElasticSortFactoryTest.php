@@ -11,6 +11,8 @@ use Jackardios\ElasticQueryWizard\Sorts\NestedSort;
 use Jackardios\ElasticQueryWizard\Sorts\RandomSort;
 use Jackardios\ElasticQueryWizard\Sorts\ScoreSort;
 use Jackardios\ElasticQueryWizard\Sorts\ScriptSort;
+use Jackardios\EsScoutDriver\Search\SearchBuilder;
+use Jackardios\QueryWizard\Enums\SortDirection;
 use Jackardios\QueryWizard\Sorts\CallbackSort;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
@@ -39,6 +41,30 @@ class ElasticSortFactoryTest extends TestCase
         $this->assertInstanceOf(CallbackSort::class, $sort);
         $this->assertEquals('name', $sort->getProperty());
         $this->assertEquals('alias', $sort->getName());
+    }
+
+    #[Test]
+    public function a_callback_sort_passes_the_search_builder_and_the_direction(): void
+    {
+        $received = null;
+        $sort = ElasticSort::callback('name', function (SearchBuilder $builder, string $direction, string $property) use (&$received): void {
+            $received = [$direction, $property];
+        });
+
+        $sort->apply($this->createStub(SearchBuilder::class), SortDirection::Descending);
+
+        $this->assertSame(['desc', 'name'], $received);
+    }
+
+    #[Test]
+    public function a_callback_sort_refuses_a_subject_that_is_not_a_search_builder(): void
+    {
+        $sort = ElasticSort::callback('name', fn (SearchBuilder $builder) => null);
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Callback sort `name` expects a `'.SearchBuilder::class.'` subject.');
+
+        $sort->apply(new \stdClass, SortDirection::Ascending);
     }
 
     #[Test]
