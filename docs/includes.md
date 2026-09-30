@@ -61,7 +61,7 @@ If you disable this exception in config, unknown includes are ignored:
 
 // GET /posts?include=author,secret_relation
 // By default: throws InvalidIncludeQuery
-// With disable_invalid_include_query_exception=true: ignored
+// With ignore_unknown.includes = true: ignored
 ```
 
 ---

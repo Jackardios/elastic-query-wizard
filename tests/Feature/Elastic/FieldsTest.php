@@ -151,7 +151,7 @@ class FieldsTest extends TestCase
     #[Test]
     public function all_invalid_root_fields_hide_every_root_attribute_when_the_exception_is_disabled(): void
     {
-        Config::set('query-wizard.disable_invalid_field_query_exception', true);
+        Config::set('query-wizard.ignore_unknown.fields', true);
 
         $model = $this
             ->createElasticWizardWithFields(['testModel' => 'totally_unknown_field'])

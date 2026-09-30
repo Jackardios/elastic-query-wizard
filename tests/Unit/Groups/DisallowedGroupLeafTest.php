@@ -47,7 +47,7 @@ class DisallowedGroupLeafTest extends UnitTestCase
     #[Test]
     public function a_disallowed_leaf_is_ignored_when_the_exception_is_disabled(): void
     {
-        config()->set('query-wizard.disable_invalid_filter_query_exception', true);
+        config()->set('query-wizard.ignore_unknown.filters', true);
 
         $wizard = $this->createElasticWizardWithFilters(['internal_flag' => '1'])
             ->allowedFilters($this->group())

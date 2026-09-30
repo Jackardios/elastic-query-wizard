@@ -399,7 +399,7 @@ configuration call after `build()` throws a `LogicException` instead of rebuildi
 
 Root and relation fieldsets follow `laravel-query-wizard`'s `EloquentQueryWizard`: an explicit empty root fieldset
 (`?fields[post]=`) and a root fieldset whose fields were all dropped as invalid (with
-`disable_invalid_field_query_exception` on) hide every root attribute. Before, both returned every column. Without a
+`ignore_unknown.fields` on) hide every root attribute. Before, both returned every column. Without a
 `fields` parameter for the resource the models keep every attribute, as before.
 
 The primary key and the Scout key are always selected, and hidden unless requested. A root fieldset keeps the count and
@@ -427,9 +427,10 @@ The request is parsed by `laravel-query-wizard` v3, whose stricter rules apply t
 - A filter value of the wrong shape (a list where a filter takes one value, a scalar for `dateRange`) → 400
   (`InvalidFilterQuery`).
 - Blank values are absent: `null`, a whitespace-only string, `,` and a list of blanks add no condition, and with
-  `apply_filter_default_on_null` the default applies to them.
-- An empty `?sort=` (also `-` and `,`) → 400 (`InvalidSortQuery`), unless `disable_invalid_sort_query_exception` is on,
-  in which case the default sorts apply.
+  `filters.apply_default_on_null` the default applies to them.
+- An empty `?sort=` (also `-` and `,`) → 400 (`InvalidSortQuery`).
+- `laravel-query-wizard` 3.0 moved configuration keys (`disable_invalid_*_query_exception` → `ignore_unknown.*` and
+  others); see its UPGRADE.md.
 - Count and exists includes are allowed only explicitly: `allowedIncludes('comments')` does not allow `commentsCount`.
 - `defaultSorts()`, `defaultIncludes()` and the other `default*()` methods replace the schema defaults; calling one
   without arguments sets no defaults.

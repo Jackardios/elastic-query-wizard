@@ -99,7 +99,7 @@ If you disable this exception in config, unknown filters are ignored:
 
 // GET /posts?filter[status]=active&filter[secret_field]=value
 // By default: throws InvalidFilterQuery
-// With disable_invalid_filter_query_exception=true: ignored
+// With ignore_unknown.filters = true: ignored
 ```
 
 Allow-listing decides *which* filters run, not what a caller may put inside one. Three filters pass the raw value
@@ -1622,7 +1622,7 @@ carries the value (`$exception->filterValue`) and what was expected (`$exception
 A value of the wrong shape for the filter (for example a list for `exists`) is rejected earlier with 400
 `InvalidFilterQuery`. Blank values (`null`, whitespace) add no condition, and neither does `,` for a filter that splits
 its value; the filters that keep their value whole ([Value Splitting](#value-splitting)) send `,` as the text.
-`disable_invalid_filter_query_exception` covers unknown filter names only, not unreadable values.
+`ignore_unknown.filters` covers unknown filter names only, not unreadable values.
 
 A range bound that is a date is passed on as sent, and Elasticsearch reads it with the field's format, in UTC unless
 the query sets `time_zone` (`->withParameters(['time_zone' => '+03:00'])`).

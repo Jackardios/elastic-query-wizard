@@ -58,7 +58,7 @@ If you disable this exception in config, unknown sorts are ignored:
 
 // GET /posts?sort=secret_field
 // By default: throws InvalidSortQuery
-// With disable_invalid_sort_query_exception=true: ignored
+// With ignore_unknown.sorts = true: ignored
 ```
 
 ---
