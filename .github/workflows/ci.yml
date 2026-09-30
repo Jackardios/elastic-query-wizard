@@ -64,11 +64,12 @@ jobs:
             es_client: '8'
             dependencies: 'lowest'
             framework-floor: '12.69.0'
+          # The Laravel 13 floor runs on ES 9, so the lowest legs cover both client majors.
           - php: '8.3'
             laravel: '13'
             testbench: '11'
-            elasticsearch: '8.19.22'
-            es_client: '8'
+            elasticsearch: '9.5.3'
+            es_client: '9'
             dependencies: 'lowest'
             framework-floor: '13.30.0'
         exclude:
@@ -120,10 +121,17 @@ jobs:
           echo "laravel/framework ${installed}"
           test "${installed}" = "v${{ matrix.framework-floor }}"
 
+      - name: Show the installed Elasticsearch client
+        run: |
+          for package in elasticsearch/elasticsearch babenkoivan/elastic-migrations; do
+            composer show "${package}" | grep -E '^(name|versions) '
+          done
+
       - name: Run tests
         run: vendor/bin/phpunit --colors=always
         env:
           ELASTIC_HOST: localhost:9200
+          TESTBENCH_CONVERT_DEPRECATIONS_TO_EXCEPTIONS: 'true'
 
   static-analysis:
     name: Static Analysis (PHPStan, PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }})
