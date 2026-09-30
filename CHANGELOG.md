@@ -50,6 +50,12 @@ made since those snapshots.
   read, and throws `InvalidArgumentException` for a generator, which post-processing would use up.
 - Requests are subject to `laravel-query-wizard`'s `limits.max_fields_count` (100 fields across every fieldset by
   default), and include, sort, field and append limits are checked while the request is read.
+- `ElasticQueryWizard::for()` and the constructor take the model class only; a model instance, which searched the whole
+  index rather than that model, is a `TypeError`. A schema whose `model()` is not the searched model throws
+  `InvalidArgumentException`, and filters added with `addAllowedFilters()` are checked for name conflicts with the
+  others.
+- `asBoolean()` throws `LogicException` on the text, pattern, more-like-this, range, date range, geo, ids and trashed
+  filters and on groups, which can't take booleans; term, exists, null and nested filters accept it.
 
 ### Added
 

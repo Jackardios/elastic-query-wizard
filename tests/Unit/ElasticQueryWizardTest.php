@@ -7,15 +7,21 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Jackardios\ElasticQueryWizard\ElasticFilter;
+use Jackardios\ElasticQueryWizard\ElasticGroup;
 use Jackardios\ElasticQueryWizard\ElasticQuery;
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
 use Jackardios\ElasticQueryWizard\Filters\TermFilter;
 use Jackardios\ElasticQueryWizard\Sorts\FieldSort;
+use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\GeoModel;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\QueryWizard\Enums\SortDirection;
+use Jackardios\QueryWizard\Filters\AbstractFilter;
+use Jackardios\QueryWizard\Schema\ResourceSchema;
 use Jackardios\QueryWizard\Values\Sort;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -115,12 +121,59 @@ class ElasticQueryWizardTest extends UnitTestCase
     }
 
     #[Test]
-    public function it_creates_wizard_from_model_instance(): void
+    public function it_rejects_a_model_instance(): void
     {
-        $model = new TestModel;
-        $wizard = ElasticQueryWizard::for($model);
+        $this->expectException(\TypeError::class);
 
-        $this->assertInstanceOf(ElasticQueryWizard::class, $wizard);
+        ElasticQueryWizard::for(new TestModel);
+    }
+
+    #[Test]
+    public function it_rejects_a_schema_of_another_model(): void
+    {
+        $schema = new class extends ResourceSchema
+        {
+            public function model(): string
+            {
+                return GeoModel::class;
+            }
+        };
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('describes '.GeoModel::class.', but the wizard queries '.TestModel::class.'.');
+
+        ElasticQueryWizard::for(TestModel::class)->schema($schema);
+    }
+
+    /**
+     * @return iterable<string, array{\Closure(): AbstractFilter}>
+     */
+    public static function filtersWithoutBooleans(): iterable
+    {
+        yield 'match' => [fn () => ElasticFilter::match('name')];
+        yield 'range' => [fn () => ElasticFilter::range('price')];
+        yield 'dateRange' => [fn () => ElasticFilter::dateRange('created_at')];
+        yield 'geoDistance' => [fn () => ElasticFilter::geoDistance('location')];
+        yield 'ids' => [fn () => ElasticFilter::ids('id')];
+        yield 'trashed' => [fn () => ElasticFilter::trashed()];
+        yield 'bool group' => [fn () => ElasticGroup::bool('should')];
+    }
+
+    #[Test]
+    #[DataProvider('filtersWithoutBooleans')]
+    public function as_boolean_throws_on_filters_that_do_not_take_booleans(\Closure $make): void
+    {
+        $this->expectException(\LogicException::class);
+
+        $make()->asBoolean();
+    }
+
+    #[Test]
+    public function as_boolean_is_accepted_by_filters_that_take_booleans(): void
+    {
+        foreach ([ElasticFilter::term('active'), ElasticFilter::exists('active'), ElasticFilter::null('deleted_at')] as $filter) {
+            $this->assertSame($filter, $filter->asBoolean());
+        }
     }
 
     #[Test]

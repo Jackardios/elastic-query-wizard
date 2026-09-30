@@ -101,24 +101,37 @@ class ElasticQueryWizard extends BaseQueryWizard
      */
     private bool $boolQueryChangedBeforeBuild = false;
 
+    /**
+     * @param  class-string<Model>  $subject  A model class using the `Jackardios\EsScoutDriver\Searchable` trait
+     *
+     * @throws \InvalidArgumentException When the class is not a searchable model, or the schema describes another model
+     */
     public function __construct(
-        Model|string $subject,
+        string $subject,
         ?QueryParametersManager $parameters = null,
         ?QueryWizardConfig $config = null,
         ?ResourceSchemaInterface $schema = null,
     ) {
-        $modelClass = is_string($subject) ? $subject : $subject::class;
-
-        if (! (is_subclass_of($modelClass, Model::class) && method_exists($modelClass, 'searchQuery'))) {
+        if (! (is_subclass_of($subject, Model::class) && method_exists($subject, 'searchQuery'))) {
             throw new \InvalidArgumentException('$subject must be a model that uses `Jackardios\EsScoutDriver\Searchable` trait');
         }
 
-        $this->modelClass = $modelClass;
+        $this->modelClass = $subject;
 
-        parent::__construct($modelClass::searchQuery(), $parameters, $config, $schema);
+        parent::__construct($subject::searchQuery(), $parameters, $config, $schema);
+
+        if ($schema !== null) {
+            $this->assertSchemaDescribesResourceModel($schema);
+        }
     }
 
-    public static function for(Model|string $subject, ?QueryParametersManager $parameters = null): static
+    /**
+     * Search a model class. A model instance is not accepted: the search would
+     * cover the whole index, not that model.
+     *
+     * @param  class-string<Model>  $subject
+     */
+    public static function for(string $subject, ?QueryParametersManager $parameters = null): static
     {
         return new static($subject, $parameters);
     }
@@ -270,9 +283,7 @@ class ElasticQueryWizard extends BaseQueryWizard
     protected function getEffectiveFilters(): array
     {
         if ($this->cachedEffectiveFilters === null) {
-            $this->assertNoFilterNameConflicts(
-                $this->allowedFiltersExplicitlySet ? $this->allowedFilters : ($this->getSchema()?->filters($this) ?? [])
-            );
+            $this->assertNoFilterNameConflicts($this->getConfiguredFilters());
         }
 
         return parent::getEffectiveFilters();

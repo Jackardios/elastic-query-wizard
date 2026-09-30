@@ -21,6 +21,10 @@ This guide covers migrating from `jackardios/elastic-query-wizard` v2 to v3.
 
 > **Important:** The underlying ES driver changed from `elastic-scout-driver-plus` to `es-scout-driver`. This is a completely different package with different APIs.
 
+`ElasticQueryWizard::for()` takes the model class (`ElasticQueryWizard::for(Post::class)`); a model instance is a
+`TypeError`. The configuration rules of `laravel-query-wizard` 3.0 apply as well: `disallowed*()` calls add up, defaults
+apply without being allowed, and duplicate public names throw. See its UPGRADE.md.
+
 ---
 
 ## Removed/Renamed Classes

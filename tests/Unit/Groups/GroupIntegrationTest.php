@@ -394,6 +394,19 @@ class GroupIntegrationTest extends UnitTestCase
     }
 
     #[Test]
+    public function a_leaf_in_an_added_group_and_an_allowed_group_is_refused(): void
+    {
+        $this->expectException(FilterNameConflictException::class);
+        $this->expectExceptionMessage('Filter(s) status are in more than one group');
+
+        $this
+            ->createElasticWizardWithFilters(['status' => 'open'])
+            ->allowedFilters(ElasticGroup::bool('a')->children([ElasticFilter::term('status')]))
+            ->addAllowedFilters(ElasticGroup::bool('b')->inMustNot()->children([ElasticFilter::term('status')]))
+            ->build();
+    }
+
+    #[Test]
     public function a_leaf_in_two_groups_is_refused(): void
     {
         $this->expectException(FilterNameConflictException::class);
