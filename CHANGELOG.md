@@ -16,6 +16,23 @@ made since those snapshots.
   floors), `laravel-query-wizard` ^3.0.0-rc.5 and `es-scout-driver` ^1.0.0-rc.1.
   CI runs Elasticsearch 8.19 and 9.5.
 
+### Added
+
+- `MaxResultWindowExceeded::ERROR_CODE`, like `laravel-query-wizard`'s error code constants.
+- `GeoShapeFilter::indexedShapes()`.
+- `MoreLikeThisFilter::allowDocumentReferences()`, see Security.
+- `DateRangeFilter::esFormat()`.
+- `withParameters(['boost' => …])` on prefix and exists filters (their `es-scout-driver` queries gained `boost()`).
+- `maxLength()` on the text, pattern and more-like-this filters; a longer value is a 400. `regexp` and `prefix` default
+  to 1000 characters, Elasticsearch's `index.max_regex_length`, and `fuzzy` to 256.
+- `asNumber()` on `term`, `range` and `ids` filters reads values as decimal numbers and returns 400 for anything else,
+  such as text or a date for a numeric field, where Elasticsearch fails the search.
+- `ElasticQueryWizard::paginate()` answers a page that ends past the result window with 400 `MaxResultWindowExceeded`
+  instead of letting Elasticsearch refuse it with a 500. The window is `elastic-query-wizard.max_result_window`
+  (10000, `null` turns the check off).
+- Geo bounding boxes take named edges (`left`, `bottom`, `right`, `top`); geo shape polygons keep their holes and are
+  closed when their last point differs from their first.
+
 ### Changed
 
 - The exceptions drop the `Exception` suffix and are final, like `laravel-query-wizard`'s:
@@ -31,7 +48,9 @@ made since those snapshots.
   `laravel-query-wizard`'s `tap()`.
 - `HasParameters::applyParametersOnQuery()` is protected; the `Concerns` traits, `AbstractElasticInclude::setSearchResult()`
   and the protected internals of `ElasticQueryWizard` are `@internal`. The README's Backward Compatibility section lists
-  what 3.x keeps stable, following `laravel-query-wizard`.
+  what 3.x keeps stable, following `laravel-query-wizard`: public methods not marked `@internal`, and the protected
+  members marked `@api` of `AbstractElasticFilter`, `AbstractElasticSort`, `AbstractElasticInclude` and
+  `AbstractElasticGroup`, the classes meant to be extended.
 - `GroupInterface` requires `getEffectiveClause()`, so a group that implements it directly goes to the clause it names
   inside another group (it always went to `filter`).
 - Exception messages follow `laravel-query-wizard`'s: names in backticks, and `Call to undefined method …()` for a
@@ -86,22 +105,6 @@ made since those snapshots.
 - `asBoolean()` throws `LogicException` on the text, pattern, more-like-this, range, date range, geo, ids and trashed
   filters and on groups, which can't take booleans; term, exists, null and nested filters accept it.
 
-### Added
-
-- `MaxResultWindowExceeded::ERROR_CODE`, like `laravel-query-wizard`'s error code constants.
-- `GeoShapeFilter::indexedShapes()`.
-- `DateRangeFilter::esFormat()`.
-- `withParameters(['boost' => …])` on prefix and exists filters (their `es-scout-driver` queries gained `boost()`).
-- `maxLength()` on the text, pattern and more-like-this filters; a longer value is a 400. `regexp` and `prefix` default
-  to 1000 characters, Elasticsearch's `index.max_regex_length`, and `fuzzy` to 256.
-- `asNumber()` on `term`, `range` and `ids` filters reads values as decimal numbers and returns 400 for anything else,
-  such as text or a date for a numeric field, where Elasticsearch fails the search.
-- `ElasticQueryWizard::paginate()` answers a page that ends past the result window with 400 `MaxResultWindowExceeded`
-  instead of letting Elasticsearch refuse it with a 500. The window is `elastic-query-wizard.max_result_window`
-  (10000, `null` turns the check off).
-- Geo bounding boxes take named edges (`left`, `bottom`, `right`, `top`); geo shape polygons keep their holes and are
-  closed when their last point differs from their first.
-
 ### Removed
 
 - `getType()` on filters, sorts, includes and groups, following `laravel-query-wizard`, which no longer reads it. A
@@ -110,16 +113,18 @@ made since those snapshots.
 - `case_insensitive` on the term filter: its multi-value `terms` query does not support it, and Elasticsearch rejected
   such a request. `withParameters(['case_insensitive' => …])` throws `InvalidArgumentException`.
 - The protected `ElasticQueryWizard` internals of the `dev-master` snapshots that subclasses could override:
-  `applyPostProcessingToResults()`, `finalizeSubject()`, `addBuildQueryModifier()` and the `HandlesSafeRelationSelect`
-  and `HandlesRelationPostProcessing` traits. Models are shaped by `EloquentShape`; use `modifyQuery()`,
+  `applyPostProcessingToResults()`, `finalizeSubject()`, `addBuildQueryModifier()`, `prepareAppendTreeData()`,
+  `prepareRelationFieldData()`, the `$appendTree`, `$relationFieldTree`, `$buildQueryModifiers`,
+  `$safeRootHiddenFields` and `$validatedRequestedRootFields` properties with their `…Prepared` flags, and the
+  `HandlesSafeRelationSelect` and `HandlesRelationPostProcessing` traits. Models are shaped by `EloquentShape`; use `modifyQuery()`,
   `modifyModels()` and `tapSearchBuilder()`.
 - `DateRangeFilter::dateFormat()`; use `esFormat()`.
+- `NullFilter::withInvertedLogic()` and `withoutInvertedLogic()`; use `ElasticFilter::notNull()`.
 
 ### Fixed
 
 - `ElasticSort::callback()` throws a `LogicException` naming the sort when its subject is not a `SearchBuilder`, like
   `ElasticFilter::callback()`.
-
 - Negated exists and null filters stay in the filter's clause, so they work in `inShould()`, `inMustNot()` and bool
   groups.
 - Random sorts wrap the whole query in a `function_score` and sort by the random score alone.
@@ -161,18 +166,20 @@ made since those snapshots.
 
 - The docs name the values Elasticsearch refuses that the package cannot check (complex wildcard patterns, missing
   indexed shapes, numbers outside a field's type) and warn about fuzzy terms in `simpleQueryString`.
-
 - More-like-this filters take document references (`filter[similar][_id]=5`) only after `allowDocumentReferences()`;
   otherwise a reference is a 400. Elasticsearch reads the referenced document regardless of the search's conditions,
   so a client could learn what a document of another tenant contains.
-
 - `prefix` refuses a value longer than 1000 characters, like `regexp`, and `fuzzy` one longer than 256, with a 400;
   `maxLength()` changes the limit. A long prefix failed the search, and a long fuzzy term could trip Elasticsearch's
   circuit breaker.
-
 - `disallowedFilters()` removes a filter inside a bool or nested group, as it removes one at the root: its request key
   is refused and its default is not applied. It used to reach Elasticsearch.
 - A client can no longer read documents of other indices through more-like-this references or indexed shapes, or
   search fields outside a query string filter's property without a field-qualified term.
 
+## [2.2.0] and earlier
+
+See the [GitHub releases](https://github.com/Jackardios/elastic-query-wizard/releases).
+
 [3.0.0]: https://github.com/Jackardios/elastic-query-wizard/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/Jackardios/elastic-query-wizard/releases/tag/v2.2.0
