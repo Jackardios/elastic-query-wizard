@@ -448,8 +448,9 @@ The request is parsed by `laravel-query-wizard` v3, whose stricter rules apply t
   `withValueSplitting()` does not restore the v2 behavior; it turns a value containing the separator into a 400.
   `moreLikeThis` keeps a value whole too and reads a list as several texts.
 - **Filter groups take no value modifiers.** `default()`, `prepareValueWith()`, `when()`, `asBoolean()`,
-  `allowStructuredInput()`, `withValueSplitting()` and `withoutValueSplitting()` on a bool or nested group throw a
-  `LogicException` when the group is configured, since a group has no value of its own; call them on a child filter.
+  `withStructuredInput()`, `withoutStructuredInput()`, `withValueSplitting()` and `withoutValueSplitting()` on a bool or
+  nested group throw a `LogicException` when the group is configured, since a group has no value of its own; call them
+  on a child filter.
 - **Negated exists and null filters** stay in the filter's clause: in `inShould()` or a bool group a negated condition
   is one alternative (v2 added a `must_not` that excluded the documents from every alternative), and in `inMustNot()`
   the double negation requires the field.
@@ -751,7 +752,7 @@ ElasticInclude::callback('name', function(Builder $builder, string $relation) {
 - `ElasticFilter::queryString()` — Lucene query syntax
 - `ElasticFilter::simpleQueryString()` — simple query syntax
 - `ElasticFilter::dateRange()` — date range with format
-- `ElasticFilter::null()` — null/missing field queries
+- `ElasticFilter::null()` and `ElasticFilter::notNull()` — null/missing field queries
 - `ElasticFilter::nested()` — nested document filtering
 - `ElasticFilter::moreLikeThis()` — similar documents
 - `ElasticFilter::passthrough()` — raw value passthrough

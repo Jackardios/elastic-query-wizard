@@ -46,6 +46,7 @@ Filters allow you to limit Elasticsearch query results based on query parameters
 | `range` | Numeric/date ranges | `ElasticFilter::range('price')` |
 | `exists` | Field presence check | `ElasticFilter::exists('thumbnail')` |
 | `null` | NULL/NOT NULL check | `ElasticFilter::null('deleted_at')` |
+| `notNull` | NOT NULL/NULL check | `ElasticFilter::notNull('thumbnail')` |
 | `multiMatch` | Search across multiple fields | `ElasticFilter::multiMatch(['title', 'body'], 'q')` |
 | `wildcard` | Pattern matching (`*`, `?`) — see [warning](#wildcard-filter) | `ElasticFilter::wildcard('sku')` |
 | `prefix` | Prefix-based search (autocomplete) | `ElasticFilter::prefix('username')` |
@@ -406,27 +407,18 @@ GET /posts?filter[is_deleted]=false
 { "exists": { "field": "deleted_at" } }
 ```
 
-### Inverted Logic
+### Not Null
 
-By default, a truthy value means "field IS NULL". You can invert this behavior:
+`ElasticFilter::notNull()` reverses the meaning: a truthy value means "field exists" (NOT NULL).
 
 ```php
-// Inverted: truthy means "field exists" (NOT NULL)
-ElasticFilter::null('thumbnail', 'has_thumbnail')->withInvertedLogic()
+ElasticFilter::notNull('thumbnail', 'has_thumbnail')
 ```
 
 ```
-# With inverted logic:
 # filter[has_thumbnail]=1 → field EXISTS (NOT NULL)
 # filter[has_thumbnail]=0 → field DOES NOT EXIST (NULL)
 ```
-
-### Configuration Methods
-
-| Method | Description |
-|--------|-------------|
-| `withInvertedLogic()` | Invert behavior: truthy → NOT NULL, falsy → NULL |
-| `withoutInvertedLogic()` | Reset to default behavior |
 
 ### Difference from Exists Filter
 

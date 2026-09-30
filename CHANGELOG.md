@@ -21,6 +21,8 @@ made since those snapshots.
   `laravel-query-wizard`'s enums and those of `es-scout-driver`.
 - `AbstractElasticSort::handle()` and `apply()` take a `SortDirection` (was `'asc'`/`'desc'`), following
   `laravel-query-wizard`'s `SortInterface`; pass `$direction->value` to `order()`. Callback sorts still receive the string.
+- `ElasticFilter::notNull()` (`NullFilter::notNull()`) replaces `ElasticFilter::null()->withInvertedLogic()`, and
+  `withStructuredInput()` replaces `allowStructuredInput()`, following `laravel-query-wizard`.
 - The searched models are loaded through `laravel-query-wizard`'s `EloquentShape`, so includes, sparse fieldsets and
   appends behave as in `EloquentQueryWizard`: an explicit empty root fieldset hides every root attribute, the primary
   and Scout keys are selected and hidden unless requested, and a relation fieldset runs after the eager-load
@@ -48,8 +50,8 @@ made since those snapshots.
 - The text and pattern filters take one value: a list is a 400 for `prefix`, `wildcard`, `regexp`, `fuzzy`, the match
   family, `queryString` and `simpleQueryString` (the match family and the query string filters joined it with `,`).
   `moreLikeThis` reads a list as several texts.
-- `default()`, `prepareValueWith()`, `when()`, `asBoolean()`, `allowStructuredInput()`, `withValueSplitting()` and
-  `withoutValueSplitting()` on a filter group throw a `LogicException`.
+- `default()`, `prepareValueWith()`, `when()`, `asBoolean()`, `withStructuredInput()`, `withoutStructuredInput()`,
+  `withValueSplitting()` and `withoutValueSplitting()` on a filter group throw a `LogicException`.
 - `applyPostProcessingTo()` returns a new lazy collection for a lazy collection, post-processing each model as it is
   read, and throws `InvalidArgumentException` for a generator, which post-processing would use up.
 - Requests are subject to `laravel-query-wizard`'s `limits.max_fields_count` (100 fields across every fieldset by

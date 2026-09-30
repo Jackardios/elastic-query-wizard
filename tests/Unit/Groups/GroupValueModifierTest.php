@@ -34,7 +34,8 @@ class GroupValueModifierTest extends UnitTestCase
             'prepareValueWith' => fn (AbstractElasticGroup $group) => $group->prepareValueWith(fn ($value) => $value),
             'when' => fn (AbstractElasticGroup $group) => $group->when(fn () => true),
             'asBoolean' => fn (AbstractElasticGroup $group) => $group->asBoolean(),
-            'allowStructuredInput' => fn (AbstractElasticGroup $group) => $group->allowStructuredInput(),
+            'withStructuredInput' => fn (AbstractElasticGroup $group) => $group->withStructuredInput(),
+            'withoutStructuredInput' => fn (AbstractElasticGroup $group) => $group->withoutStructuredInput(),
             'withValueSplitting' => fn (AbstractElasticGroup $group) => $group->withValueSplitting(),
             'withoutValueSplitting' => fn (AbstractElasticGroup $group) => $group->withoutValueSplitting(),
         ];

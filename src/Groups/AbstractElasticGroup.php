@@ -105,9 +105,17 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
     /**
      * @throws LogicException A group has no value of its own; let a child filter read structured input
      */
-    public function allowStructuredInput(): static
+    public function withStructuredInput(): static
     {
-        throw $this->valueModifierException('allowStructuredInput');
+        throw $this->valueModifierException('withStructuredInput');
+    }
+
+    /**
+     * @throws LogicException A group has no value of its own; let a child filter validate its raw input
+     */
+    public function withoutStructuredInput(): static
+    {
+        throw $this->valueModifierException('withoutStructuredInput');
     }
 
     /**

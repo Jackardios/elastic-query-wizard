@@ -67,7 +67,7 @@ final class MoreLikeThisFilter extends AbstractElasticFilter
         parent::__construct($property, $alias);
         $this->fields = $fields;
 
-        $this->allowStructuredInput();
+        $this->withStructuredInput();
     }
 
     /**

@@ -102,11 +102,11 @@ class NullFilterQueryTest extends UnitTestCase
     }
 
     #[Test]
-    public function it_inverts_logic_for_truthy_value(): void
+    public function not_null_filter_handles_truthy_value(): void
     {
         $wizard = $this
             ->createElasticWizardWithFilters(['has_value' => 'true'])
-            ->allowedFilters(NullFilter::make('thumbnail', 'has_value')->withInvertedLogic());
+            ->allowedFilters(NullFilter::notNull('thumbnail', 'has_value'));
         $wizard->build();
 
         $filterQueries = $this->getFilterQueries($wizard->boolQuery());
@@ -119,11 +119,11 @@ class NullFilterQueryTest extends UnitTestCase
     }
 
     #[Test]
-    public function it_inverts_logic_for_falsy_value(): void
+    public function not_null_filter_handles_falsy_value(): void
     {
         $wizard = $this
             ->createElasticWizardWithFilters(['has_value' => 'false'])
-            ->allowedFilters(NullFilter::make('thumbnail', 'has_value')->withInvertedLogic());
+            ->allowedFilters(NullFilter::notNull('thumbnail', 'has_value'));
         $wizard->build();
 
         $filterQueries = $this->getFilterQueries($wizard->boolQuery());
@@ -136,32 +136,11 @@ class NullFilterQueryTest extends UnitTestCase
     }
 
     #[Test]
-    public function it_can_reset_inverted_logic(): void
-    {
-        $wizard = $this
-            ->createElasticWizardWithFilters(['is_null' => 'true'])
-            ->allowedFilters(
-                NullFilter::make('deleted_at', 'is_null')
-                    ->withInvertedLogic()
-                    ->withoutInvertedLogic()
-            );
-        $wizard->build();
-
-        $filterQueries = $this->getFilterQueries($wizard->boolQuery());
-        $mustNotQueries = $this->getMustNotQueries($wizard->boolQuery());
-
-        // Back to normal: truthy means NULL (field doesn't exist)
-        $this->assertEmpty($filterQueries);
-        $this->assertCount(1, $mustNotQueries);
-        $this->assertEquals(['exists' => ['field' => 'deleted_at']], $mustNotQueries[0]);
-    }
-
-    #[Test]
-    public function it_inverts_logic_for_integer_1(): void
+    public function not_null_filter_handles_integer_1(): void
     {
         $wizard = $this
             ->createElasticWizardWithFilters(['has_value' => '1'])
-            ->allowedFilters(NullFilter::make('thumbnail', 'has_value')->withInvertedLogic());
+            ->allowedFilters(NullFilter::notNull('thumbnail', 'has_value'));
         $wizard->build();
 
         $filterQueries = $this->getFilterQueries($wizard->boolQuery());
@@ -172,11 +151,11 @@ class NullFilterQueryTest extends UnitTestCase
     }
 
     #[Test]
-    public function it_inverts_logic_for_integer_0(): void
+    public function not_null_filter_handles_integer_0(): void
     {
         $wizard = $this
             ->createElasticWizardWithFilters(['has_value' => '0'])
-            ->allowedFilters(NullFilter::make('thumbnail', 'has_value')->withInvertedLogic());
+            ->allowedFilters(NullFilter::notNull('thumbnail', 'has_value'));
         $wizard->build();
 
         $mustNotQueries = $this->getMustNotQueries($wizard->boolQuery());

@@ -135,6 +135,11 @@ final class ElasticFilter
         return NullFilter::make($property, $alias);
     }
 
+    public static function notNull(string $property, ?string $alias = null): NullFilter
+    {
+        return NullFilter::notNull($property, $alias);
+    }
+
     /**
      * @param  string  $path  The nested document path (e.g., 'comments', 'variants')
      * @param  string  $property  The field within the nested document to filter on

@@ -60,11 +60,11 @@ class NullFilterTest extends TestCase
     }
 
     #[Test]
-    public function it_can_invert_logic_for_true(): void
+    public function not_null_filter_matches_existing_field_for_true(): void
     {
         $result = $this
             ->createElasticWizardWithFilters(['category' => 'true'])
-            ->allowedFilters(NullFilter::make('category')->withInvertedLogic())
+            ->allowedFilters(NullFilter::notNull('category'))
             ->build()
             ->execute()
             ->models();
@@ -74,11 +74,11 @@ class NullFilterTest extends TestCase
     }
 
     #[Test]
-    public function it_can_invert_logic_for_false(): void
+    public function not_null_filter_matches_missing_field_for_false(): void
     {
         $result = $this
             ->createElasticWizardWithFilters(['category' => 'false'])
-            ->allowedFilters(NullFilter::make('category')->withInvertedLogic())
+            ->allowedFilters(NullFilter::notNull('category'))
             ->build()
             ->execute()
             ->models();
