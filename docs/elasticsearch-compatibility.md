@@ -15,6 +15,10 @@ This package supports Elasticsearch 8.x and 9.x. This document covers version-sp
 |---------------|--------|-------|
 | 8.x | Fully supported | Recommended for production |
 | 9.x | Fully supported | Some features removed (see below) |
+
+Use the `elasticsearch/elasticsearch` client of the server's major version. The 8.x client asks a 9.x server to accept
+8.x requests, so a parameter removed in 9.x (such as `force_source`) only draws a deprecation warning through it; the
+9.x client gets the error the tables below describe.
 | 7.x and below | Not supported | Use older package versions |
 
 ## Elasticsearch 9.x Breaking Changes
@@ -28,7 +32,6 @@ If you're using or upgrading to Elasticsearch 9.x, be aware of these removed/cha
 | Range `from`/`to` params | Supported | Removed | Use `gt`/`gte`/`lt`/`lte` |
 | `_knn_search` endpoint | Available | Removed | Use `knn` in `_search` |
 | `force_source` highlighting | Supported | Removed | Remove this parameter |
-| Boolean histogram aggregation | Works | Error | Use `terms` aggregation |
 | Frozen indices | Supported | Removed | Unfreeze before upgrade |
 
 ### Changed Behavior
@@ -70,11 +73,10 @@ the same way.
 
 ### Boolean Aggregations
 
-```php
-// Wrong: histogram on boolean field (fails on ES 9.x)
-// ->aggregate('by_active', ElasticAggregation::histogram('is_active', 1))
+A histogram on a boolean field works on Elasticsearch 8 and 9 (checked on 9.3 and 9.5), with the keys `0` and `1`. A
+`terms` aggregation gives `true` and `false` keys instead:
 
-// Correct: use terms aggregation
+```php
 ->aggregate('by_active', ElasticAggregation::terms('is_active'))
 ```
 
@@ -109,22 +111,12 @@ the same way.
 2. **Audit your code** for these patterns:
    - `random_score` without explicit `field`
    - `force_source` in highlight options
-   - Histogram aggregations on boolean fields
    - Direct `_knn_search` endpoint calls
 
 ### Code Changes Required
 
 **Random sorting:** `ElasticSort::random()->seed()` needs no change, since it sets `field` to `_seq_no`. Add `field` to
 any `random_score` you build yourself.
-
-**Boolean aggregations:**
-```php
-// Before (ES 8.x)
-->aggregate('active', ElasticAggregation::histogram('is_active', 1))
-
-// After (ES 8.x/9.x compatible)
-->aggregate('active', ElasticAggregation::terms('is_active'))
-```
 
 **Highlighting:**
 ```php
@@ -145,5 +137,4 @@ runs on both with `make test-es8` and `make test-es9` from its repository.
 This package handles most ES 8.x/9.x differences internally. The filters, sorts, and includes work identically on both versions. The main areas requiring attention are:
 
 1. **Custom queries** via `tapSearchBuilder()` — Review for deprecated features
-2. **Direct aggregations** via `aggregate()` — Check for histogram on booleans
-3. **Custom highlighting options** — Remove `force_source`
+2. **Custom highlighting options** — Remove `force_source`

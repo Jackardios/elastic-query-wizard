@@ -830,8 +830,7 @@ v3 is compatible with ES 8.x and 9.x. Key notes:
 1. **Range queries:** Use `gt/gte/lt/lte` (not `from/to`) — legacy operators throw exception
 2. **Random sorting:** A seeded `random_score` needs a `field`; `ElasticSort::random()->seed()` sets `_seq_no` for you
 3. **Highlighting:** `force_source` parameter removed
-4. **Histogram aggregation:** Cannot use on boolean fields (use `terms` instead)
-5. **Circle geo shape:** Not supported (use `GeoDistanceFilter` instead)
+4. **Circle geo shape:** Not supported (use `GeoDistanceFilter` instead)
 
 ---
 

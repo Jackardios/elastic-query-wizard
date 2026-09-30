@@ -1614,7 +1614,7 @@ ElasticGroup::nested('comments')
     ->innerHits([            // Retrieve matching nested documents
         'name' => 'matched_comments',
         'size' => 3,
-        'sort' => [['date' => ['order' => 'desc']]],
+        'sort' => [['comments.date' => ['order' => 'desc']]],
     ])
     ->inFilter()
     ->children([...])
@@ -1637,7 +1637,7 @@ ElasticGroup::nested('comments')
 | `name` | Name for the inner_hits result set; defaults to the group's name (its alias, or else its path) |
 | `size` | Maximum number of nested docs to return (default: 3) |
 | `from` | Offset for pagination |
-| `sort` | Sort order for nested documents |
+| `sort` | Sort order for nested documents, by full path (`comments.date`, not `date`) |
 | `highlight` | Highlight matching fields |
 | `_source` | Fields to include in the response |
 

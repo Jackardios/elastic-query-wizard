@@ -168,7 +168,7 @@ ElasticQueryWizard::forSchema(PostSchema::class)
 ElasticQueryWizard::forSchema(PostSchema::class)
     ->tapSearchBuilder(fn ($builder) => $builder->filter(ElasticQuery::term('status', 'published')))
     ->disallowedFilters('status', 'trashed')     // Remove sensitive filters
-    ->disallowedIncludes('comments')             // Remove heavy includes
+    ->disallowedIncludes('comments', 'commentsCount') // Remove heavy includes; a count include has its own name
     ->disallowedFields('body')                   // Hide full content
     ->build()
     ->execute();
@@ -202,7 +202,7 @@ All `disallowed*()` methods support wildcards:
 ```php
 ElasticQueryWizard::forSchema(PostSchema::class)
     ->disallowedFields('author.*')      // Block author fields, keep author relation
-    ->disallowedIncludes('comments')    // Block comments and all nested
+    ->disallowedIncludes('comments')    // Block comments and its nested includes, not commentsCount
     ->build();
 ```
 
@@ -338,7 +338,7 @@ You can also use `tapSearchBuilder()` to apply arbitrary mutations:
 ElasticQueryWizard::for(Post::class)
     ->tapSearchBuilder(function ($builder) {
         $builder->trackTotalHits(true);
-        $builder->minScore(0.5);
+        $builder->timeout('2s');
     });
 ```
 
@@ -779,7 +779,8 @@ $paginator = ElasticQueryWizard::for(Post::class)
 Elasticsearch refuses a search whose `from + size` exceeds the index's `max_result_window` (10000 by default) with an
 error that reaches the client as a 500. The wizard's `paginate()` answers such a page with 400
 `MaxResultWindowExceeded` (error code `max_result_window_exceeded`, `MaxResultWindowExceeded::ERROR_CODE`) before
-searching. Set another limit, or `null` to turn the check off, in `config/elastic-query-wizard.php`:
+searching. The package ships no config file; to set another limit, or `null` to turn the check off, create
+`config/elastic-query-wizard.php` in the application:
 
 ```php
 return [
@@ -787,7 +788,8 @@ return [
 ];
 ```
 
-`paginate()` on the search builder that `build()` returns does not check the window. For results deeper than the
+The wizard's `paginate()` takes 15 results per page by default, like Eloquent; `paginate()` on the search builder takes
+10. `paginate()` on the search builder that `build()` returns does not check the window. For results deeper than the
 window, use `searchAfter()` or a point in time.
 
 ---
@@ -926,12 +928,6 @@ ElasticSort::random('random')->seed($request->session()->getId())
 ->tapSearchBuilder(function ($builder) {
     $builder->highlight('title');  // Don't use force_source: true
 })
-```
-
-**"Boolean histogram aggregation not supported"**
-```php
-// Use terms aggregation instead of histogram for boolean fields
-->aggregate('by_active', ElasticAggregation::terms('is_active'))
 ```
 
 ### Query Returning No Results

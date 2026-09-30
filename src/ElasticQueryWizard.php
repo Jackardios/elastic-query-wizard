@@ -38,7 +38,6 @@ use Jackardios\QueryWizard\Schema\ResourceSchemaInterface;
  * ES 9.x compatibility notes:
  * - Don't use `force_source` highlighting parameter (removed in ES 9.x)
  * - `ElasticSort::random()` sends `field: _seq_no` with a seed, which ES 8.x requires
- * - Don't use histogram aggregation on boolean fields (use terms aggregation instead)
  *
  * Query execution methods (delegated to SearchBuilder):
  *

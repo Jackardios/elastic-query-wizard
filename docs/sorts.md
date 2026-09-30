@@ -598,8 +598,9 @@ ElasticQueryWizard::for(Post::class)
 // First featured, then by date
 ```
 
-A default sort must name an allowed sort: one missing from `allowedSorts()` is left out without an error, so here
-`is_featured` needs its own `ElasticSort::field('is_featured')`.
+A default sort does not need `allowedSorts()`: a name no allowed sort has sorts by that field (`FieldSort`). Name an
+allowed sort, or its alias, to get its options. A default that `disallowedSorts()` removes throws
+`InvalidArgumentException`.
 
 ### Using Sort Objects
 

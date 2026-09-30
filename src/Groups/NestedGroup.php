@@ -87,7 +87,7 @@ final class NestedGroup extends AbstractElasticGroup
      * @param  array<string, mixed>  $options  Options: name, size, from, sort, highlight, _source
      *
      * @example innerHits() // Enable with defaults
-     * @example innerHits(['size' => 5, 'sort' => [['date' => 'desc']]])
+     * @example innerHits(['size' => 5, 'sort' => [['comments.date' => 'desc']]]) // Sort by the full path
      * @example innerHits(['name' => 'matched_comments', 'size' => 3])
      */
     public function innerHits(array $options = []): static

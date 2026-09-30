@@ -29,7 +29,7 @@ use Jackardios\ElasticQueryWizard\Groups\NestedGroup;
  * @example NestedGroup with inner_hits
  * ElasticGroup::nested('comments')
  *     ->scoreMode('avg')
- *     ->innerHits(['size' => 3, 'sort' => [['date' => 'desc']]])
+ *     ->innerHits(['size' => 3, 'sort' => [['comments.date' => 'desc']]])
  *     ->inFilter()
  *     ->children([
  *         ElasticFilter::term(property: 'comments.status', alias: 'status'),

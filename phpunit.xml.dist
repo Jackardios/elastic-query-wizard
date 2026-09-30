@@ -8,9 +8,6 @@
         <include>
             <directory suffix=".php">src</directory>
         </include>
-        <exclude>
-            <file>src/ElasticQueryWizardServiceProvider.php</file>
-        </exclude>
     </source>
     <testsuites>
         <testsuite name="Unit">

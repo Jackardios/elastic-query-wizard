@@ -36,9 +36,10 @@ A powerful Laravel package for building Elasticsearch queries with JSON:API styl
 
 ## Requirements
 
-- PHP 8.2+
+- PHP 8.2+ (tested on 8.2–8.5)
 - Laravel 12.69.0+ or 13.30.0+
-- Elasticsearch 8.x or 9.x (CI runs 8.19 and 9.5)
+- Elasticsearch 8.x or 9.x (CI runs 8.19 and 9.5), with the `elasticsearch/elasticsearch` client of the same major
+  version: 8.x for Elasticsearch 8, 9.x for Elasticsearch 9
 - [es-scout-driver](https://github.com/Jackardios/es-scout-driver)
 - [laravel-query-wizard](https://github.com/Jackardios/laravel-query-wizard)
 
@@ -161,7 +162,7 @@ $posts = ElasticQueryWizard::forSchema(PostSchema::class)
 // Override schema settings for specific endpoints
 ElasticQueryWizard::forSchema(PostSchema::class)
     ->disallowedFilters('status')        // Remove filter
-    ->disallowedIncludes('comments')     // Remove include
+    ->disallowedIncludes('comments', 'commentsCount') // Remove includes; a count include has its own name
     ->build()
     ->execute();
 ```
@@ -414,7 +415,6 @@ This package supports both Elasticsearch 8.x and 9.x. The package handles most v
 | Feature | ES 9.x Status |
 |---------|---------------|
 | `force_source` highlighting | Removed |
-| Boolean histogram aggregation | Removed (use `terms`) |
 | `random_score` seed without `field` | Reads `_seq_no` (8.x refuses it); `ElasticSort::random()` always sends `_seq_no` |
 
 For full details, migration guide, and safe usage examples, see [Elasticsearch Compatibility](docs/elasticsearch-compatibility.md).
