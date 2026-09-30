@@ -488,9 +488,10 @@ The request is parsed by `laravel-query-wizard` v3, whose stricter rules apply t
   `dateFormat()` is deprecated in favor of `esFormat()`. Neither changes the request format any more:
   `dateFormat('dd/MM/yyyy')` with `from=01/01/2024` is now a 400. The format given is sent followed by
   `||strict_date_optional_time`, so Elasticsearch still reads the ISO bounds.
-- **Regexp patterns** longer than 1000 characters (Elasticsearch's default `index.max_regex_length`) return 400
-  instead of a 500 from Elasticsearch; `maxLength()` sets another limit. The text and pattern filters take
-  `maxLength()` as an opt-in limit.
+- **Regexp and prefix patterns** longer than 1000 characters (Elasticsearch's default `index.max_regex_length`) return
+  400 instead of a 500 from Elasticsearch, and **fuzzy values** longer than 256 characters return 400 instead of
+  risking Elasticsearch's circuit breaker; `maxLength()` sets another limit and `maxLength(null)` removes it. The other
+  text and pattern filters take `maxLength()` as an opt-in limit.
 - **Range filters** go to the `filter` clause (v2: `must`), so they no longer add to the relevance score; `inMust()`
   restores that.
 - **Geo bounding box longitudes keep their order.** v2 swapped `left` and `right` when `left > right`; v3 reads such a

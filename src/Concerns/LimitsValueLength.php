@@ -46,11 +46,7 @@ trait LimitsValueLength
         $length = intdiv(strlen((string) mb_convert_encoding($value, 'UTF-16LE', 'UTF-8')), 2);
 
         if ($length > $this->maxLength) {
-            throw InvalidFilterValue::make(
-                mb_substr($value, 0, 50).'…',
-                $this,
-                "Expected at most {$this->maxLength} characters, got {$length}."
-            );
+            throw InvalidFilterValue::make($value, $this, "Expected at most {$this->maxLength} characters, got {$length}.");
         }
     }
 }

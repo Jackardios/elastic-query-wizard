@@ -109,8 +109,10 @@ straight into the Elasticsearch DSL and therefore need a second look before you 
 [`regexp`](#regexp-filter) and [`wildcard`](#wildcard-filter) (the value can force an index-wide scan).
 
 The text and pattern filters (`prefix`, `wildcard`, `regexp`, `fuzzy`, the match family, `queryString`,
-`simpleQueryString` and `moreLikeThis`) take `maxLength(int)`: a longer value returns 400 (`InvalidFilterValue`). Only
-`regexp` has a limit by default (1000, see [Regexp Filter](#regexp-filter)). A query string is kept short by the web
+`simpleQueryString` and `moreLikeThis`) take `maxLength(int)`: a longer value returns 400 (`InvalidFilterValue`), and
+`maxLength(null)` removes the limit. Three have one by default: `regexp` and `prefix` 1000, the longest pattern
+Elasticsearch accepts (see [Regexp Filter](#regexp-filter)), and `fuzzy` 256, since a long fuzzy term costs
+Elasticsearch tens of kilobytes of memory per character. A query string is kept short by the web
 server's URL limit; with `request_data_source` set to `body` nothing limits it, so set `maxLength()` on the filters
 that take free text.
 
@@ -563,6 +565,10 @@ ElasticFilter::prefix('username')->withParameters([
 ])
 ```
 
+A prefix longer than 1000 characters, Elasticsearch's default `index.max_regex_length`, returns 400
+(`InvalidFilterValue`) instead of failing the search. Call `maxLength()` with the index's own limit if you changed it,
+or `maxLength(null)` to leave the check to Elasticsearch.
+
 ---
 
 ## Fuzzy Filter
@@ -598,6 +604,10 @@ ElasticFilter::fuzzy('name')->withParameters([
     'transpositions' => true,   // Consider transpositions (ab -> ba)
 ])
 ```
+
+A value longer than 256 characters returns 400 (`InvalidFilterValue`): Elasticsearch spends tens of kilobytes of
+memory per character of a fuzzy term, and a few thousand characters trip its circuit breaker. Change the limit with
+`maxLength()`, or remove it with `maxLength(null)`.
 
 ### Fuzziness Values
 

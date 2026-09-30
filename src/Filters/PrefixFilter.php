@@ -17,6 +17,13 @@ final class PrefixFilter extends AbstractElasticFilter
     use LimitsValueLength;
 
     /**
+     * Elasticsearch's default `index.max_regex_length`, which also bounds a
+     * prefix: a longer one fails the search, so it is refused with a 400
+     * first. maxLength() changes it for an index with another limit.
+     */
+    private const ES_MAX_PREFIX_LENGTH = 1000;
+
+    /**
      * The value is one pattern, which may contain the separator; a list is a 400.
      */
     protected function __construct(string $property, ?string $alias = null)
@@ -24,6 +31,7 @@ final class PrefixFilter extends AbstractElasticFilter
         parent::__construct($property, $alias);
 
         $this->withoutValueSplitting();
+        $this->maxLength = self::ES_MAX_PREFIX_LENGTH;
     }
 
     public static function make(string $property, ?string $alias = null): static

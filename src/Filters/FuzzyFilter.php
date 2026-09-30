@@ -18,6 +18,13 @@ final class FuzzyFilter extends AbstractElasticFilter
     use LimitsValueLength;
 
     /**
+     * Elasticsearch builds an automaton per term that costs tens of kilobytes
+     * of memory for each character, so a long term can trip a circuit breaker.
+     * maxLength() changes or removes the limit.
+     */
+    private const DEFAULT_MAX_LENGTH = 256;
+
+    /**
      * The value is one pattern, which may contain the separator; a list is a 400.
      */
     protected function __construct(string $property, ?string $alias = null)
@@ -25,6 +32,7 @@ final class FuzzyFilter extends AbstractElasticFilter
         parent::__construct($property, $alias);
 
         $this->withoutValueSplitting();
+        $this->maxLength = self::DEFAULT_MAX_LENGTH;
     }
 
     public static function make(string $property, ?string $alias = null): static

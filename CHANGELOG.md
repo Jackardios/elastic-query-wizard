@@ -121,6 +121,10 @@ made since those snapshots.
 
 ### Security
 
+- `prefix` refuses a value longer than 1000 characters, like `regexp`, and `fuzzy` one longer than 256, with a 400;
+  `maxLength()` changes the limit. A long prefix failed the search, and a long fuzzy term could trip Elasticsearch's
+  circuit breaker.
+
 - `disallowedFilters()` removes a filter inside a bool or nested group, as it removes one at the root: its request key
   is refused and its default is not applied. It used to reach Elasticsearch.
 - A client can no longer read documents of other indices through more-like-this references or indexed shapes, or
