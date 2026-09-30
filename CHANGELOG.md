@@ -27,6 +27,8 @@ made since those snapshots.
   `ElasticFilter::multiMatch($property, $fields)`, `moreLikeThis($property, $fields)`, `nested($property, $path)`,
   `ElasticSort::script($property, $scriptSource)` and `ElasticSort::nested($property, $path, $nestedField)`, and the
   `make()` methods of their classes.
+- `tapSearchBuilder()`, `modifyQuery()` and `modifyModels()` take any callable (were `Closure` only), like
+  `laravel-query-wizard`'s `tap()`.
 - `BoolClause` cases are PascalCase (`Filter`, `Must`, `Should`, `MustNot`; were `FILTER`, … `MUST_NOT`), like
   `laravel-query-wizard`'s enums and those of `es-scout-driver`.
 - `AbstractElasticSort::handle()` and `apply()` take a `SortDirection` (was `'asc'`/`'desc'`), following

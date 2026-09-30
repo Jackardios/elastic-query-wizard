@@ -59,10 +59,10 @@ class ElasticQueryWizard extends BaseQueryWizard
     /** @var SearchBuilder */
     protected mixed $subject;
 
-    /** @var array<int, Closure(Builder<Model>, array<string, mixed>): mixed> */
+    /** @var array<int, callable(Builder<Model>, array<string, mixed>): mixed> */
     protected array $queryModifiers = [];
 
-    /** @var array<int, Closure(Collection<int, Model>): Collection<int, Model>> */
+    /** @var array<int, callable(Collection<int, Model>): Collection<int, Model>> */
     protected array $modelModifiers = [];
 
     /** @var array<int, Closure(SearchBuilder): mixed> */
@@ -179,19 +179,19 @@ class ElasticQueryWizard extends BaseQueryWizard
     /**
      * Apply custom SearchBuilder mutations declaratively (before/after build).
      *
-     * @param  Closure(SearchBuilder): mixed  $callback  Return value is ignored.
+     * @param  callable(SearchBuilder): mixed  $callback  Return value is ignored.
      */
-    public function tapSearchBuilder(Closure $callback): static
+    public function tapSearchBuilder(callable $callback): static
     {
-        return $this->queueSearchBuilderMutation($callback);
+        return $this->queueSearchBuilderMutation($callback(...));
     }
 
     /**
      * Add a callback to modify the Eloquent query before loading models.
      *
-     * @param  Closure(Builder<Model>, array<string, mixed>): mixed  $callback  Return value is ignored.
+     * @param  callable(Builder<Model>, array<string, mixed>): mixed  $callback  Return value is ignored.
      */
-    public function modifyQuery(Closure $callback): static
+    public function modifyQuery(callable $callback): static
     {
         $this->assertBuildCallbackCanBeAdded('modifyQuery');
         $this->queryModifiers[] = $callback;
@@ -202,9 +202,9 @@ class ElasticQueryWizard extends BaseQueryWizard
     /**
      * Add a callback to modify the loaded Eloquent collection.
      *
-     * @param  Closure(Collection<int, Model>): Collection<int, Model>  $callback
+     * @param  callable(Collection<int, Model>): Collection<int, Model>  $callback
      */
-    public function modifyModels(Closure $callback): static
+    public function modifyModels(callable $callback): static
     {
         $this->assertBuildCallbackCanBeAdded('modifyModels');
         $this->modelModifiers[] = $callback;

@@ -266,6 +266,32 @@ class ElasticQueryWizardTest extends UnitTestCase
     }
 
     #[Test]
+    public function the_search_builder_and_model_callbacks_take_any_callable(): void
+    {
+        $minScore = new class
+        {
+            public function __invoke(SearchBuilder $builder): void
+            {
+                $builder->minScore(0.5);
+            }
+        };
+
+        $wizard = ElasticQueryWizard::for(TestModel::class)
+            ->tapSearchBuilder($minScore)
+            ->modifyQuery([$this, 'ignoreQuery'])
+            ->modifyModels(static fn (Collection $models): Collection => $models);
+        $wizard->build();
+
+        $this->assertSame(0.5, $wizard->getSubject()->toArray()['body']['min_score']);
+    }
+
+    /**
+     * @param  Builder<Model>  $builder
+     * @param  array<string, mixed>  $rawResult
+     */
+    public function ignoreQuery(Builder $builder, array $rawResult): void {}
+
+    #[Test]
     public function bool_query_after_build_locks_configuration_changes(): void
     {
         $wizard = ElasticQueryWizard::for(TestModel::class);
