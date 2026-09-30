@@ -1,10 +1,11 @@
 {
     "name": "jackardios/elastic-query-wizard",
-    "description": "Laravel Elastic Query Wizard",
+    "description": "Builds Elasticsearch queries from API request parameters (filters, sorts, includes, fields, appends) in Laravel, on top of laravel-query-wizard and es-scout-driver",
     "keywords": [
         "jackardios",
-        "scout-query-wizard",
         "laravel-elastic-query-wizard",
+        "laravel-query-wizard",
+        "es-scout-driver",
         "elastic-query-builder",
         "laravel-query-builder",
         "laravel",
@@ -17,6 +18,7 @@
         "json",
         "api",
         "json api",
+        "json-api",
         "query builder",
         "filtering",
         "sorting",
@@ -64,7 +66,7 @@
         "test": "phpunit",
         "test:unit": "phpunit --testsuite=Unit",
         "test:feature": "phpunit --testsuite=Feature",
-        "analyse": "phpstan analyse --memory-limit=512M",
+        "analyse": "phpstan analyse --memory-limit=1G",
         "format-check": "pint --test",
         "format": "pint"
     },
@@ -72,6 +74,11 @@
         "sort-packages": true,
         "allow-plugins": {
             "php-http/discovery": true
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "3.x-dev"
         }
     },
     "prefer-stable": true
