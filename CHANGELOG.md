@@ -137,6 +137,9 @@ made since those snapshots.
 
 ### Security
 
+- The docs name the values Elasticsearch refuses that the package cannot check (complex wildcard patterns, missing
+  indexed shapes, numbers outside a field's type) and warn about fuzzy terms in `simpleQueryString`.
+
 - More-like-this filters take document references (`filter[similar][_id]=5`) only after `allowDocumentReferences()`;
   otherwise a reference is a 400. Elasticsearch reads the referenced document regardless of the search's conditions,
   so a client could learn what a document of another tenant contains.

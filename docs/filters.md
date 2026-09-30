@@ -559,6 +559,22 @@ ElasticFilter::wildcard('sku')->withParameters([
 > Either restrict this filter to trusted callers, or normalize the value with `prepareValueWith()` (for example, strip
 > a leading `*`) before it reaches the query.
 
+A pattern with many wildcards (`*a` repeated 300 times) is too complex for Elasticsearch, which fails the search with a
+400 ([Syntax Elasticsearch Refuses](#syntax-elasticsearch-refuses)). The threshold depends on the pattern, not its
+length, so `maxLength()` does not prevent it; limit the wildcards themselves:
+
+```php
+use Jackardios\QueryWizard\Exceptions\InvalidFilterValue;
+
+ElasticFilter::wildcard('sku')->prepareValueWith(function (mixed $value) {
+    if (is_string($value) && strlen($value) - strlen(str_replace(['*', '?'], '', $value)) > 10) {
+        throw InvalidFilterValue::make($value, 'sku', 'Expected at most 10 wildcards.');
+    }
+
+    return $value;
+})
+```
+
 ---
 
 ## Prefix Filter
@@ -801,6 +817,16 @@ The filter searches its property (`fields: ["body"]`) unless `withParameters()` 
 GET /posts?filter[q]=laravel +wizard -draft
 ```
 
+> **Warning:** A fuzzy term (`word~2`) costs Elasticsearch memory for each term, and a few kilobytes of them trip its
+> circuit breaker, which fails the search with a 429 for every request the node serves at that moment. For untrusted
+> input, set `maxLength()`, or leave the fuzzy operator out of the flags, so `~2` is read as text:
+>
+> ```php
+> ElasticFilter::simpleQueryString('body', 'q')->withParameters([
+>     'flags' => 'AND|OR|NOT|PHRASE|PRECEDENCE|PREFIX|ESCAPE|WHITESPACE',
+> ])
+> ```
+
 ---
 
 ## Geo Distance Filter
@@ -950,6 +976,9 @@ chooses only the document:
 ```php
 ElasticFilter::geoShape('boundary')->indexedShapes('shapes', 'geometry') // index, field (default `shape`)
 ```
+
+An `id` of no document, or of a document without the field, fails the search in Elasticsearch with a 400
+([Syntax Elasticsearch Refuses](#syntax-elasticsearch-refuses)).
 
 > **Note:** Circle type is not supported as an inline shape in geo_shape queries (ES 8.x/9.x). For radius-based filtering, use [Geo Distance Filter](#geo-distance-filter) instead.
 
@@ -1717,8 +1746,15 @@ use Elastic\Elasticsearch\Exception\ClientResponseException;
 })
 ```
 
-A range bound outside a numeric field's type (`gte=3000000000` on an `integer` field) fails the same way, and so does
-text in a `term`, `range` or `ids` filter on a numeric field without `asNumber()`.
+The same 400 comes from other values Elasticsearch can only judge against the index:
+
+- a `wildcard` pattern too complex to run;
+- an `indexed_shape` `id` of no document, or of one without the shape field;
+- a range bound outside a numeric field's type (`gte=3000000000` on an `integer` field);
+- text in a `term`, `range` or `ids` filter on a numeric field without `asNumber()`.
+
+A search that trips a circuit breaker (for example many fuzzy terms in `simpleQueryString`) fails with 429 instead; it
+is a load problem, not a client mistake, so leave it to the application's usual error handling.
 
 A 400 from Elasticsearch can also mean a mistake in the application, such as a query on a field of the wrong type, so
 log it before answering.
