@@ -146,4 +146,45 @@ class RangeFilterQueryTest extends UnitTestCase
 
         $this->assertSame([], $this->getFilterQueries($wizard->boolQuery()));
     }
+
+    #[Test]
+    public function a_date_bound_is_sent_in_the_syntax_elasticsearch_reads(): void
+    {
+        $bounds = [
+            'gte' => '2024-01-01 10:00',
+            'gt' => '2024-01-01t10:00:00',
+            'lte' => '2024-01-31T10:00:00z',
+            'lt' => ' 2024-02-01T00:00:00+0300 ',
+        ];
+        $wizard = $this
+            ->createElasticWizardWithFilters(['created' => $bounds])
+            ->allowedFilters(RangeFilter::make('created_at', 'created'));
+        $wizard->build();
+
+        $this->assertEquals(
+            [['range' => ['created_at' => [
+                'gte' => '2024-01-01T10:00',
+                'gt' => '2024-01-01T10:00:00',
+                'lte' => '2024-01-31T10:00:00Z',
+                'lt' => '2024-02-01T00:00:00+0300',
+            ]]]],
+            $this->getFilterQueries($wizard->boolQuery())
+        );
+    }
+
+    #[Test]
+    public function a_default_bound_may_be_a_date_time(): void
+    {
+        $wizard = $this
+            ->createElasticWizardWithFilters([])
+            ->allowedFilters(RangeFilter::make('created_at')->default([
+                'gte' => new \DateTimeImmutable('2024-01-01 10:00:00', new \DateTimeZone('+03:00')),
+            ]));
+        $wizard->build();
+
+        $this->assertSame(
+            [['range' => ['created_at' => ['gte' => '2024-01-01T10:00:00+03:00']]]],
+            $this->getFilterQueries($wizard->boolQuery())
+        );
+    }
 }

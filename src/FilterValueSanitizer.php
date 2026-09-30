@@ -148,8 +148,10 @@ class FilterValueSanitizer
      * Legacy operators (from, to, include_lower, include_upper) will throw InvalidRangeValue.
      *
      * Each bound is a decimal number or an ISO 8601 date (see laravel-query-wizard's
-     * `FilterValueParser::comparable()`); a date is passed on as sent, for
-     * Elasticsearch to read with the field's format and the query's `time_zone`.
+     * `FilterValueParser::comparable()`), or a `DateTimeInterface` from a default.
+     * A date keeps its meaning, for Elasticsearch to read with the field's format
+     * and the query's `time_zone`, and is written with `T` and `Z` in upper case,
+     * the only ISO 8601 syntax the default `strict_date_optional_time` accepts.
      *
      * @param  mixed  $value  raw filter value
      * @param  string|FilterInterface  $filter  the filter or its public name, for the exception
@@ -173,6 +175,12 @@ class FilterValueSanitizer
                 throw InvalidRangeValue::invalidBounds($value, $filter);
             }
 
+            if ($itemValue instanceof \DateTimeInterface) {
+                $prepared[$itemKey] = $itemValue->format(DATE_ATOM);
+
+                continue;
+            }
+
             try {
                 $bound = FilterValueParser::comparable($itemValue, $filter, FilterValueParser::defaultTimezone(), $itemKey);
             } catch (InvalidFilterValue $exception) {
@@ -184,7 +192,9 @@ class FilterValueSanitizer
             }
 
             if ($bound instanceof ParsedDate) {
-                $bound = is_string($itemValue) ? trim($itemValue) : $bound->value->format(DATE_ATOM);
+                /** @var string $itemValue */
+                $date = trim($itemValue);
+                $bound = preg_replace(['/^(\d{4}-\d{2}-\d{2})[ t]/', '/z\z/'], ['$1T', 'Z'], $date) ?? $date;
             }
 
             $prepared[$itemKey] = $bound;
