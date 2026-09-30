@@ -20,7 +20,7 @@ class HasBoolClauseTest extends TestCase
         $object = $this->createObjectWithTrait();
 
         $this->assertNull($object->getClause());
-        $this->assertEquals(BoolClause::FILTER, $object->getEffectiveClause());
+        $this->assertEquals(BoolClause::Filter, $object->getEffectiveClause());
     }
 
     #[Test]
@@ -31,8 +31,8 @@ class HasBoolClauseTest extends TestCase
         $result = $object->inFilter();
 
         $this->assertSame($object, $result);
-        $this->assertEquals(BoolClause::FILTER, $object->getClause());
-        $this->assertEquals(BoolClause::FILTER, $object->getEffectiveClause());
+        $this->assertEquals(BoolClause::Filter, $object->getClause());
+        $this->assertEquals(BoolClause::Filter, $object->getEffectiveClause());
     }
 
     #[Test]
@@ -43,8 +43,8 @@ class HasBoolClauseTest extends TestCase
         $result = $object->inMust();
 
         $this->assertSame($object, $result);
-        $this->assertEquals(BoolClause::MUST, $object->getClause());
-        $this->assertEquals(BoolClause::MUST, $object->getEffectiveClause());
+        $this->assertEquals(BoolClause::Must, $object->getClause());
+        $this->assertEquals(BoolClause::Must, $object->getEffectiveClause());
     }
 
     #[Test]
@@ -55,8 +55,8 @@ class HasBoolClauseTest extends TestCase
         $result = $object->inShould();
 
         $this->assertSame($object, $result);
-        $this->assertEquals(BoolClause::SHOULD, $object->getClause());
-        $this->assertEquals(BoolClause::SHOULD, $object->getEffectiveClause());
+        $this->assertEquals(BoolClause::Should, $object->getClause());
+        $this->assertEquals(BoolClause::Should, $object->getEffectiveClause());
     }
 
     #[Test]
@@ -67,21 +67,21 @@ class HasBoolClauseTest extends TestCase
         $result = $object->inMustNot();
 
         $this->assertSame($object, $result);
-        $this->assertEquals(BoolClause::MUST_NOT, $object->getClause());
-        $this->assertEquals(BoolClause::MUST_NOT, $object->getEffectiveClause());
+        $this->assertEquals(BoolClause::MustNot, $object->getClause());
+        $this->assertEquals(BoolClause::MustNot, $object->getEffectiveClause());
     }
 
     #[Test]
     public function get_effective_clause_returns_explicit_clause_over_default(): void
     {
-        $object = $this->createObjectWithCustomDefault(BoolClause::MUST);
+        $object = $this->createObjectWithCustomDefault(BoolClause::Must);
 
         // Without explicit clause, returns custom default
-        $this->assertEquals(BoolClause::MUST, $object->getEffectiveClause());
+        $this->assertEquals(BoolClause::Must, $object->getEffectiveClause());
 
         // With explicit clause, returns explicit value
         $object->inShould();
-        $this->assertEquals(BoolClause::SHOULD, $object->getEffectiveClause());
+        $this->assertEquals(BoolClause::Should, $object->getEffectiveClause());
     }
 
     private function createObjectWithTrait(): object

@@ -55,7 +55,7 @@ final class QueryStringFilter extends AbstractElasticFilter
 
     protected function getDefaultClause(): BoolClause
     {
-        return BoolClause::MUST;
+        return BoolClause::Must;
     }
 
     public function buildQuery(mixed $value): ?QueryInterface

@@ -19,7 +19,7 @@ trait HasBoolClause
      */
     public function inFilter(): static
     {
-        $this->clause = BoolClause::FILTER;
+        $this->clause = BoolClause::Filter;
 
         return $this;
     }
@@ -29,7 +29,7 @@ trait HasBoolClause
      */
     public function inMust(): static
     {
-        $this->clause = BoolClause::MUST;
+        $this->clause = BoolClause::Must;
 
         return $this;
     }
@@ -39,7 +39,7 @@ trait HasBoolClause
      */
     public function inShould(): static
     {
-        $this->clause = BoolClause::SHOULD;
+        $this->clause = BoolClause::Should;
 
         return $this;
     }
@@ -49,7 +49,7 @@ trait HasBoolClause
      */
     public function inMustNot(): static
     {
-        $this->clause = BoolClause::MUST_NOT;
+        $this->clause = BoolClause::MustNot;
 
         return $this;
     }
@@ -68,7 +68,7 @@ trait HasBoolClause
      */
     protected function getDefaultClause(): BoolClause
     {
-        return BoolClause::FILTER;
+        return BoolClause::Filter;
     }
 
     /**

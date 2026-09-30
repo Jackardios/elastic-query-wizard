@@ -28,7 +28,7 @@ class FilterClauseTest extends UnitTestCase
     {
         $filter = TermFilter::make('name');
 
-        $this->assertEquals(BoolClause::FILTER, $filter->getEffectiveClause());
+        $this->assertEquals(BoolClause::Filter, $filter->getEffectiveClause());
     }
 
     #[Test]
@@ -36,7 +36,7 @@ class FilterClauseTest extends UnitTestCase
     {
         $filter = TermFilter::make('name')->inMust();
 
-        $this->assertEquals(BoolClause::MUST, $filter->getEffectiveClause());
+        $this->assertEquals(BoolClause::Must, $filter->getEffectiveClause());
     }
 
     #[Test]
@@ -44,7 +44,7 @@ class FilterClauseTest extends UnitTestCase
     {
         $filter = TermFilter::make('name')->inShould();
 
-        $this->assertEquals(BoolClause::SHOULD, $filter->getEffectiveClause());
+        $this->assertEquals(BoolClause::Should, $filter->getEffectiveClause());
     }
 
     #[Test]
@@ -52,7 +52,7 @@ class FilterClauseTest extends UnitTestCase
     {
         $filter = TermFilter::make('name')->inMustNot();
 
-        $this->assertEquals(BoolClause::MUST_NOT, $filter->getEffectiveClause());
+        $this->assertEquals(BoolClause::MustNot, $filter->getEffectiveClause());
     }
 
     #[Test]
@@ -60,7 +60,7 @@ class FilterClauseTest extends UnitTestCase
     {
         $filter = MatchFilter::make('title');
 
-        $this->assertEquals(BoolClause::MUST, $filter->getEffectiveClause());
+        $this->assertEquals(BoolClause::Must, $filter->getEffectiveClause());
     }
 
     #[Test]
@@ -68,7 +68,7 @@ class FilterClauseTest extends UnitTestCase
     {
         $filter = MatchFilter::make('title')->inFilter();
 
-        $this->assertEquals(BoolClause::FILTER, $filter->getEffectiveClause());
+        $this->assertEquals(BoolClause::Filter, $filter->getEffectiveClause());
     }
 
     #[Test]
@@ -76,7 +76,7 @@ class FilterClauseTest extends UnitTestCase
     {
         $filter = MultiMatchFilter::make(['title', 'content'], 'search');
 
-        $this->assertEquals(BoolClause::MUST, $filter->getEffectiveClause());
+        $this->assertEquals(BoolClause::Must, $filter->getEffectiveClause());
     }
 
     #[Test]
@@ -84,7 +84,7 @@ class FilterClauseTest extends UnitTestCase
     {
         $filter = FuzzyFilter::make('name');
 
-        $this->assertEquals(BoolClause::MUST, $filter->getEffectiveClause());
+        $this->assertEquals(BoolClause::Must, $filter->getEffectiveClause());
     }
 
     #[Test]
@@ -92,7 +92,7 @@ class FilterClauseTest extends UnitTestCase
     {
         $filter = MatchPhraseFilter::make('content');
 
-        $this->assertEquals(BoolClause::MUST, $filter->getEffectiveClause());
+        $this->assertEquals(BoolClause::Must, $filter->getEffectiveClause());
     }
 
     #[Test]
@@ -100,7 +100,7 @@ class FilterClauseTest extends UnitTestCase
     {
         $filter = MatchPhrasePrefixFilter::make('content');
 
-        $this->assertEquals(BoolClause::MUST, $filter->getEffectiveClause());
+        $this->assertEquals(BoolClause::Must, $filter->getEffectiveClause());
     }
 
     #[Test]
@@ -108,7 +108,7 @@ class FilterClauseTest extends UnitTestCase
     {
         $filter = QueryStringFilter::make('search');
 
-        $this->assertEquals(BoolClause::MUST, $filter->getEffectiveClause());
+        $this->assertEquals(BoolClause::Must, $filter->getEffectiveClause());
     }
 
     #[Test]
@@ -116,7 +116,7 @@ class FilterClauseTest extends UnitTestCase
     {
         $filter = SimpleQueryStringFilter::make('search');
 
-        $this->assertEquals(BoolClause::MUST, $filter->getEffectiveClause());
+        $this->assertEquals(BoolClause::Must, $filter->getEffectiveClause());
     }
 
     #[Test]
@@ -124,7 +124,7 @@ class FilterClauseTest extends UnitTestCase
     {
         $filter = MoreLikeThisFilter::make(['title', 'content'], 'similar');
 
-        $this->assertEquals(BoolClause::MUST, $filter->getEffectiveClause());
+        $this->assertEquals(BoolClause::Must, $filter->getEffectiveClause());
     }
 
     #[Test]

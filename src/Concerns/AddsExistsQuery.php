@@ -28,19 +28,19 @@ trait AddsExistsQuery
 
         if ($negated) {
             match ($clause) {
-                BoolClause::FILTER, BoolClause::MUST => $boolQuery->addMustNot($exists),
-                BoolClause::SHOULD => $boolQuery->addShould(Query::bool()->addMustNot($exists)),
-                BoolClause::MUST_NOT => $boolQuery->addFilter($exists),
+                BoolClause::Filter, BoolClause::Must => $boolQuery->addMustNot($exists),
+                BoolClause::Should => $boolQuery->addShould(Query::bool()->addMustNot($exists)),
+                BoolClause::MustNot => $boolQuery->addFilter($exists),
             };
 
             return;
         }
 
         match ($clause) {
-            BoolClause::FILTER => $boolQuery->addFilter($exists),
-            BoolClause::MUST => $boolQuery->addMust($exists),
-            BoolClause::SHOULD => $boolQuery->addShould($exists),
-            BoolClause::MUST_NOT => $boolQuery->addMustNot($exists),
+            BoolClause::Filter => $boolQuery->addFilter($exists),
+            BoolClause::Must => $boolQuery->addMust($exists),
+            BoolClause::Should => $boolQuery->addShould($exists),
+            BoolClause::MustNot => $boolQuery->addMustNot($exists),
         };
     }
 }

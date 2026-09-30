@@ -130,10 +130,10 @@ abstract class AbstractElasticFilter extends AbstractFilter
         $clause = $this->getEffectiveClause();
 
         match ($clause) {
-            BoolClause::FILTER => $boolQuery->addFilter($query),
-            BoolClause::MUST => $boolQuery->addMust($query),
-            BoolClause::SHOULD => $boolQuery->addShould($query),
-            BoolClause::MUST_NOT => $boolQuery->addMustNot($query),
+            BoolClause::Filter => $boolQuery->addFilter($query),
+            BoolClause::Must => $boolQuery->addMust($query),
+            BoolClause::Should => $boolQuery->addShould($query),
+            BoolClause::MustNot => $boolQuery->addMustNot($query),
         };
     }
 }

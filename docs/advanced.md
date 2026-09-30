@@ -564,7 +564,7 @@ class CustomFilter extends AbstractElasticFilter
      */
     protected function getDefaultClause(): BoolClause
     {
-        return BoolClause::MUST;
+        return BoolClause::Must;
     }
 
     /**

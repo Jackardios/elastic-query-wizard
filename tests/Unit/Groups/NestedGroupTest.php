@@ -29,7 +29,7 @@ class NestedGroupTest extends UnitTestCase
     {
         $group = ElasticGroup::nested('sides');
 
-        $this->assertEquals(BoolClause::FILTER, $group->getEffectiveClause());
+        $this->assertEquals(BoolClause::Filter, $group->getEffectiveClause());
     }
 
     #[Test]
@@ -37,7 +37,7 @@ class NestedGroupTest extends UnitTestCase
     {
         $group = ElasticGroup::nested('sides')->inMust();
 
-        $this->assertEquals(BoolClause::MUST, $group->getEffectiveClause());
+        $this->assertEquals(BoolClause::Must, $group->getEffectiveClause());
     }
 
     #[Test]

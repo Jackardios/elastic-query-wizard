@@ -6,8 +6,8 @@ namespace Jackardios\ElasticQueryWizard\Enums;
 
 enum BoolClause: string
 {
-    case FILTER = 'filter';
-    case MUST = 'must';
-    case SHOULD = 'should';
-    case MUST_NOT = 'must_not';
+    case Filter = 'filter';
+    case Must = 'must';
+    case Should = 'should';
+    case MustNot = 'must_not';
 }

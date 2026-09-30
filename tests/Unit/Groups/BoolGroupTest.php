@@ -29,7 +29,7 @@ class BoolGroupTest extends UnitTestCase
     {
         $group = ElasticGroup::bool('advanced');
 
-        $this->assertEquals(BoolClause::FILTER, $group->getEffectiveClause());
+        $this->assertEquals(BoolClause::Filter, $group->getEffectiveClause());
     }
 
     #[Test]
@@ -37,7 +37,7 @@ class BoolGroupTest extends UnitTestCase
     {
         $group = ElasticGroup::bool('advanced')->inMust();
 
-        $this->assertEquals(BoolClause::MUST, $group->getEffectiveClause());
+        $this->assertEquals(BoolClause::Must, $group->getEffectiveClause());
     }
 
     #[Test]

@@ -204,17 +204,17 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
      */
     protected function addQueryToBoolQuery(BoolQuery $boolQuery, FilterInterface $filter, QueryInterface $query): void
     {
-        $clause = BoolClause::FILTER;
+        $clause = BoolClause::Filter;
 
         if ($filter instanceof AbstractElasticFilter || $filter instanceof AbstractElasticGroup) {
             $clause = $filter->getEffectiveClause();
         }
 
         match ($clause) {
-            BoolClause::FILTER => $boolQuery->addFilter($query),
-            BoolClause::MUST => $boolQuery->addMust($query),
-            BoolClause::SHOULD => $boolQuery->addShould($query),
-            BoolClause::MUST_NOT => $boolQuery->addMustNot($query),
+            BoolClause::Filter => $boolQuery->addFilter($query),
+            BoolClause::Must => $boolQuery->addMust($query),
+            BoolClause::Should => $boolQuery->addShould($query),
+            BoolClause::MustNot => $boolQuery->addMustNot($query),
         };
     }
 
@@ -226,10 +226,10 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
         $clause = $this->getEffectiveClause();
 
         match ($clause) {
-            BoolClause::FILTER => $parentBoolQuery->addFilter($query),
-            BoolClause::MUST => $parentBoolQuery->addMust($query),
-            BoolClause::SHOULD => $parentBoolQuery->addShould($query),
-            BoolClause::MUST_NOT => $parentBoolQuery->addMustNot($query),
+            BoolClause::Filter => $parentBoolQuery->addFilter($query),
+            BoolClause::Must => $parentBoolQuery->addMust($query),
+            BoolClause::Should => $parentBoolQuery->addShould($query),
+            BoolClause::MustNot => $parentBoolQuery->addMustNot($query),
         };
     }
 
