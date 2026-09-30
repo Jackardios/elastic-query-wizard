@@ -65,6 +65,7 @@ made since those snapshots.
 
 ### Added
 
+- `MaxResultWindowExceeded::ERROR_CODE`, like `laravel-query-wizard`'s error code constants.
 - `GeoShapeFilter::indexedShapes()`.
 - `DateRangeFilter::esFormat()`.
 - `withParameters(['boost' => …])` on prefix and exists filters (their `es-scout-driver` queries gained `boost()`).

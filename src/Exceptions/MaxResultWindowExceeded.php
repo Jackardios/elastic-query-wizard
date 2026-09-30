@@ -13,6 +13,8 @@ use Jackardios\QueryWizard\Exceptions\QueryLimitExceeded;
  */
 final class MaxResultWindowExceeded extends QueryLimitExceeded
 {
+    public const ERROR_CODE = 'max_result_window_exceeded';
+
     public function __construct(
         public readonly int $page,
         public readonly int $perPage,
@@ -21,7 +23,7 @@ final class MaxResultWindowExceeded extends QueryLimitExceeded
     ) {
         parent::__construct(
             "Page {$page} of {$perPage} results ends past the first {$maxResultWindow} results, the most a page can reach.",
-            'max_result_window_exceeded',
+            self::ERROR_CODE,
             $pageName,
         );
     }

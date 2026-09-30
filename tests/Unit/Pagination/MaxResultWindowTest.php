@@ -25,6 +25,7 @@ class MaxResultWindowTest extends UnitTestCase
         } catch (MaxResultWindowExceeded $exception) {
             $this->assertSame(400, $exception->getStatusCode());
             $this->assertSame('max_result_window_exceeded', $exception->errorCode);
+            $this->assertSame(MaxResultWindowExceeded::ERROR_CODE, $exception->errorCode);
             $this->assertSame('page', $exception->parameter);
             $this->assertSame([1001, 10, 10000], [$exception->page, $exception->perPage, $exception->maxResultWindow]);
         }
