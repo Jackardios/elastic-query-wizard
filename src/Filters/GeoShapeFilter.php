@@ -106,6 +106,11 @@ final class GeoShapeFilter extends AbstractElasticFilter
         $type = $value['type'] ?? null;
         $typeString = is_string($type) ? $type : null;
 
+        if (in_array($typeString, ['envelope', 'polygon', 'point'], true)
+            && array_diff(array_keys($value), ['type', 'coordinates']) !== []) {
+            throw InvalidGeoShapeValue::unexpectedKeys($value, $this, $typeString);
+        }
+
         match ($typeString) {
             'envelope' => $this->applyEnvelope($query, $value),
             'polygon' => $this->applyPolygon($query, $value),

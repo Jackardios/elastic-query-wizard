@@ -118,6 +118,9 @@ made since those snapshots.
   model callbacks for its own model, where they used to fail every build with an `InvalidQueryException`.
 - `modifyQuery()`, `modifyModels()`, `tapSearchBuilder()` and SearchBuilder methods called while the wizard builds throw
   a `LogicException`, like the core's configuration methods, instead of adding a callback on every build.
+- Geo distance and geo shape filters return 400 for a key they do not read, instead of ignoring it, and a geo distance
+  too long to be a finite number is a 400 instead of a 500 from Elasticsearch. An unknown shape type is shortened in
+  the message.
 - A range bound left empty is no bound; coordinates that overflow to infinity no longer fail the JSON encoding.
 - A clone of a wizard whose built search was changed keeps the change lock.
 - A configuration call after the build throws a `LogicException` when `boolQuery()` was used before the build; the

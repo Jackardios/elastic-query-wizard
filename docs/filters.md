@@ -1624,8 +1624,9 @@ carries the value (`$exception->filterValue`) and what was expected (`$exception
 |--------|-----------------|-----------|
 | `range` | not an array; a key other than `gt`, `gte`, `lt`, `lte`; a legacy key (`from`, `to`, `include_lower`, `include_upper`); a bound that is not a decimal number or an ISO 8601 date (exponents and date math such as `now-1d` included) | `InvalidRangeValue` |
 | `geoBoundingBox` | not four finite coordinates; unknown edge names; latitude outside [-90, 90] or longitude outside [-180, 180] | `InvalidGeoBoundingBoxValue` |
-| `geoDistance` | missing `lat`, `lon` or `distance`; coordinates out of range; a distance that is not a positive number with an optional unit | `InvalidGeoDistanceValue` |
-| `geoShape` | an unknown type; coordinates that do not form the shape | `InvalidGeoShapeValue` |
+| `dateRange` | a bound that is not a date or an ISO 8601 date-time; a bound after the year 9999 | `InvalidFilterValue` |
+| `geoDistance` | missing `lat`, `lon` or `distance`; a key other than those; coordinates out of range; a distance that is not a finite positive number with an optional unit | `InvalidGeoDistanceValue` |
+| `geoShape` | an unknown type; a key other than `type` and `coordinates` (`type` and `id` for an indexed shape); coordinates that do not form the shape | `InvalidGeoShapeValue` |
 | `exists`, `null` | not a boolean (`true`, `false`, `1`, `0`, `yes`, `no`, `on`, `off`, in any letter case) | `InvalidFilterValue` |
 | `trashed` | not `with`, `only`, `without`, `true` or `false` | `InvalidFilterValue` |
 

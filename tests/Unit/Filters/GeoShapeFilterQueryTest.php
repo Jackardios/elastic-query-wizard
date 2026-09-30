@@ -7,6 +7,7 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Filters;
 use Jackardios\ElasticQueryWizard\Exceptions\InvalidGeoShapeValue;
 use Jackardios\ElasticQueryWizard\Filters\GeoShapeFilter;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -501,5 +502,42 @@ class GeoShapeFilterQueryTest extends UnitTestCase
         $wizard->build();
 
         return $this->getFilterQueries($wizard->boolQuery())[0]['geo_shape']['boundary']['shape'];
+    }
+
+    /**
+     * @return array<string, array{array<string, mixed>}>
+     */
+    public static function shapesWithAnUnknownKey(): array
+    {
+        return [
+            'envelope' => [['type' => 'envelope', 'coordinates' => [[0, 50], [10, 40]], 'orientation' => 'cw']],
+            'polygon' => [['type' => 'polygon', 'coordinates' => [[[0, 0], [10, 0], [10, 10], [0, 0]]], 'orientation' => 'cw']],
+            'point' => [['type' => 'point', 'coordinates' => [0, 50], 'radius' => '1km']],
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $value
+     */
+    #[Test]
+    #[DataProvider('shapesWithAnUnknownKey')]
+    public function a_key_other_than_type_and_coordinates_is_refused(array $value): void
+    {
+        $this->expectException(InvalidGeoShapeValue::class);
+        $this->expectExceptionMessage('expects only `type` and `coordinates`');
+
+        $this->shapeOf($value);
+    }
+
+    #[Test]
+    public function the_message_shortens_a_long_unknown_type(): void
+    {
+        try {
+            $this->shapeOf(['type' => str_repeat('x', 100000)]);
+            $this->fail('The filter accepted an unknown shape type.');
+        } catch (InvalidGeoShapeValue $exception) {
+            $this->assertLessThan(500, strlen($exception->getMessage()));
+            $this->assertStringContainsString('Unsupported shape type `'.str_repeat('x', 50).'…`', $exception->getMessage());
+        }
     }
 }

@@ -12,6 +12,8 @@ use Jackardios\QueryWizard\Exceptions\InvalidFilterValue;
  */
 final class InvalidGeoShapeValue extends InvalidFilterValue
 {
+    private const MAX_ECHOED_TYPE_LENGTH = 50;
+
     public static function unknownType(mixed $value, string|FilterInterface $filter, ?string $type): self
     {
         $expected = 'envelope, polygon, point or indexed_shape (when the filter enables indexed shapes)';
@@ -19,8 +21,20 @@ final class InvalidGeoShapeValue extends InvalidFilterValue
         return self::make(
             $value,
             $filter,
-            $type === null ? "Expected a shape `type`: {$expected}." : "Unsupported shape type `{$type}`. Expected {$expected}."
+            $type === null ? "Expected a shape `type`: {$expected}." : 'Unsupported shape type `'.self::shortenType($type)."`. Expected {$expected}."
         );
+    }
+
+    public static function unexpectedKeys(mixed $value, string|FilterInterface $filter, string $type): self
+    {
+        return self::make($value, $filter, "A shape of type `{$type}` expects only `type` and `coordinates`.");
+    }
+
+    private static function shortenType(string $type): string
+    {
+        $type = mb_scrub($type, 'UTF-8');
+
+        return mb_strlen($type) > self::MAX_ECHOED_TYPE_LENGTH ? mb_substr($type, 0, self::MAX_ECHOED_TYPE_LENGTH).'…' : $type;
     }
 
     public static function invalidEnvelope(mixed $value, string|FilterInterface $filter): self

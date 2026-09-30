@@ -111,4 +111,30 @@ class GeoDistanceFilterQueryTest extends UnitTestCase
             ->allowedFilters(GeoDistanceFilter::make('location'))
             ->build();
     }
+
+    #[Test]
+    public function a_distance_too_long_to_be_finite_is_refused(): void
+    {
+        $this->expectException(InvalidGeoDistanceValue::class);
+
+        $this
+            ->createElasticWizardWithFilters([
+                'location' => ['lat' => '55.75', 'lon' => '37.62', 'distance' => str_repeat('9', 400).'km'],
+            ], GeoModel::class)
+            ->allowedFilters(GeoDistanceFilter::make('location'))
+            ->build();
+    }
+
+    #[Test]
+    public function a_key_other_than_lat_lon_and_distance_is_refused(): void
+    {
+        $this->expectException(InvalidGeoDistanceValue::class);
+
+        $this
+            ->createElasticWizardWithFilters([
+                'location' => ['lat' => '55.75', 'lon' => '37.62', 'distance' => '10km', 'unit' => 'mi'],
+            ], GeoModel::class)
+            ->allowedFilters(GeoDistanceFilter::make('location'))
+            ->build();
+    }
 }

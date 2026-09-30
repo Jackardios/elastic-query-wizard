@@ -122,6 +122,7 @@ class FilterValueSanitizer
         $distance = (is_string($rawDistance) || is_int($rawDistance) || is_float($rawDistance)) ? trim((string) $rawDistance) : null;
 
         if ($lat === null || $lon === null || $distance === null
+            || array_diff(array_keys($point), ['lat', 'lon', 'distance']) !== []
             || ! self::isLatitude($lat) || ! self::isLongitude($lon) || ! self::isDistance($distance)) {
             throw InvalidGeoDistanceValue::invalidDistance($value, $filter);
         }
@@ -130,7 +131,7 @@ class FilterValueSanitizer
     }
 
     /**
-     * A decimal number greater than zero with an optional Elasticsearch
+     * A finite decimal number greater than zero with an optional Elasticsearch
      * distance unit, such as `3km` or `1.5 mi`.
      */
     private static function isDistance(string $distance): bool
@@ -138,7 +139,8 @@ class FilterValueSanitizer
         $units = 'mm|millimeters|cm|centimeters|m|meters|km|kilometers|in|inch|ft|feet|yd|yards|mi|miles|NM|nmi|nauticalmiles';
 
         return preg_match('/^(\d+(?:\.\d*)?|\.\d+)\s*(?:'.$units.')?$/', $distance, $matches) === 1
-            && (float) $matches[1] > 0.0;
+            && (float) $matches[1] > 0.0
+            && is_finite((float) $matches[1]);
     }
 
     /**
