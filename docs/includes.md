@@ -287,7 +287,8 @@ function (Builder $builder, string $relation): mixed
 | `$builder` | The Eloquent query that loads the models Elasticsearch returned |
 | `$relation` | The include's relation name (not its alias) |
 
-The return value is ignored.
+The return value is ignored, so the callback changes the given builder in place: a builder it returns, such as
+`$builder->clone()->with('comments')`, is dropped.
 
 > **Note:** The callback receives the Eloquent Query Builder since includes are applied after Elasticsearch returns results. You can use standard Eloquent methods like `with()`, `withCount()`, etc.
 

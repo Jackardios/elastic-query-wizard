@@ -282,6 +282,10 @@ class PostSchema extends ResourceSchema
 
 ## Fields and Appends
 
+Sparse fieldsets, appends and includes shape the Eloquent models loaded for the hits (`models()`, `withModels()` on the
+paginator). The documents (`documents()`, `withDocuments()`) hold each hit's full `_source`; limit it with the search
+builder's `source()` when the documents are returned to the client.
+
 ### Allowed Fields
 
 Control which fields can be requested via the `fields` parameter:
@@ -745,6 +749,8 @@ ElasticQueryWizard::for(Post::class)
     ])
     ->build();
 ```
+
+The callback changes the given builder in place; a builder it returns is ignored.
 
 ---
 
