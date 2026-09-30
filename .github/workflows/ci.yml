@@ -177,6 +177,69 @@ jobs:
       - name: Run PHPStan
         run: vendor/bin/phpstan analyse --memory-limit=1G
 
+  # The Unit suite needs no Elasticsearch, so coverage and mutation testing run without one.
+  coverage:
+    name: Coverage and mutation testing (Unit, PHP 8.4 / Laravel 13)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: dom, curl, libxml, mbstring, zip, pdo_sqlite
+          coverage: pcov
+          tools: composer:v2, infection:0.35
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v6
+        with:
+          path: ~/.composer/cache
+          key: ${{ runner.os }}-coverage-composer-${{ hashFiles('**/composer.json') }}
+          restore-keys: ${{ runner.os }}-coverage-composer-
+
+      - name: Install dependencies
+        run: |
+          composer update \
+            --with="laravel/framework:^13.0" \
+            --with="orchestra/testbench:^11.0" \
+            --prefer-dist --no-interaction --no-progress
+
+      - name: Run tests with coverage
+        run: vendor/bin/phpunit --testsuite=Unit --coverage-text --coverage-clover=build/coverage/clover.xml --only-summary-for-coverage-text
+
+      # Report-only until the surviving mutants are triaged; minMsi in infection.json5 then becomes the floor.
+      # A full run takes too long for every push, so pushes and pull requests mutate only changed lines.
+      # A push compares with the commit it replaced; a new or rewritten branch falls back to the default branch.
+      - name: Run mutation testing on changed lines
+        if: github.event_name == 'push' || github.event_name == 'pull_request'
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          base="origin/${{ github.base_ref || github.event.repository.default_branch }}"
+          if [ "${{ github.event_name }}" = push ] && git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+            base="${BEFORE}"
+          fi
+          infection --threads=max --no-progress --git-diff-lines --git-diff-base="${base}" --ignore-msi-with-no-mutations
+
+      - name: Run mutation testing
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: infection --threads=max --no-progress
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-and-mutation
+          path: build/
+          if-no-files-found: ignore
+
   code-style:
     name: Code Style (Pint)
     runs-on: ubuntu-latest
