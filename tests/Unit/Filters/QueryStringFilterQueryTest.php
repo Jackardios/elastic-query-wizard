@@ -138,6 +138,8 @@ class QueryStringFilterQueryTest extends UnitTestCase
             'second field' => ['a:b:*c', true],
             'after an escaped backslash' => ['\\\\ *b', true],
             'lone question mark' => ['?', true],
+            'after an ideographic space' => ["a\u{3000}*b", true],
+            'lone star before an ideographic space' => ["*\u{3000}a", false],
             'star inside a regular expression' => ['/a *b/', false],
             'slash inside a term' => ['a/*b/', false],
             'plus inside a term' => ['a+*b', false],

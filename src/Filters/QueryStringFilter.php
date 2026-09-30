@@ -102,13 +102,15 @@ final class QueryStringFilter extends AbstractElasticFilter
      * refuses without `allow_leading_wildcard`. A lone `*`, quoted phrases,
      * ranges, regular expressions and escaped characters are not such terms.
      *
-     * A new term starts after whitespace, `(`, `)`, `:`, `!`, a phrase, a range,
-     * a regular expression, and fuzziness or a boost (`a~*b`, `a^2*b`), as
-     * Lucene's query parser reads it. The scan is linear, so a long value can't
-     * exhaust the PCRE limits and slip through.
+     * A new term starts after whitespace (U+3000, the ideographic space, too),
+     * `(`, `)`, `:`, `!`, a phrase, a range, a regular expression, and
+     * fuzziness or a boost (`a~*b`, `a^2*b`), as Lucene's query parser reads
+     * it. The scan is linear, so a long value can't exhaust the PCRE limits and
+     * slip through.
      */
     private static function hasLeadingWildcard(string $query): bool
     {
+        $query = str_replace("\u{3000}", ' ', $query);
         $length = strlen($query);
         $atTermStart = true;
 
