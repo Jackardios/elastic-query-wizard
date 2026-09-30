@@ -10,11 +10,6 @@ use Jackardios\QueryWizard\Enums\SortDirection;
 
 /**
  * Script-based sorting using Painless scripts.
- *
- * ES 9.x compatibility note:
- * If using random_score in function_score queries, note that the default field
- * changed from `_id` to `_seq_no` in ES 9.x. Specify the field explicitly
- * for consistent behavior across ES versions.
  */
 final class ScriptSort extends AbstractElasticSort
 {
