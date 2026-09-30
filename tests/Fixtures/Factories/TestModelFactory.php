@@ -14,8 +14,8 @@ class TestModelFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->name,
-            'category' => $this->faker->word,
+            'name' => $this->faker->name(),
+            'category' => $this->faker->word(),
         ];
     }
 }

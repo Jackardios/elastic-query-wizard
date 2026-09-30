@@ -53,9 +53,9 @@ abstract class TestCase extends Orchestra
         ];
     }
 
-    protected function getEnvironmentSetUp($app): void
+    protected function defineEnvironment($app): void
     {
-        parent::getEnvironmentSetUp($app);
+        parent::defineEnvironment($app);
 
         $app['config']->set('scout.driver', 'elastic');
         $app['config']->set('elastic.migrations.storage.default_path', __DIR__.'/Fixtures/data/elastic/migrations');

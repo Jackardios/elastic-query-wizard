@@ -15,7 +15,7 @@ class GeoModelFactory extends Factory
     {
         // moscow coordinates
         return [
-            'name' => $this->faker->name,
+            'name' => $this->faker->name(),
             'lat' => $this->faker->latitude(55.105673, 56.056992),
             'lon' => $this->faker->longitude(36.461995, 38.309071),
         ];

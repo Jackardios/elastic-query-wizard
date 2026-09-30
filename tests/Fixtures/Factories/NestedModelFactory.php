@@ -24,8 +24,8 @@ class NestedModelFactory extends Factory
             ],
             'comments' => [
                 [
-                    'author' => $this->faker->firstName,
-                    'text' => $this->faker->paragraph,
+                    'author' => $this->faker->firstName(),
+                    'text' => $this->faker->paragraph(),
                     'rating' => $this->faker->numberBetween(1, 5),
                 ],
             ],
