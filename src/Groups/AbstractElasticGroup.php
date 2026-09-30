@@ -144,15 +144,12 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
      *
      * @param  array<string, mixed>  $childValues  Map of child filter names to their values
      *
-     * @throws UnsupportedFilterInGroup When an unsupported filter is used in group context
-     *
      * @api
      */
     protected function applyChildrenToQuery(BoolQuery $innerBoolQuery, array $childValues): void
     {
         foreach ($this->children as $child) {
             if ($child instanceof GroupInterface) {
-                // Nested group - collect its child values and apply recursively
                 $groupChildValues = $this->collectGroupChildValues($child, $childValues);
 
                 if (empty($groupChildValues)) {
@@ -172,9 +169,6 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
                 }
 
                 $child->handleInGroup($innerBoolQuery, $childValues[$childName]);
-            } else {
-                // Non-elastic filters (CallbackFilter, PassthroughFilter) cannot be used in groups
-                throw UnsupportedFilterInGroup::forFilter($child, $this->getName());
             }
         }
     }
@@ -265,10 +259,5 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
         }
 
         return $names;
-    }
-
-    protected function supportsBooleanValues(): bool
-    {
-        return false;
     }
 }

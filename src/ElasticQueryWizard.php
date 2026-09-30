@@ -145,12 +145,7 @@ class ElasticQueryWizard extends BaseQueryWizard
         /** @var class-string<Model> $modelClass */
         $modelClass = $resolvedSchema->model();
 
-        return new static(
-            $modelClass,
-            null,
-            app(QueryWizardConfig::class),
-            $resolvedSchema
-        );
+        return new static($modelClass, null, null, $resolvedSchema);
     }
 
     public function getSubject(): SearchBuilder
@@ -266,13 +261,6 @@ class ElasticQueryWizard extends BaseQueryWizard
         $this->build();
 
         return $this->shape === null ? $results : $this->shape->postProcess($results);
-    }
-
-    protected function applyFilter(FilterInterface $filter, mixed $preparedValue): void
-    {
-        /** @var SearchBuilder $result */
-        $result = $filter->apply($this->subject, $preparedValue);
-        $this->subject = $result;
     }
 
     /**
