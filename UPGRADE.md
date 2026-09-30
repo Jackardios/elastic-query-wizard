@@ -16,7 +16,7 @@ This guide covers migrating from `jackardios/elastic-query-wizard` v2 to v3.
 "php": "^8.2",
 "jackardios/es-scout-driver": "^1.0.0-rc.1",
 "jackardios/laravel-query-wizard": "^3.0.0-rc.3",
-"laravel/framework": "^12.61.1 || ^13.12.0"
+"laravel/framework": "^12.69.0 || ^13.30.0"
 ```
 
 > **Important:** The underlying ES driver changed from `elastic-scout-driver-plus` to `es-scout-driver`. This is a completely different package with different APIs.

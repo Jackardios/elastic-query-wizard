@@ -36,7 +36,7 @@ A powerful Laravel package for building Elasticsearch queries with JSON:API styl
 ## Requirements
 
 - PHP 8.2+
-- Laravel 12.61.1+ or 13.12.0+
+- Laravel 12.69.0+ or 13.30.0+
 - Elasticsearch 8.x or 9.x (CI runs 8.19 and 9.5)
 - [es-scout-driver](https://github.com/Jackardios/es-scout-driver)
 - [laravel-query-wizard](https://github.com/Jackardios/laravel-query-wizard)

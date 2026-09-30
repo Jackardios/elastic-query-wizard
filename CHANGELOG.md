@@ -12,7 +12,8 @@ made since those snapshots.
 
 ### Requirements
 
-- PHP 8.2+, Laravel 12.61.1+ or 13.12.0+, `laravel-query-wizard` ^3.0.0-rc.3 and `es-scout-driver` ^1.0.0-rc.1.
+- PHP 8.2+, Laravel 12.69.0+ or 13.30.0+ (the first releases without CVE-2026-102279, like `laravel-query-wizard`'s
+  floors), `laravel-query-wizard` ^3.0.0-rc.3 and `es-scout-driver` ^1.0.0-rc.1.
   CI runs Elasticsearch 8.19 and 9.5.
 
 ### Changed
