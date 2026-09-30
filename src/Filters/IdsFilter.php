@@ -9,6 +9,7 @@ use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Query\Term\IdsQuery;
 use Jackardios\EsScoutDriver\Support\Query;
+use Jackardios\QueryWizard\Exceptions\InvalidFilterValue;
 
 final class IdsFilter extends AbstractElasticFilter
 {
@@ -38,12 +39,17 @@ final class IdsFilter extends AbstractElasticFilter
             return null;
         }
 
-        // Filter to strings only (IDs must be strings)
-        /** @var array<int, string> $stringIds */
-        $stringIds = array_values(array_filter(
-            array_map(static fn ($v) => is_scalar($v) ? (string) $v : null, $prepared),
-            static fn ($v) => $v !== null && $v !== ''
-        ));
+        $stringIds = [];
+
+        foreach ($prepared as $id) {
+            if (is_bool($id)) {
+                throw InvalidFilterValue::make($value, $this, 'Expected document ids, not a boolean.');
+            }
+
+            if (is_scalar($id) && (string) $id !== '') {
+                $stringIds[] = (string) $id;
+            }
+        }
 
         if ($stringIds === []) {
             return null;

@@ -59,7 +59,7 @@ final class MultiMatchFilter extends AbstractElasticFilter
 
     public function buildQuery(mixed $value): ?QueryInterface
     {
-        $prepared = FilterValueSanitizer::toString($value);
+        $prepared = FilterValueSanitizer::text($value, $this);
 
         if ($prepared === null || $prepared === '') {
             return null;

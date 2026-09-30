@@ -121,6 +121,8 @@ made since those snapshots.
 - Geo distance and geo shape filters return 400 for a key they do not read, instead of ignoring it, and a geo distance
   too long to be a finite number is a 400 instead of a 500 from Elasticsearch. An unknown shape type is shortened in
   the message.
+- Text and pattern filters and `ids` return 400 for a JSON boolean from a request body. Text filters ignored it, and
+  `ids` searched for the id `1`.
 - A range bound left empty is no bound; coordinates that overflow to infinity no longer fail the JSON encoding.
 - A clone of a wizard whose built search was changed keeps the change lock.
 - A configuration call after the build throws a `LogicException` when `boolQuery()` was used before the build; the

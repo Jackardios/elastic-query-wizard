@@ -1629,6 +1629,7 @@ carries the value (`$exception->filterValue`) and what was expected (`$exception
 | `geoShape` | an unknown type; a key other than `type` and `coordinates` (`type` and `id` for an indexed shape); coordinates that do not form the shape | `InvalidGeoShapeValue` |
 | `exists`, `null` | not a boolean (`true`, `false`, `1`, `0`, `yes`, `no`, `on`, `off`, in any letter case) | `InvalidFilterValue` |
 | `trashed` | not `with`, `only`, `without`, `true` or `false` | `InvalidFilterValue` |
+| text and pattern filters, `ids` | a JSON boolean (with `request_data_source` set to `body`); a value longer than `maxLength()` | `InvalidFilterValue` |
 
 A value of the wrong shape for the filter (for example a list for `exists`) is rejected earlier with 400
 `InvalidFilterQuery`. Blank values (`null`, whitespace) add no condition, and neither does `,` for a filter that splits

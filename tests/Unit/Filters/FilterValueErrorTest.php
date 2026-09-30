@@ -53,6 +53,18 @@ class FilterValueErrorTest extends UnitTestCase
             'shape polygon longitude out of range' => [ElasticFilter::geoShape('boundary', 'cost'), ['type' => 'polygon', 'coordinates' => [[['0', '0'], ['200', '0'], ['0', '10']]]], InvalidGeoShapeValue::class],
             'exists' => [ElasticFilter::exists('price', 'cost'), 'maybe', InvalidFilterValue::class],
             'null' => [ElasticFilter::null('price', 'cost'), 'maybe', InvalidFilterValue::class],
+            'match boolean' => [ElasticFilter::match('title', 'cost'), true, InvalidFilterValue::class],
+            'match phrase boolean' => [ElasticFilter::matchPhrase('title', 'cost'), false, InvalidFilterValue::class],
+            'match phrase prefix boolean' => [ElasticFilter::matchPhrasePrefix('title', 'cost'), true, InvalidFilterValue::class],
+            'multi match boolean' => [ElasticFilter::multiMatch(['title'], 'cost'), true, InvalidFilterValue::class],
+            'prefix boolean' => [ElasticFilter::prefix('title', 'cost'), true, InvalidFilterValue::class],
+            'wildcard boolean' => [ElasticFilter::wildcard('title', 'cost'), true, InvalidFilterValue::class],
+            'regexp boolean' => [ElasticFilter::regexp('title', 'cost'), true, InvalidFilterValue::class],
+            'fuzzy boolean' => [ElasticFilter::fuzzy('title', 'cost'), true, InvalidFilterValue::class],
+            'query string boolean' => [ElasticFilter::queryString('title', 'cost'), true, InvalidFilterValue::class],
+            'simple query string boolean' => [ElasticFilter::simpleQueryString('title', 'cost'), true, InvalidFilterValue::class],
+            'ids boolean' => [ElasticFilter::ids('cost'), true, InvalidFilterValue::class],
+            'ids list with a boolean' => [ElasticFilter::ids('cost'), ['1', false], InvalidFilterValue::class],
         ];
     }
 
