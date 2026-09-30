@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Groups;
 
-use Closure;
 use Jackardios\ElasticQueryWizard\Concerns\HasBoolClause;
 use Jackardios\ElasticQueryWizard\Enums\BoolClause;
 use Jackardios\ElasticQueryWizard\Exceptions\DuplicateGroupChildFilterNameException;
@@ -81,7 +80,7 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
     /**
      * @throws LogicException A group has no value of its own; prepare the value of a child filter
      */
-    public function prepareValueWith(Closure $callback): static
+    public function prepareValueWith(callable $callback): static
     {
         throw $this->valueModifierException('prepareValueWith');
     }
@@ -89,7 +88,7 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
     /**
      * @throws LogicException A group has no value of its own; add the condition to a child filter
      */
-    public function when(Closure $callback): static
+    public function when(callable $callback): static
     {
         throw $this->valueModifierException('when');
     }
