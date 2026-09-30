@@ -620,11 +620,9 @@ class ElasticQueryWizard extends BaseQueryWizard
 
         if ($result === $this->subject || $result instanceof BoolQuery) {
             $this->proxyModified = true;
-
-            return $this;
         }
 
-        return $result;
+        return $result === $this->subject ? $this : $result;
     }
 
     /**

@@ -16,6 +16,7 @@ use Jackardios\ElasticQueryWizard\Sorts\FieldSort;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\GeoModel;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use Jackardios\EsScoutDriver\Query\Compound\BoolQuery;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\QueryWizard\Enums\SortDirection;
 use Jackardios\QueryWizard\Exceptions\InvalidFilterQuery;
@@ -438,8 +439,13 @@ class ElasticQueryWizardTest extends UnitTestCase
     {
         $wizard = $this->createElasticWizardWithFilters(['category' => 'a'])->allowedFilters('category');
         $boolQuery = $wizard->getBoolQuery();
-        $this->assertNotNull($boolQuery);
-        $boolQuery->filter(ElasticQuery::term('tenant_id', 7));
+        $this->assertInstanceOf(BoolQuery::class, $boolQuery);
+        $boolQuery->addFilter(ElasticQuery::term('tenant_id', 7));
+
+        $this->assertSame(
+            [['term' => ['category' => ['value' => 'a']]], ['term' => ['tenant_id' => ['value' => 7]]]],
+            $this->getFilterQueries($wizard->getSubject()->boolQuery())
+        );
 
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('The wizard cannot be reconfigured after its built search was changed through the wizard');
