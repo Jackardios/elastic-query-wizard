@@ -26,12 +26,6 @@ final class MoreLikeThisFilter extends AbstractElasticFilter
 {
     use LimitsValueLength;
 
-    /**
-     * A text is one value, which may contain the separator; several texts
-     * come as a list.
-     */
-    protected bool $splitValues = false;
-
     /** @var string[] */
     protected array $fields;
 
@@ -60,6 +54,9 @@ final class MoreLikeThisFilter extends AbstractElasticFilter
     private const EXPECTED = 'Expected a text, a list of texts or `_id` references.';
 
     /**
+     * A text is one value, which may contain the separator; several texts
+     * come as a list.
+     *
      * @param  string[]  $fields  Fields to analyze for similarity
      */
     protected function __construct(array $fields, string $property, ?string $alias = null)
@@ -67,6 +64,7 @@ final class MoreLikeThisFilter extends AbstractElasticFilter
         parent::__construct($property, $alias);
         $this->fields = $fields;
 
+        $this->withoutValueSplitting();
         $this->withStructuredInput();
     }
 

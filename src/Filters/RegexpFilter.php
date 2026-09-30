@@ -17,21 +17,20 @@ final class RegexpFilter extends AbstractElasticFilter
     use LimitsValueLength;
 
     /**
-     * The value is one pattern, which may contain the separator; a list is a 400.
-     */
-    protected bool $splitValues = false;
-
-    /**
      * Elasticsearch's default `index.max_regex_length`: a longer pattern fails
      * the search, so it is refused with a 400 first. maxLength() changes it
      * for an index with another limit.
      */
     private const ES_MAX_REGEX_LENGTH = 1000;
 
+    /**
+     * The value is one pattern, which may contain the separator; a list is a 400.
+     */
     protected function __construct(string $property, ?string $alias = null)
     {
         parent::__construct($property, $alias);
 
+        $this->withoutValueSplitting();
         $this->maxLength = self::ES_MAX_REGEX_LENGTH;
     }
 

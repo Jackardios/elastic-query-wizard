@@ -17,21 +17,19 @@ final class MultiMatchFilter extends AbstractElasticFilter
     use HasParameters;
     use LimitsValueLength;
 
-    /**
-     * The value is one text, which may contain the separator; a list is a 400.
-     */
-    protected bool $splitValues = false;
-
     /** @var string[] */
     protected array $fields;
 
     /**
+     * The value is one text, which may contain the separator; a list is a 400.
+     *
      * @param  string[]  $fields
      */
     protected function __construct(array $fields, string $property, ?string $alias = null)
     {
         parent::__construct($property, $alias);
 
+        $this->withoutValueSplitting();
         $this->fields = $fields;
     }
 

@@ -25,7 +25,12 @@ final class SimpleQueryStringFilter extends AbstractElasticFilter
     /**
      * The value is one text, which may contain the separator; a list is a 400.
      */
-    protected bool $splitValues = false;
+    protected function __construct(string $property, ?string $alias = null)
+    {
+        parent::__construct($property, $alias);
+
+        $this->withoutValueSplitting();
+    }
 
     public static function make(string $property, ?string $alias = null): static
     {
