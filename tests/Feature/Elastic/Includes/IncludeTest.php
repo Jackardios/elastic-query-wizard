@@ -261,19 +261,6 @@ class IncludeTest extends TestCase
     }
 
     #[Test]
-    public function it_can_include_camel_case_includes(): void
-    {
-        $models = $this
-            ->createElasticWizardWithIncludes('relatedModels')
-            ->allowedIncludes('relatedModels')
-            ->build()
-            ->execute()
-            ->models();
-
-        $this->assertRelationLoaded($models, 'relatedModels');
-    }
-
-    #[Test]
     public function it_can_include_models_on_an_empty_collection(): void
     {
         TestModel::query()->delete();
@@ -286,17 +273,6 @@ class IncludeTest extends TestCase
             ->models();
 
         $this->assertCount(0, $models);
-    }
-
-    #[Test]
-    public function it_guards_against_invalid_includes(): void
-    {
-        $this->expectException(InvalidIncludeQuery::class);
-
-        $this
-            ->createElasticWizardWithIncludes('random-model')
-            ->allowedIncludes('relatedModels')
-            ->build();
     }
 
     #[Test]

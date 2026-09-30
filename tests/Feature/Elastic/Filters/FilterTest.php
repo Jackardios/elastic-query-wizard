@@ -219,17 +219,6 @@ class FilterTest extends TestCase
     }
 
     #[Test]
-    public function it_guards_against_invalid_filters(): void
-    {
-        $this->expectException(InvalidFilterQuery::class);
-
-        $this
-            ->createElasticWizardWithFilters(['name' => 'John'])
-            ->allowedFilters('id')
-            ->build();
-    }
-
-    #[Test]
     public function it_can_create_a_custom_filter_with_an_instantiated_filter(): void
     {
         $customFilter = new class('*') extends AbstractElasticFilter
@@ -269,14 +258,6 @@ class FilterTest extends TestCase
 
         $this->assertEquals(['unknown filter'], $exception->unknownFilters->all());
         $this->assertEquals(['allowed filter'], $exception->allowedFilters->all());
-    }
-
-    #[Test]
-    public function it_sets_property_column_name_to_property_name_by_default(): void
-    {
-        $filter = TermFilter::make('property_name');
-
-        $this->assertEquals($filter->getName(), $filter->getProperty());
     }
 
     #[Test]

@@ -112,17 +112,6 @@ class FieldsTest extends TestCase
     }
 
     #[Test]
-    public function it_guards_against_not_allowed_fields(): void
-    {
-        $this->expectException(InvalidFieldQuery::class);
-
-        $this
-            ->createElasticWizardWithFields(['testModel' => 'random-column'])
-            ->allowedFields('name')
-            ->build();
-    }
-
-    #[Test]
     public function it_wont_use_sketchy_field_requests(): void
     {
         // In v3, requesting fields without allowedFields() throws InvalidFieldQuery

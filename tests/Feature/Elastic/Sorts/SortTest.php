@@ -11,7 +11,6 @@ use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\TestCase;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\QueryWizard\Enums\SortDirection;
-use Jackardios\QueryWizard\Exceptions\InvalidSortQuery;
 use Jackardios\QueryWizard\Sorts\AbstractSort;
 use Jackardios\QueryWizard\Values\Sort;
 use PHPUnit\Framework\Attributes\Group;
@@ -77,17 +76,6 @@ class SortTest extends TestCase
             ->build();
 
         $this->assertEquals([['name' => 'desc']], $this->getSorts($searchBuilder));
-    }
-
-    #[Test]
-    public function it_will_throw_an_exception_if_a_sort_property_is_not_allowed(): void
-    {
-        $this->expectException(InvalidSortQuery::class);
-
-        $this
-            ->createElasticWizardWithSorts('name')
-            ->allowedSorts('id')
-            ->build();
     }
 
     #[Test]

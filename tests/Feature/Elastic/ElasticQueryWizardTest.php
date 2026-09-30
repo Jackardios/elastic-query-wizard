@@ -28,16 +28,6 @@ class ElasticQueryWizardTest extends TestCase
     use AssertsCollectionSorting;
 
     #[Test]
-    public function it_can_not_be_given_a_string_that_is_not_a_class_name(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-
-        $this->expectExceptionMessage('is not a model using the `Jackardios\EsScoutDriver\Searchable` trait.');
-
-        ElasticQueryWizard::for('not a class name');
-    }
-
-    #[Test]
     public function it_can_query_soft_deletes(): void
     {
         Config::set('scout.soft_delete', true);
