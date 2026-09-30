@@ -7,6 +7,11 @@ namespace Jackardios\ElasticQueryWizard\Sorts;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\QueryWizard\Sorts\AbstractSort;
 
+/**
+ * Base class for custom Elasticsearch sorts.
+ *
+ * @api
+ */
 abstract class AbstractElasticSort extends AbstractSort
 {
     /**

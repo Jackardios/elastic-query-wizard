@@ -9,6 +9,11 @@ use Illuminate\Database\Eloquent\Model;
 use Jackardios\EsScoutDriver\Search\SearchResult;
 use Jackardios\QueryWizard\Includes\AbstractInclude;
 
+/**
+ * Base class for includes that shape the Eloquent query loading the search hits (handleEloquent()).
+ *
+ * @api
+ */
 abstract class AbstractElasticInclude extends AbstractInclude
 {
     protected ?SearchResult $searchResult = null;

@@ -12,6 +12,11 @@ use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\QueryWizard\Filters\AbstractFilter;
 
+/**
+ * Base class for custom Elasticsearch filters: buildQuery() returns the query the wizard adds to the filter's bool clause.
+ *
+ * @api
+ */
 abstract class AbstractElasticFilter extends AbstractFilter
 {
     use HasBoolClause;
