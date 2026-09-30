@@ -1410,7 +1410,7 @@ ElasticFilter::match('title')->withParameters([
 
 Parameter names correspond to the parameters of the respective Elasticsearch queries. The method automatically converts snake_case to camelCase for builder method calls.
 
-`withParameters()` checks each name against the es-scout-driver query the filter builds and throws `InvalidArgumentException` for a name the query has no setter for, so a typo fails when the filter is configured rather than as a 500 on the first request that uses it. The parameters a filter takes are the setters of its query, such as `boost` for exists and prefix. A custom filter that uses the `HasParameters` trait can opt into the same check by returning its query classes from `parameterQueryClasses()`.
+`withParameters()` checks each name and value against the es-scout-driver query the filter builds and throws `InvalidArgumentException` for a name the query has no setter for, or for a value of a type the setter does not take (`'boost' => '2'`), so a mistake fails when the filter is configured rather than as a 500 on the first request that uses it. The parameters a filter takes are the setters of its query, such as `boost` for exists and prefix. A custom filter sets the options of its query in `buildQuery()` (see [Creating Custom Filters](advanced.md#creating-custom-filters)).
 
 ---
 

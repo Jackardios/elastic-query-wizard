@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Concerns;
 
-use BadMethodCallException;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
+use ReflectionIntersectionType;
 use ReflectionMethod;
+use ReflectionNamedType;
+use ReflectionType;
+use ReflectionUnionType;
 
 /**
  * withParameters(): the options of a built-in filter's Elasticsearch query.
@@ -30,15 +33,7 @@ trait HasParameters
     protected function applyParametersOnQuery(object $queryBuilder): object
     {
         foreach ($this->queryParameters as $name => $value) {
-            $methodName = Str::camel($name);
-
-            if (! method_exists($queryBuilder, $methodName)) {
-                throw new BadMethodCallException(
-                    sprintf('Call to undefined method %s::%s()', get_class($queryBuilder), $methodName)
-                );
-            }
-
-            $queryBuilder->{$methodName}($value);
+            $queryBuilder->{Str::camel($name)}($value);
         }
 
         return $queryBuilder;
@@ -48,12 +43,13 @@ trait HasParameters
      * @param  array<string, mixed>  $parameters  Query builder setter name, in snake or camel case => value
      * @return $this
      *
-     * @throws InvalidArgumentException When a query the filter builds has no setter for a parameter
+     * @throws InvalidArgumentException When a query the filter builds has no setter for a parameter, or its setter does
+     *                                  not take the value's type
      */
     public function withParameters(array $parameters): static
     {
-        foreach (array_keys($parameters) as $name) {
-            $this->assertParameterIsSupported((string) $name);
+        foreach ($parameters as $name => $value) {
+            $this->assertParameterIsSupported((string) $name, $value);
         }
 
         $this->queryParameters = array_merge($this->queryParameters, $parameters);
@@ -80,15 +76,11 @@ trait HasParameters
 
     /**
      * The query classes the filter may build. withParameters() accepts only
-     * the setters every one of them has; an empty list leaves the check to
-     * applyParametersOnQuery().
+     * the setters every one of them has, with a value of the type they take.
      *
      * @return list<class-string>
      */
-    protected function parameterQueryClasses(): array
-    {
-        return [];
-    }
+    abstract protected function parameterQueryClasses(): array;
 
     /**
      * Setters the filter calls itself, by setter name, with where their value
@@ -101,7 +93,7 @@ trait HasParameters
         return [];
     }
 
-    private function assertParameterIsSupported(string $name): void
+    private function assertParameterIsSupported(string $name, mixed $value): void
     {
         $methodName = Str::camel($name);
         $source = $this->reservedParameters()[$methodName] ?? null;
@@ -120,7 +112,55 @@ trait HasParameters
                     $methodName
                 ));
             }
+
+            $type = (new ReflectionMethod($queryClass, $methodName))->getParameters()[0]->getType();
+
+            if ($type !== null && ! self::valueHasType($value, $type)) {
+                throw new InvalidArgumentException(sprintf(
+                    'Parameter `%s` of %s expects %s, got %s.',
+                    $name,
+                    static::class,
+                    $type,
+                    get_debug_type($value)
+                ));
+            }
         }
+    }
+
+    /**
+     * Whether the setter takes the value as a strictly typed call would.
+     */
+    private static function valueHasType(mixed $value, ReflectionType $type): bool
+    {
+        if ($value === null && $type->allowsNull()) {
+            return true;
+        }
+
+        if ($type instanceof ReflectionUnionType || $type instanceof ReflectionIntersectionType) {
+            $matches = array_map(static fn (ReflectionType $member): bool => self::valueHasType($value, $member), $type->getTypes());
+
+            return $type instanceof ReflectionUnionType ? in_array(true, $matches, true) : ! in_array(false, $matches, true);
+        }
+
+        if (! $type instanceof ReflectionNamedType) {
+            return true;
+        }
+
+        return match ($type->getName()) {
+            'mixed' => true,
+            'int' => is_int($value),
+            'float' => is_float($value) || is_int($value),
+            'string' => is_string($value),
+            'bool' => is_bool($value),
+            'true' => $value === true,
+            'false' => $value === false,
+            'array' => is_array($value),
+            'iterable' => is_iterable($value),
+            'callable' => is_callable($value),
+            'object' => is_object($value),
+            'null' => $value === null,
+            default => $type->isBuiltin() || $value instanceof ($type->getName()),
+        };
     }
 
     /**
