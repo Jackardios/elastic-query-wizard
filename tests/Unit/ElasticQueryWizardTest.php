@@ -487,19 +487,43 @@ class ElasticQueryWizardTest extends UnitTestCase
     }
 
     #[Test]
-    public function a_method_without_a_fluent_return_type_that_returns_the_builder_returns_the_wizard(): void
+    public function when_and_unless_are_applied_at_the_build(): void
+    {
+        $wizard = $this->createElasticWizardWithFilters(['category' => 'a']);
+
+        $this->assertSame($wizard, $wizard->when(true, static fn (SearchBuilder $builder) => $builder->size(3)));
+        $this->assertSame($wizard, $wizard->unless(false, static fn (SearchBuilder $builder) => $builder->from(6)));
+        $this->assertNull($wizard->getSubject()->getSize());
+
+        $body = $wizard->allowedFilters('category')->build()->toArray()['body'];
+
+        $this->assertSame(3, $body['size']);
+        $this->assertSame(6, $body['from']);
+        $this->assertSame([['term' => ['category' => ['value' => 'a']]]], $body['query']['bool']['filter']);
+    }
+
+    #[Test]
+    public function when_after_the_build_changes_the_built_search(): void
     {
         $wizard = ElasticQueryWizard::for(TestModel::class);
+        $builder = $wizard->build();
 
-        $result = $wizard->when(true, static fn (SearchBuilder $builder) => $builder->size(3));
-
-        $this->assertSame($wizard, $result);
-        $this->assertSame(3, $wizard->getSubject()->getSize());
+        $this->assertSame($wizard, $wizard->when(true, static fn (SearchBuilder $builder) => $builder->size(3)));
+        $this->assertSame(3, $builder->getSize());
 
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('The wizard cannot be reconfigured after its built search was changed through the wizard');
 
         $wizard->allowedSorts('name');
+    }
+
+    #[Test]
+    public function when_without_a_callback_throws(): void
+    {
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage('Pass a callback to Jackardios\\ElasticQueryWizard\\ElasticQueryWizard::when()');
+
+        ElasticQueryWizard::for(TestModel::class)->when(true);
     }
 
     #[Test]
@@ -513,6 +537,47 @@ class ElasticQueryWizardTest extends UnitTestCase
 
         $this->assertCount(1, (new \ReflectionProperty(ElasticQueryWizard::class, 'searchBuilderModifiers'))->getValue($wizard));
         $this->assertSame(0.5, $wizard->getSubject()->toArray()['body']['min_score']);
+    }
+
+    #[Test]
+    public function a_search_builder_macro_runs_on_the_built_search(): void
+    {
+        SearchBuilder::macro('wizardTestPageOfFour', function (): SearchBuilder {
+            /** @var SearchBuilder $this */
+            return $this->size(4);
+        });
+        SearchBuilder::macro('wizardTestSize', function (): ?int {
+            /** @var SearchBuilder $this */
+            return $this->getSize();
+        });
+
+        try {
+            $wizard = $this->createElasticWizardWithFilters(['category' => 'a'])->allowedFilters('category');
+
+            $this->assertSame($wizard, $wizard->wizardTestPageOfFour());
+            $this->assertSame(4, $wizard->wizardTestSize());
+            $this->assertSame([['term' => ['category' => ['value' => 'a']]]], $this->getFilterQueries($wizard->getSubject()->boolQuery()));
+
+            $this->expectException(\LogicException::class);
+            $this->expectExceptionMessage('The wizard cannot be reconfigured after its built search was changed through the wizard');
+
+            $wizard->allowedSorts('name');
+        } finally {
+            SearchBuilder::flushMacros();
+        }
+    }
+
+    #[Test]
+    public function a_non_public_search_builder_method_throws_before_the_build(): void
+    {
+        $privateMethods = (new \ReflectionClass(SearchBuilder::class))->getMethods(\ReflectionMethod::IS_PRIVATE | \ReflectionMethod::IS_PROTECTED);
+        $this->assertNotEmpty($privateMethods);
+        $name = $privateMethods[0]->getName();
+
+        $this->expectException(\BadMethodCallException::class);
+        $this->expectExceptionMessage("Call to undefined method Jackardios\\ElasticQueryWizard\\ElasticQueryWizard::{$name}()");
+
+        $this->createElasticWizardWithFilters(['not_allowed' => 'x'])->{$name}();
     }
 
     #[Test]

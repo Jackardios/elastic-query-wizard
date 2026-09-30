@@ -96,7 +96,7 @@ class ElasticQueryWizard extends BaseQueryWizard
 
     private const DEFAULT_MAX_RESULT_WINDOW = 10000;
 
-    /** @var array<string, bool> */
+    /** @var array<string, bool|null> */
     private static array $searchBuilderFluentMethods = [];
 
     /**
@@ -560,18 +560,39 @@ class ElasticQueryWizard extends BaseQueryWizard
     }
 
     /**
+     * Forward a call to the search builder. A method that returns the builder,
+     * and when() or unless() with a callback, is applied at the build, or to the
+     * built search once the wizard is built. Any other method or macro builds
+     * the wizard first and runs on the built search; the result is returned,
+     * or the wizard in place of the builder.
+     *
      * @param  array<int, mixed>  $arguments
+     *
+     * @throws \BadMethodCallException When the search builder has no such public method or macro,
+     *                                 or when() or unless() gets no callback
      */
     public function __call(string $name, array $arguments): mixed
     {
-        if ($this->isSearchBuilderFluentMethod($name)) {
+        $isFluent = $this->isSearchBuilderFluentMethod($name);
+
+        if ($isFluent === null && ! SearchBuilder::hasMacro($name)) {
+            throw new \BadMethodCallException(sprintf('Call to undefined method %s::%s()', static::class, $name));
+        }
+
+        $isConditional = $name === 'when' || $name === 'unless';
+
+        if ($isConditional && count($arguments) < 2) {
+            throw new \BadMethodCallException(sprintf(
+                'Pass a callback to %s::%s(): the wizard applies it to the search builder when it builds.',
+                static::class,
+                $name
+            ));
+        }
+
+        if ($isFluent === true || $isConditional) {
             return $this->queueSearchBuilderMutation(
                 fn (SearchBuilder $builder) => $builder->{$name}(...$arguments)
             );
-        }
-
-        if (! method_exists($this->subject, $name)) {
-            throw new \BadMethodCallException(sprintf('Call to undefined method %s::%s()', static::class, $name));
         }
 
         $this->build();
@@ -603,32 +624,24 @@ class ElasticQueryWizard extends BaseQueryWizard
         return $value;
     }
 
-    private function isSearchBuilderFluentMethod(string $name): bool
+    /**
+     * Whether the public SearchBuilder method returns the builder; null when
+     * SearchBuilder has no public method of that name.
+     */
+    private function isSearchBuilderFluentMethod(string $name): ?bool
     {
         if (array_key_exists($name, self::$searchBuilderFluentMethods)) {
             return self::$searchBuilderFluentMethods[$name];
         }
 
-        if (! method_exists(SearchBuilder::class, $name)) {
-            self::$searchBuilderFluentMethods[$name] = false;
+        $isFluent = null;
 
-            return false;
-        }
+        if (method_exists(SearchBuilder::class, $name) && ($method = new \ReflectionMethod(SearchBuilder::class, $name))->isPublic()) {
+            $returnType = $method->getReturnType();
+            $types = $returnType instanceof \ReflectionUnionType ? $returnType->getTypes() : [$returnType];
+            $isFluent = false;
 
-        $method = new \ReflectionMethod(SearchBuilder::class, $name);
-        $returnType = $method->getReturnType();
-
-        if ($returnType === null) {
-            self::$searchBuilderFluentMethods[$name] = false;
-
-            return false;
-        }
-
-        $isFluent = false;
-        if ($returnType instanceof \ReflectionNamedType) {
-            $isFluent = $this->isFluentNamedReturnType($returnType);
-        } elseif ($returnType instanceof \ReflectionUnionType) {
-            foreach ($returnType->getTypes() as $type) {
+            foreach ($types as $type) {
                 if ($type instanceof \ReflectionNamedType && $this->isFluentNamedReturnType($type)) {
                     $isFluent = true;
 
@@ -637,9 +650,7 @@ class ElasticQueryWizard extends BaseQueryWizard
             }
         }
 
-        self::$searchBuilderFluentMethods[$name] = $isFluent;
-
-        return $isFluent;
+        return self::$searchBuilderFluentMethods[$name] = $isFluent;
     }
 
     private function isFluentNamedReturnType(\ReflectionNamedType $returnType): bool

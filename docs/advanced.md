@@ -332,6 +332,16 @@ $results = ElasticQueryWizard::for(Post::class)
     ->execute();
 ```
 
+`when()` and `unless()` are declarative as well: their callback receives the search builder when the wizard builds. Any
+other `SearchBuilder` method, such as `count()` or `getBoolQuery()`, and any `SearchBuilder` macro builds the wizard
+first and runs on the built search; the wizard is returned in place of the builder.
+
+```php
+ElasticQueryWizard::for(Post::class)
+    ->when($request->boolean('featured'), fn ($builder) => $builder->filter(ElasticQuery::term('featured', true)))
+    ->allowedFilters([ElasticFilter::term('status')]);
+```
+
 You can also use `tapSearchBuilder()` to apply arbitrary mutations:
 
 ```php
