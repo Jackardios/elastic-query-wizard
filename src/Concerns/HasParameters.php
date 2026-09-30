@@ -34,7 +34,7 @@ trait HasParameters
 
             if (! method_exists($queryBuilder, $methodName)) {
                 throw new BadMethodCallException(
-                    sprintf('Method "%s" does not exist on %s.', $methodName, get_class($queryBuilder))
+                    sprintf('Call to undefined method %s::%s()', get_class($queryBuilder), $methodName)
                 );
             }
 
@@ -107,13 +107,13 @@ trait HasParameters
         $source = $this->reservedParameters()[$methodName] ?? null;
 
         if ($source !== null) {
-            throw new InvalidArgumentException(sprintf('Parameter "%s" is set by %s from %s.', $name, static::class, $source));
+            throw new InvalidArgumentException(sprintf('Parameter `%s` is set by %s from %s.', $name, static::class, $source));
         }
 
         foreach ($this->parameterQueryClasses() as $queryClass) {
             if (! self::isQuerySetter($queryClass, $methodName)) {
                 throw new InvalidArgumentException(sprintf(
-                    'Parameter "%s" is not supported by %s: %s has no %s() setter.',
+                    'Parameter `%s` is not supported by %s: %s has no %s() setter.',
                     $name,
                     static::class,
                     $queryClass,

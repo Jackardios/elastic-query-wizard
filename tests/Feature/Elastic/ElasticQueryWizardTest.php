@@ -32,7 +32,7 @@ class ElasticQueryWizardTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
 
-        $this->expectExceptionMessage('$subject must be a model that uses `Jackardios\EsScoutDriver\Searchable` trait');
+        $this->expectExceptionMessage('is not a model using the `Jackardios\EsScoutDriver\Searchable` trait.');
 
         ElasticQueryWizard::for('not a class name');
     }

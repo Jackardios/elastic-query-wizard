@@ -131,7 +131,7 @@ class ElasticQueryWizard extends BaseQueryWizard
         ?ResourceSchemaInterface $schema = null,
     ) {
         if (! (is_subclass_of($subject, Model::class) && method_exists($subject, 'searchQuery'))) {
-            throw new \InvalidArgumentException('$subject must be a model that uses `Jackardios\EsScoutDriver\Searchable` trait');
+            throw new \InvalidArgumentException(sprintf('`%s` is not a model using the `Jackardios\EsScoutDriver\Searchable` trait.', $subject));
         }
 
         $this->modelClass = $subject;
@@ -460,8 +460,8 @@ class ElasticQueryWizard extends BaseQueryWizard
     {
         if ($this->boolQueryChangeRolledBack) {
             throw new \LogicException(
-                'Cannot rebuild a wizard whose bool query was changed before a failed build: the rollback dropped the '
-                .'change. Change the bool query in tapSearchBuilder(), which runs on every build.'
+                'The wizard cannot be rebuilt: a failed build dropped the change made through boolQuery() before it. '
+                .'Change the bool query in tapSearchBuilder(), which runs on every build.'
             );
         }
 
@@ -538,14 +538,14 @@ class ElasticQueryWizard extends BaseQueryWizard
     {
         if ($this->proxyModified) {
             throw new \LogicException(
-                'Cannot modify query wizard configuration after calling query builder methods. '
-                .'Call all configuration methods (allowedFilters, allowedSorts, etc.) before query builder methods.'
+                'The wizard cannot be reconfigured after its built search was changed through the wizard: the rebuild '
+                .'would drop the change. Configure the wizard first, or change the search in tapSearchBuilder().'
             );
         }
 
         if ($this->boolQueryChangedBeforeBuild && $this->isBuilt()) {
             throw new \LogicException(
-                'Cannot modify query wizard configuration of a built wizard whose bool query was changed: the rebuild '
+                'The wizard cannot be reconfigured after its bool query was changed and the wizard built: the rebuild '
                 .'would drop the change. Change the bool query in tapSearchBuilder(), which runs on every build.'
             );
         }
@@ -613,9 +613,7 @@ class ElasticQueryWizard extends BaseQueryWizard
         }
 
         if (! method_exists($this->subject, $name)) {
-            throw new \BadMethodCallException(
-                sprintf('Method %s::%s does not exist.', static::class, $name)
-            );
+            throw new \BadMethodCallException(sprintf('Call to undefined method %s::%s()', static::class, $name));
         }
 
         $this->build();
@@ -709,7 +707,7 @@ class ElasticQueryWizard extends BaseQueryWizard
 
         throw new \LogicException(
             sprintf(
-                'Cannot call %s() after build(). Register query/model callbacks before build().',
+                '%s() cannot be called after build(): register the model callbacks before the build.',
                 $methodName
             )
         );

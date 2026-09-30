@@ -53,8 +53,6 @@ final class MoreLikeThisFilter extends AbstractElasticFilter
 
     protected bool $allowsDocumentReferences = false;
 
-    private const EXPECTED = 'Expected a text, a list of texts or `_id` references.';
-
     /**
      * A text is one value, which may contain the separator; several texts
      * come as a list.
@@ -235,7 +233,7 @@ final class MoreLikeThisFilter extends AbstractElasticFilter
         }
 
         if (! is_array($value)) {
-            return $this->likeText($value) ?? throw InvalidFilterValue::make($value, $this, self::EXPECTED);
+            return $this->likeText($value) ?? throw InvalidFilterValue::make($value, $this, $this->expected());
         }
 
         if (! array_is_list($value) && array_filter(array_keys($value), is_string(...)) !== []) {
@@ -251,10 +249,17 @@ final class MoreLikeThisFilter extends AbstractElasticFilter
 
             $like[] = is_array($item)
                 ? $this->documentReference($item, $value)
-                : ($this->likeText($item) ?? throw InvalidFilterValue::make($value, $this, self::EXPECTED));
+                : ($this->likeText($item) ?? throw InvalidFilterValue::make($value, $this, $this->expected()));
         }
 
         return $like;
+    }
+
+    private function expected(): string
+    {
+        return $this->allowsDocumentReferences
+            ? 'Expected a text, a list of texts or `_id` references.'
+            : 'Expected a text or a list of texts.';
     }
 
     private function likeText(mixed $item): ?string

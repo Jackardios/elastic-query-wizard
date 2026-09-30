@@ -34,6 +34,8 @@ made since those snapshots.
   what 3.x keeps stable, following `laravel-query-wizard`.
 - `GroupInterface` requires `getEffectiveClause()`, so a group that implements it directly goes to the clause it names
   inside another group (it always went to `filter`).
+- Exception messages follow `laravel-query-wizard`'s: names in backticks, and `Call to undefined method …()` for a
+  method the wizard, `ElasticQuery` or `ElasticAggregation` does not have.
 - `BoolClause` cases are PascalCase (`Filter`, `Must`, `Should`, `MustNot`; were `FILTER`, … `MUST_NOT`), like
   `laravel-query-wizard`'s enums and those of `es-scout-driver`.
 - `AbstractElasticSort::handle()` and `apply()` take a `SortDirection` (was `'asc'`/`'desc'`), following

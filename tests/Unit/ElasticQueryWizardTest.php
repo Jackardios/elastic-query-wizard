@@ -34,7 +34,7 @@ class ElasticQueryWizardTest extends UnitTestCase
     public function it_throws_for_non_class_string(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('$subject must be a model that uses `Jackardios\EsScoutDriver\Searchable` trait');
+        $this->expectExceptionMessage('is not a model using the `Jackardios\EsScoutDriver\Searchable` trait.');
 
         ElasticQueryWizard::for('not a class name');
     }
@@ -300,7 +300,7 @@ class ElasticQueryWizardTest extends UnitTestCase
         $wizard->boolQuery();
 
         $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Cannot modify query wizard configuration after calling query builder methods.');
+        $this->expectExceptionMessage('The wizard cannot be reconfigured after its built search was changed through the wizard');
 
         $wizard->allowedFilters(TermFilter::make('name'));
     }
@@ -315,7 +315,7 @@ class ElasticQueryWizardTest extends UnitTestCase
         $clone = clone $wizard;
 
         $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Cannot modify query wizard configuration after calling query builder methods.');
+        $this->expectExceptionMessage('The wizard cannot be reconfigured after its built search was changed through the wizard');
 
         $clone->allowedFilters(TermFilter::make('name'));
     }
@@ -327,7 +327,7 @@ class ElasticQueryWizardTest extends UnitTestCase
         $wizard->build();
 
         $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Cannot call modifyQuery() after build().');
+        $this->expectExceptionMessage('modifyQuery() cannot be called after build()');
 
         $wizard->modifyQuery(static function (Builder $builder, array $rawResult): void {});
     }
@@ -339,7 +339,7 @@ class ElasticQueryWizardTest extends UnitTestCase
         $wizard->build();
 
         $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Cannot call modifyModels() after build().');
+        $this->expectExceptionMessage('modifyModels() cannot be called after build()');
 
         $wizard->modifyModels(static function (Collection $collection): Collection {
             return $collection;
@@ -426,7 +426,7 @@ class ElasticQueryWizardTest extends UnitTestCase
         $boolQuery->filter(ElasticQuery::term('tenant_id', 7));
 
         $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Cannot modify query wizard configuration after calling query builder methods.');
+        $this->expectExceptionMessage('The wizard cannot be reconfigured after its built search was changed through the wizard');
 
         $wizard->allowedSorts('id');
     }

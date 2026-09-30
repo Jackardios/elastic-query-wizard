@@ -31,7 +31,7 @@ class ElasticAggregationProxyTest extends TestCase
     public function it_throws_for_unknown_method(): void
     {
         $this->expectException(BadMethodCallException::class);
-        $this->expectExceptionMessage('Method "Jackardios\\ElasticQueryWizard\\ElasticAggregation::unknownMethod" does not exist.');
+        $this->expectExceptionMessage('Call to undefined method Jackardios\\ElasticQueryWizard\\ElasticAggregation::unknownMethod()');
 
         ElasticAggregation::unknownMethod();
     }

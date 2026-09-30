@@ -170,7 +170,7 @@ final class ElasticFilter
             $name,
             static function (mixed $builder, mixed $value, string $property) use ($callback): mixed {
                 if (! $builder instanceof SearchBuilder) {
-                    throw new \LogicException(sprintf('Elastic callback filter "%s" expects a %s.', $property, SearchBuilder::class));
+                    throw new \LogicException(sprintf('Callback filter `%s` expects a `%s` subject.', $property, SearchBuilder::class));
                 }
 
                 return $callback($builder, $value, $property);

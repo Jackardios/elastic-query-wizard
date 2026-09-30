@@ -56,7 +56,7 @@ final class ElasticQuery
     public static function __callStatic(string $name, array $arguments): mixed
     {
         if (! method_exists(Query::class, $name)) {
-            throw new BadMethodCallException(sprintf('Method "%s::%s" does not exist.', self::class, $name));
+            throw new BadMethodCallException(sprintf('Call to undefined method %s::%s()', self::class, $name));
         }
 
         return Query::$name(...$arguments);

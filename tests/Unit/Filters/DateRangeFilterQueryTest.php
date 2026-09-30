@@ -314,7 +314,7 @@ class DateRangeFilterQueryTest extends UnitTestCase
                 DateRangeFilter::make('created_at')->withParameters([$name => 'x']);
                 $this->fail("withParameters() accepted {$name}");
             } catch (\InvalidArgumentException $e) {
-                $this->assertStringContainsString("Parameter \"{$name}\" is set by", $e->getMessage());
+                $this->assertStringContainsString("Parameter `{$name}` is set by", $e->getMessage());
                 $this->assertStringContainsString($instead, $e->getMessage());
             }
         }

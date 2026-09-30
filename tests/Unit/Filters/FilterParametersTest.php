@@ -18,7 +18,7 @@ class FilterParametersTest extends UnitTestCase
     public function a_misspelled_parameter_is_refused_when_the_filter_is_configured(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Parameter "bost" is not supported');
+        $this->expectExceptionMessage('Parameter `bost` is not supported');
 
         ElasticFilter::term('name')->withParameters(['bost' => 2]);
     }

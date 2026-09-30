@@ -56,7 +56,7 @@ class HasParametersTest extends TestCase
         $mockBuilder = new class {};
 
         $this->expectException(BadMethodCallException::class);
-        $this->expectExceptionMessage('Method "nonExistentMethod" does not exist');
+        $this->expectExceptionMessage('::nonExistentMethod()');
 
         $trait->applyTo($mockBuilder);
     }
