@@ -6,6 +6,7 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Pagination;
 
 use Jackardios\ElasticQueryWizard\Exceptions\MaxResultWindowExceeded;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -53,9 +54,38 @@ class MaxResultWindowTest extends UnitTestCase
     }
 
     #[Test]
-    public function an_invalid_window_is_refused(): void
+    public function the_window_is_read_from_a_string_of_digits(): void
     {
-        config()->set('elastic-query-wizard.max_result_window', 0);
+        config()->set('elastic-query-wizard.max_result_window', '100');
+
+        $this->expectException(MaxResultWindowExceeded::class);
+        $this->expectExceptionMessage('Page 11 of 10 results ends past the first 100 results');
+
+        $this->createElasticWizardFromQuery()->paginate(10, 'page', 11);
+    }
+
+    /**
+     * @return array<string, array{mixed}>
+     */
+    public static function invalidWindows(): array
+    {
+        return [
+            'zero' => [0],
+            'negative' => [-1],
+            'zero string' => ['0'],
+            'signed string' => ['+100'],
+            'decimal string' => ['100.0'],
+            'overflowing string' => ['99999999999999999999'],
+            'float' => [100.0],
+            'boolean' => [true],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('invalidWindows')]
+    public function an_invalid_window_is_refused(mixed $window): void
+    {
+        config()->set('elastic-query-wizard.max_result_window', $window);
 
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('elastic-query-wizard.max_result_window');

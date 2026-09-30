@@ -797,6 +797,9 @@ return [
 ];
 ```
 
+The value is a positive integer, a string of digits such as `env()` returns, or `null`; anything else throws an
+`InvalidArgumentException` when the wizard paginates.
+
 The wizard's `paginate()` takes 15 results per page by default, like Eloquent; `paginate()` on the search builder takes
 10. `paginate()` on the search builder that `build()` returns does not check the window. For results deeper than the
 window, use `searchAfter()` or a point in time.

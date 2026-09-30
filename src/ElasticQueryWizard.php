@@ -609,19 +609,27 @@ class ElasticQueryWizard extends BaseQueryWizard
      * The last result a page may reach, from `elastic-query-wizard.max_result_window`
      * (Elasticsearch's default `index.max_result_window`); null lifts the limit.
      *
-     * @throws \InvalidArgumentException When the value is not a positive integer or null
+     * @throws \InvalidArgumentException When the value is not a positive integer, a string of digits holding one, or null
      */
     private function maxResultWindow(): ?int
     {
         $value = config('elastic-query-wizard.max_result_window', self::DEFAULT_MAX_RESULT_WINDOW);
 
-        if ($value !== null && (! is_int($value) || $value < 1)) {
-            throw new \InvalidArgumentException(
-                'Config `elastic-query-wizard.max_result_window` must be a positive integer or null.'
-            );
+        if ($value === null) {
+            return null;
         }
 
-        return $value;
+        if (is_string($value) && preg_match('/^\d+\z/', $value) === 1) {
+            $value = filter_var($value, FILTER_VALIDATE_INT);
+        }
+
+        if (is_int($value) && $value > 0) {
+            return $value;
+        }
+
+        throw new \InvalidArgumentException(
+            'Config `elastic-query-wizard.max_result_window` must be a positive integer or null.'
+        );
     }
 
     /**
