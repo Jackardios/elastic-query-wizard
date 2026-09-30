@@ -36,11 +36,6 @@ trait AddsExistsQuery
             return;
         }
 
-        match ($clause) {
-            BoolClause::Filter => $boolQuery->addFilter($exists),
-            BoolClause::Must => $boolQuery->addMust($exists),
-            BoolClause::Should => $boolQuery->addShould($exists),
-            BoolClause::MustNot => $boolQuery->addMustNot($exists),
-        };
+        $clause->addTo($boolQuery, $exists);
     }
 }

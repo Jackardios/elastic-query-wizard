@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Jackardios\ElasticQueryWizard\Filters;
 
 use Jackardios\ElasticQueryWizard\Concerns\HasBoolClause;
-use Jackardios\ElasticQueryWizard\Enums\BoolClause;
 use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Query\Compound\BoolQuery;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
@@ -129,13 +128,6 @@ abstract class AbstractElasticFilter extends AbstractFilter
      */
     protected function addQueryToBuilder(BoolQuery $boolQuery, QueryInterface|array $query): void
     {
-        $clause = $this->getEffectiveClause();
-
-        match ($clause) {
-            BoolClause::Filter => $boolQuery->addFilter($query),
-            BoolClause::Must => $boolQuery->addMust($query),
-            BoolClause::Should => $boolQuery->addShould($query),
-            BoolClause::MustNot => $boolQuery->addMustNot($query),
-        };
+        $this->getEffectiveClause()->addTo($boolQuery, $query);
     }
 }

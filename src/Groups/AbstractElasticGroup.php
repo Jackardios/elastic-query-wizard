@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Jackardios\ElasticQueryWizard\Groups;
 
 use Jackardios\ElasticQueryWizard\Concerns\HasBoolClause;
-use Jackardios\ElasticQueryWizard\Enums\BoolClause;
 use Jackardios\ElasticQueryWizard\Exceptions\DuplicateGroupChildFilterName;
 use Jackardios\ElasticQueryWizard\Exceptions\UnsupportedFilterInGroup;
 use Jackardios\ElasticQueryWizard\Filters\AbstractElasticFilter;
@@ -57,18 +56,7 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
 
     public function getChildFilterNames(): array
     {
-        $names = [];
-
-        foreach ($this->children as $child) {
-            if ($child instanceof GroupInterface) {
-                // Recursively collect only leaf filter names, not group names
-                $names = array_merge($names, $child->getChildFilterNames());
-            } else {
-                $names[] = $child->getName();
-            }
-        }
-
-        return $names;
+        return self::leafFilterNames($this->children);
     }
 
     /**
@@ -174,7 +162,7 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
                 $groupQuery = $child->buildGroupQuery($groupChildValues);
 
                 if ($groupQuery !== null) {
-                    $this->addQueryToBoolQuery($innerBoolQuery, $child, $groupQuery);
+                    $child->getEffectiveClause()->addTo($innerBoolQuery, $groupQuery);
                 }
             } elseif ($child instanceof AbstractElasticFilter) {
                 $childName = $child->getName();
@@ -211,35 +199,11 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
     }
 
     /**
-     * Add a query to the inner BoolQuery using the filter's effective clause.
-     */
-    protected function addQueryToBoolQuery(BoolQuery $boolQuery, FilterInterface $filter, QueryInterface $query): void
-    {
-        $clause = $filter instanceof AbstractElasticFilter || $filter instanceof GroupInterface
-            ? $filter->getEffectiveClause()
-            : BoolClause::Filter;
-
-        match ($clause) {
-            BoolClause::Filter => $boolQuery->addFilter($query),
-            BoolClause::Must => $boolQuery->addMust($query),
-            BoolClause::Should => $boolQuery->addShould($query),
-            BoolClause::MustNot => $boolQuery->addMustNot($query),
-        };
-    }
-
-    /**
      * Add the group query to the parent BoolQuery using this group's clause.
      */
     protected function addQueryToBuilder(BoolQuery $parentBoolQuery, QueryInterface $query): void
     {
-        $clause = $this->getEffectiveClause();
-
-        match ($clause) {
-            BoolClause::Filter => $parentBoolQuery->addFilter($query),
-            BoolClause::Must => $parentBoolQuery->addMust($query),
-            BoolClause::Should => $parentBoolQuery->addShould($query),
-            BoolClause::MustNot => $parentBoolQuery->addMustNot($query),
-        };
+        $this->getEffectiveClause()->addTo($parentBoolQuery, $query);
     }
 
     /**
@@ -278,24 +242,29 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
      */
     protected function assertUniqueLeafFilterNames(array $children): void
     {
-        $leafNames = [];
-
-        foreach ($children as $child) {
-            if ($child instanceof GroupInterface) {
-                $leafNames = array_merge($leafNames, $child->getChildFilterNames());
-
-                continue;
-            }
-
-            $leafNames[] = $child->getName();
-        }
-
-        $nameCounts = array_count_values($leafNames);
+        $nameCounts = array_count_values(self::leafFilterNames($children));
         $duplicates = array_keys(array_filter($nameCounts, static fn (int $count): bool => $count > 1));
 
         if ($duplicates !== []) {
             throw DuplicateGroupChildFilterName::forGroup($this->getName(), $duplicates);
         }
+    }
+
+    /**
+     * The names of the leaf filters of a children tree, without the group names.
+     *
+     * @param  array<FilterInterface>  $children
+     * @return array<int, string>
+     */
+    private static function leafFilterNames(array $children): array
+    {
+        $names = [];
+
+        foreach ($children as $child) {
+            array_push($names, ...($child instanceof GroupInterface ? $child->getChildFilterNames() : [$child->getName()]));
+        }
+
+        return $names;
     }
 
     protected function supportsBooleanValues(): bool
