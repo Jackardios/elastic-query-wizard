@@ -262,12 +262,18 @@ class FilterValueSanitizerTest extends TestCase
     }
 
     #[Test]
-    public function finite_float_reads_numbers_and_refuses_infinity(): void
+    public function coordinates_are_decimal_numbers_in_range(): void
     {
-        $this->assertSame(1.5, FilterValueSanitizer::finiteFloat('1.5'));
-        $this->assertSame(3.0, FilterValueSanitizer::finiteFloat(3));
-        $this->assertNull(FilterValueSanitizer::finiteFloat('1e999'));
-        $this->assertNull(FilterValueSanitizer::finiteFloat('abc'));
-        $this->assertNull(FilterValueSanitizer::finiteFloat([1]));
+        $this->assertSame(1.5, FilterValueSanitizer::longitude(' 1.5 '));
+        $this->assertSame(-180.0, FilterValueSanitizer::longitude('-180'));
+        $this->assertSame(3.0, FilterValueSanitizer::latitude(3));
+        $this->assertSame(90.0, FilterValueSanitizer::latitude(90.0));
+
+        foreach (['1e1', '5.', '1e999', '0x1A', 'abc', '', true, [1], '180.5'] as $value) {
+            $this->assertNull(FilterValueSanitizer::longitude($value), var_export($value, true));
+        }
+
+        $this->assertNull(FilterValueSanitizer::latitude('91'));
+        $this->assertNull(FilterValueSanitizer::latitude(str_repeat('9', 400)));
     }
 }

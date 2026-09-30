@@ -540,4 +540,16 @@ class GeoShapeFilterQueryTest extends UnitTestCase
             $this->assertStringContainsString('Unsupported shape type `'.str_repeat('x', 50).'…`', $exception->getMessage());
         }
     }
+
+    #[Test]
+    public function a_coordinate_in_exponent_notation_is_refused(): void
+    {
+        $this->expectException(InvalidGeoShapeValue::class);
+        $this->expectExceptionMessage('A point expects coordinates');
+
+        $this
+            ->createElasticWizardWithFilters(['location' => ['type' => 'point', 'coordinates' => ['1e1', '5']]])
+            ->allowedFilters(GeoShapeFilter::make('location'))
+            ->build();
+    }
 }

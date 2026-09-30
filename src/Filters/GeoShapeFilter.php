@@ -224,14 +224,10 @@ final class GeoShapeFilter extends AbstractElasticFilter
             return null;
         }
 
-        $lon = FilterValueSanitizer::finiteFloat($point[0]);
-        $lat = FilterValueSanitizer::finiteFloat($point[1]);
+        $lon = FilterValueSanitizer::longitude($point[0]);
+        $lat = FilterValueSanitizer::latitude($point[1]);
 
-        if ($lon === null || $lat === null || abs($lon) > 180 || abs($lat) > 90) {
-            return null;
-        }
-
-        return [$lon, $lat];
+        return $lon !== null && $lat !== null ? [$lon, $lat] : null;
     }
 
     /**

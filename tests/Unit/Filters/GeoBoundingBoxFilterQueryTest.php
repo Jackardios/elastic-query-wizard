@@ -124,4 +124,15 @@ class GeoBoundingBoxFilterQueryTest extends UnitTestCase
             ->allowedFilters(GeoBoundingBoxFilter::make('location'))
             ->build();
     }
+
+    #[Test]
+    public function a_coordinate_in_exponent_notation_is_refused(): void
+    {
+        $this->expectException(InvalidGeoBoundingBoxValue::class);
+
+        $this
+            ->createElasticWizardWithFilters(['location' => '5,5,1e1,15'], GeoModel::class)
+            ->allowedFilters(GeoBoundingBoxFilter::make('location'))
+            ->build();
+    }
 }

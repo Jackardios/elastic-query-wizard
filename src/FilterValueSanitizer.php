@@ -33,20 +33,20 @@ class FilterValueSanitizer
      */
     public static function geoBoundingBoxValue(mixed $value, string|FilterInterface $filter): array
     {
-        $bbox = [];
         $arrayValue = self::normalizeGeoBoundingBoxInput($value);
 
-        foreach ($arrayValue as $item) {
-            $bbox[] = self::finiteFloat($item) ?? throw InvalidGeoBoundingBoxValue::invalidBox($value, $filter);
-        }
-
-        if (count($bbox) !== 4) {
+        if (count($arrayValue) !== 4) {
             throw InvalidGeoBoundingBoxValue::invalidBox($value, $filter);
         }
 
-        [$left, $bottom, $right, $top] = $bbox;
+        [$left, $bottom, $right, $top] = [
+            self::longitude($arrayValue[0]),
+            self::latitude($arrayValue[1]),
+            self::longitude($arrayValue[2]),
+            self::latitude($arrayValue[3]),
+        ];
 
-        if (! self::isLongitude($left) || ! self::isLongitude($right) || ! self::isLatitude($bottom) || ! self::isLatitude($top)) {
+        if ($left === null || $bottom === null || $right === null || $top === null) {
             throw InvalidGeoBoundingBoxValue::invalidBox($value, $filter);
         }
 
@@ -95,14 +95,36 @@ class FilterValueSanitizer
         return [];
     }
 
-    private static function isLongitude(float $value): bool
+    /**
+     * A longitude: a decimal number (see laravel-query-wizard's
+     * `FilterValueParser::number()`) from -180 to 180, or null.
+     */
+    public static function longitude(mixed $value): ?float
     {
-        return $value >= -180.0 && $value <= 180.0;
+        $number = self::decimal($value);
+
+        return $number !== null && $number >= -180.0 && $number <= 180.0 ? $number : null;
     }
 
-    private static function isLatitude(float $value): bool
+    /**
+     * A latitude: a decimal number from -90 to 90, or null.
+     */
+    public static function latitude(mixed $value): ?float
     {
-        return $value >= -90.0 && $value <= 90.0;
+        $number = self::decimal($value);
+
+        return $number !== null && $number >= -90.0 && $number <= 90.0 ? $number : null;
+    }
+
+    private static function decimal(mixed $value): ?float
+    {
+        try {
+            $number = FilterValueParser::number($value, '');
+        } catch (InvalidFilterValue) {
+            return null;
+        }
+
+        return $number === null ? null : (float) $number;
     }
 
     /**
@@ -115,14 +137,14 @@ class FilterValueSanitizer
     public static function geoDistanceValue(mixed $value, string|FilterInterface $filter): array
     {
         $point = is_array($value) ? $value : [];
-        $lat = self::finiteFloat($point['lat'] ?? null);
-        $lon = self::finiteFloat($point['lon'] ?? null);
+        $lat = self::latitude($point['lat'] ?? null);
+        $lon = self::longitude($point['lon'] ?? null);
         $rawDistance = $point['distance'] ?? null;
         $distance = (is_string($rawDistance) || is_int($rawDistance) || is_float($rawDistance)) ? trim((string) $rawDistance) : null;
 
         if ($lat === null || $lon === null || $distance === null
             || array_diff(array_keys($point), ['lat', 'lon', 'distance']) !== []
-            || ! self::isLatitude($lat) || ! self::isLongitude($lon) || ! self::isDistance($distance)) {
+            || ! self::isDistance($distance)) {
             throw InvalidGeoDistanceValue::invalidDistance($value, $filter);
         }
 
@@ -261,20 +283,5 @@ class FilterValueSanitizer
         }
 
         throw InvalidFilterValue::make($value, $filter, 'Expected text.');
-    }
-
-    /**
-     * A number as a float, or null when the value is not a number or overflows
-     * to infinity (e.g. "1e999"), which JSON can't encode.
-     */
-    public static function finiteFloat(mixed $value): ?float
-    {
-        if (! is_numeric($value)) {
-            return null;
-        }
-
-        $float = (float) $value;
-
-        return is_finite($float) ? $float : null;
     }
 }

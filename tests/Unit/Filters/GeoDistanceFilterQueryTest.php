@@ -148,4 +148,17 @@ class GeoDistanceFilterQueryTest extends UnitTestCase
 
         $this->assertEmpty($this->getFilterQueries($wizard->boolQuery()));
     }
+
+    #[Test]
+    public function a_coordinate_in_exponent_notation_is_refused(): void
+    {
+        $this->expectException(InvalidGeoDistanceValue::class);
+
+        $this
+            ->createElasticWizardWithFilters([
+                'location' => ['lat' => '1e1', 'lon' => '37.62', 'distance' => '10km'],
+            ], GeoModel::class)
+            ->allowedFilters(GeoDistanceFilter::make('location'))
+            ->build();
+    }
 }

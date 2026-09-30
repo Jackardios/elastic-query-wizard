@@ -973,7 +973,8 @@ is its top-left and bottom-right corners, so its first latitude may not be below
 
 Each polygon ring is a list of `[lon, lat]` points. A ring whose last point differs from its first is closed for you, and a ring must have at least four points once closed. Rings after the first are holes: documents inside a hole do not match.
 
-Coordinates must be finite numbers; a value such as `1e999` returns 400.
+Coordinates are decimal numbers (digits with an optional sign and fraction, no exponent); a value such as `1e1` returns
+400.
 
 `indexed_shape` values are refused (400) unless the filter names the index and field that hold the shapes; the client
 chooses only the document:
@@ -1714,9 +1715,9 @@ carries the value (`$exception->filterValue`) and what was expected (`$exception
 | Filter | Rejected values | Exception |
 |--------|-----------------|-----------|
 | `range` | not an array; a key other than `gt`, `gte`, `lt`, `lte`; a legacy key (`from`, `to`, `include_lower`, `include_upper`); a bound that is not a decimal number or an ISO 8601 date (exponents and date math such as `now-1d` included) | `InvalidRangeValue` |
-| `geoBoundingBox` | not four finite coordinates; unknown edge names; latitude outside [-90, 90] or longitude outside [-180, 180] | `InvalidGeoBoundingBoxValue` |
+| `geoBoundingBox` | not four decimal numbers (no exponent); unknown edge names; latitude outside [-90, 90] or longitude outside [-180, 180] | `InvalidGeoBoundingBoxValue` |
 | `dateRange` | a bound that is not a date or an ISO 8601 date-time; a bound after the year 9999 | `InvalidFilterValue` |
-| `geoDistance` | missing `lat`, `lon` or `distance`; a key other than those; coordinates out of range; a distance that is not a finite positive number with an optional unit | `InvalidGeoDistanceValue` |
+| `geoDistance` | missing `lat`, `lon` or `distance`; a key other than those; coordinates that are not decimal numbers (no exponent) or are out of range; a distance that is not a finite positive number with an optional unit | `InvalidGeoDistanceValue` |
 | `geoShape` | an unknown type; a key other than `type` and `coordinates` (`type` and `id` for an indexed shape); coordinates that do not form the shape | `InvalidGeoShapeValue` |
 | `exists`, `null` | not a boolean (`true`, `false`, `1`, `0`, `yes`, `no`, `on`, `off`, in any letter case) | `InvalidFilterValue` |
 | `trashed` | not `with`, `only`, `without`, `true` or `false` | `InvalidFilterValue` |
