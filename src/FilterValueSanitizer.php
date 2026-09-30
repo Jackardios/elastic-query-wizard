@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard;
 
-use Countable;
 use Jackardios\ElasticQueryWizard\Exceptions\InvalidGeoBoundingBoxValue;
 use Jackardios\ElasticQueryWizard\Exceptions\InvalidGeoDistanceValue;
 use Jackardios\ElasticQueryWizard\Exceptions\InvalidRangeValue;
@@ -213,44 +212,6 @@ class FilterValueSanitizer
         return $prepared;
     }
 
-    public static function isBlank(mixed $value): bool
-    {
-        if ($value === null) {
-            return true;
-        }
-
-        if (is_string($value)) {
-            return trim($value) === '';
-        }
-
-        if (is_numeric($value) || is_bool($value)) {
-            return false;
-        }
-
-        if ($value instanceof Countable) {
-            return count($value) === 0;
-        }
-
-        return empty($value);
-    }
-
-    public static function isFilled(mixed $value): bool
-    {
-        return ! static::isBlank($value);
-    }
-
-    /**
-     * @template TKey of array-key
-     * @template TValue
-     *
-     * @param  array<TKey, TValue>  $array
-     * @return array<TKey, TValue>
-     */
-    public static function arrayWithOnlyFilledItems(array $array): array
-    {
-        return array_filter($array, static fn ($item) => static::isFilled($item));
-    }
-
     /**
      * Converts a value to a list without blank items.
      *
@@ -262,10 +223,10 @@ class FilterValueSanitizer
     public static function toArray(mixed $value): array
     {
         if (is_array($value)) {
-            return array_values(static::arrayWithOnlyFilledItems($value));
+            return array_values(array_filter($value, static fn (mixed $item): bool => ! FilterValueParser::isBlank($item)));
         }
 
-        return static::isFilled($value) ? [$value] : [];
+        return FilterValueParser::isBlank($value) ? [] : [$value];
     }
 
     /**
@@ -305,7 +266,7 @@ class FilterValueSanitizer
         }
 
         if (is_string($value)) {
-            return self::isBlank($value) ? null : $value;
+            return FilterValueParser::isBlank($value) ? null : $value;
         }
 
         if (is_numeric($value)) {

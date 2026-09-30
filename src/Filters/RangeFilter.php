@@ -10,6 +10,7 @@ use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Query\Term\RangeQuery;
 use Jackardios\EsScoutDriver\Support\Query;
+use Jackardios\QueryWizard\Support\FilterValueParser;
 
 /**
  * Range filter for numeric and date fields.
@@ -45,7 +46,7 @@ final class RangeFilter extends AbstractElasticFilter
 
     public function buildQuery(mixed $value): ?QueryInterface
     {
-        if (FilterValueSanitizer::isBlank($value)) {
+        if (FilterValueParser::isBlank($value)) {
             return null;
         }
 

@@ -56,26 +56,7 @@ class FilterValueSanitizerTest extends TestCase
     #[Test]
     public function to_array_filters_blank_items_from_arrays(): void
     {
-        $this->assertEquals(['a', 'c'], FilterValueSanitizer::toArray(['a', '', null, 'c']));
-    }
-
-    #[Test]
-    public function is_blank_returns_true_for_blank_values(): void
-    {
-        $this->assertTrue(FilterValueSanitizer::isBlank(null));
-        $this->assertTrue(FilterValueSanitizer::isBlank(''));
-        $this->assertTrue(FilterValueSanitizer::isBlank('   '));
-        $this->assertTrue(FilterValueSanitizer::isBlank([]));
-    }
-
-    #[Test]
-    public function is_blank_returns_false_for_filled_values(): void
-    {
-        $this->assertFalse(FilterValueSanitizer::isBlank('value'));
-        $this->assertFalse(FilterValueSanitizer::isBlank(0));
-        $this->assertFalse(FilterValueSanitizer::isBlank('0'));
-        $this->assertFalse(FilterValueSanitizer::isBlank(false));
-        $this->assertFalse(FilterValueSanitizer::isBlank(['a']));
+        $this->assertEquals(['a', 'c'], FilterValueSanitizer::toArray(['a', '', null, [' '], 'c']));
     }
 
     #[Test]
@@ -200,13 +181,6 @@ class FilterValueSanitizerTest extends TestCase
     {
         $this->expectException(InvalidRangeValue::class);
         FilterValueSanitizer::rangeFilterValue('invalid', 'price');
-    }
-
-    #[Test]
-    public function array_with_only_filled_items_filters_correctly(): void
-    {
-        $result = FilterValueSanitizer::arrayWithOnlyFilledItems(['a', '', null, 'b', '  ']);
-        $this->assertEquals(['a', 'b'], array_values($result));
     }
 
     #[Test]

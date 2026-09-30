@@ -6,11 +6,11 @@ namespace Jackardios\ElasticQueryWizard\Filters;
 
 use Jackardios\ElasticQueryWizard\Concerns\LimitsValueLength;
 use Jackardios\ElasticQueryWizard\Enums\BoolClause;
-use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Query\Specialized\MoreLikeThisQuery;
 use Jackardios\EsScoutDriver\Support\Query;
 use Jackardios\QueryWizard\Exceptions\InvalidFilterValue;
+use Jackardios\QueryWizard\Support\FilterValueParser;
 
 /**
  * Finds documents like the given texts or documents of the searched index, for
@@ -228,7 +228,7 @@ final class MoreLikeThisFilter extends AbstractElasticFilter
      */
     protected function prepareLikeValue(mixed $value): string|array|null
     {
-        if (FilterValueSanitizer::isBlank($value)) {
+        if (FilterValueParser::isBlank($value)) {
             return null;
         }
 
@@ -243,7 +243,7 @@ final class MoreLikeThisFilter extends AbstractElasticFilter
         $like = [];
 
         foreach (array_values($value) as $item) {
-            if (FilterValueSanitizer::isBlank($item)) {
+            if (FilterValueParser::isBlank($item)) {
                 continue;
             }
 

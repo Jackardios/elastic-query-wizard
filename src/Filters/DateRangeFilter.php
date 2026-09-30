@@ -130,7 +130,7 @@ final class DateRangeFilter extends AbstractElasticFilter
      */
     public function validateValueShape(mixed $value): ?string
     {
-        if ($this->isBlankValueShape($value)) {
+        if (FilterValueParser::isBlank($value)) {
             return null;
         }
 

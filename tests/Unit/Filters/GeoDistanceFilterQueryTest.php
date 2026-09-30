@@ -137,4 +137,15 @@ class GeoDistanceFilterQueryTest extends UnitTestCase
             ->allowedFilters(GeoDistanceFilter::make('location'))
             ->build();
     }
+
+    #[Test]
+    public function a_prepared_value_of_blank_parts_applies_no_condition(): void
+    {
+        $wizard = $this
+            ->createElasticWizardWithFilters(['location' => 'here'], GeoModel::class)
+            ->allowedFilters(GeoDistanceFilter::make('location')->prepareValueWith(fn (): array => ['lat' => '', 'lon' => ' ', 'distance' => '']));
+        $wizard->build();
+
+        $this->assertEmpty($this->getFilterQueries($wizard->boolQuery()));
+    }
 }

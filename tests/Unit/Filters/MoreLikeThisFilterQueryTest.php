@@ -359,6 +359,17 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
     }
 
     #[Test]
+    public function it_does_not_add_query_when_the_prepared_items_are_all_blank(): void
+    {
+        $wizard = $this
+            ->createElasticWizardWithFilters(['similar' => 'apple'])
+            ->allowedFilters(MoreLikeThisFilter::make('similar', ['title'])->prepareValueWith(fn (): array => ['', ' ']));
+        $wizard->build();
+
+        $this->assertEmpty($this->getMustQueries($wizard->boolQuery()));
+    }
+
+    #[Test]
     public function it_filters_blank_items_from_array(): void
     {
         $wizard = $this

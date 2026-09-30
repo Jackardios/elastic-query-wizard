@@ -9,6 +9,7 @@ use Jackardios\ElasticQueryWizard\FilterValueSanitizer;
 use Jackardios\EsScoutDriver\Query\Geo\GeoShapeQuery;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Support\Query;
+use Jackardios\QueryWizard\Support\FilterValueParser;
 
 /**
  * Filter documents by geographic shape relationships.
@@ -72,7 +73,7 @@ final class GeoShapeFilter extends AbstractElasticFilter
 
     public function buildQuery(mixed $value): ?QueryInterface
     {
-        if (FilterValueSanitizer::isBlank($value)) {
+        if (FilterValueParser::isBlank($value)) {
             return null;
         }
 
