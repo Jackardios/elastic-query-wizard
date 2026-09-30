@@ -16,9 +16,9 @@ use Jackardios\QueryWizard\Exceptions\InvalidFilterValue;
  * Finds documents like the given texts or documents of the searched index, for
  * "related content" and recommendations.
  *
- * The value is one text, a list of texts, or `_id` references to documents
- * (`filter[similar][_id]=5`, `filter[similar][][_id]=5`). A reference takes
- * only an `_id`: the document is read from the index being searched.
+ * The value is one text or a list of texts. With allowDocumentReferences(),
+ * it may also hold `_id` references to documents (`filter[similar][_id]=5`,
+ * `filter[similar][][_id]=5`), read from the index being searched.
  *
  * @see https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-mlt-query.html
  */
@@ -50,6 +50,8 @@ final class MoreLikeThisFilter extends AbstractElasticFilter
     protected ?bool $include = null;
 
     protected ?float $boostTerms = null;
+
+    protected bool $allowsDocumentReferences = false;
 
     private const EXPECTED = 'Expected a text, a list of texts or `_id` references.';
 
@@ -169,6 +171,19 @@ final class MoreLikeThisFilter extends AbstractElasticFilter
     }
 
     /**
+     * Accept `_id` references to documents of the searched index. The query
+     * reads a referenced document whatever the search's other conditions
+     * (tenant, visibility, soft deletes), so a client can learn what a
+     * document it may not see contains from the results it gets back.
+     */
+    public function allowDocumentReferences(bool $allow = true): static
+    {
+        $this->allowsDocumentReferences = $allow;
+
+        return $this;
+    }
+
+    /**
      * Include the input documents in the results.
      */
     public function include(bool $include = true): static
@@ -258,10 +273,14 @@ final class MoreLikeThisFilter extends AbstractElasticFilter
      * @param  array<mixed>  $reference
      * @return array{_id: string}
      *
-     * @throws InvalidFilterValue
+     * @throws InvalidFilterValue When references are not allowed, or this one holds more than an `_id`
      */
     private function documentReference(array $reference, mixed $value): array
     {
+        if (! $this->allowsDocumentReferences) {
+            throw InvalidFilterValue::make($value, $this, 'Expected a text or a list of texts: this filter does not take document references.');
+        }
+
         $id = $reference['_id'] ?? null;
 
         if (array_keys($reference) !== ['_id'] || ! (is_string($id) || is_int($id)) || trim((string) $id) === '') {

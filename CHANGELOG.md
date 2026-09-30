@@ -135,6 +135,10 @@ made since those snapshots.
 
 ### Security
 
+- More-like-this filters take document references (`filter[similar][_id]=5`) only after `allowDocumentReferences()`;
+  otherwise a reference is a 400. Elasticsearch reads the referenced document regardless of the search's conditions,
+  so a client could learn what a document of another tenant contains.
+
 - `prefix` refuses a value longer than 1000 characters, like `regexp`, and `fuzzy` one longer than 256, with a 400;
   `maxLength()` changes the limit. A long prefix failed the search, and a long fuzzy term could trip Elasticsearch's
   circuit breaker.

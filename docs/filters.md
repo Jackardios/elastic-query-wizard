@@ -1074,7 +1074,18 @@ GET /articles?filter[similar]=elasticsearch, distributed search
 
 # Several texts
 GET /articles?filter[similar][]=elasticsearch&filter[similar][]=distributed search
+```
 
+### Document References
+
+A document of the searched index can stand for a text, but only when the filter allows it; otherwise a reference
+returns 400 (`InvalidFilterValue`):
+
+```php
+ElasticFilter::moreLikeThis(['title', 'body'], 'similar')->allowDocumentReferences()
+```
+
+```
 # Document of the searched index
 GET /articles?filter[similar][_id]=123
 
@@ -1084,6 +1095,11 @@ GET /articles?filter[similar][0]=elasticsearch&filter[similar][1][_id]=123
 
 A document reference takes only an `_id`: the document is read from the index being searched, so a client cannot read
 documents of another index. Any other key (`_index`, `_routing`, …) returns 400 (`InvalidFilterValue`).
+
+> **Warning:** Elasticsearch reads a referenced document whatever the search's other conditions: a tenant filter,
+> visibility or soft deletes do not apply to it. A client that names the `_id` of a document it may not see learns what
+> the document contains from the similar documents it gets back. Allow references only when every document of the
+> index is visible to every client of the endpoint.
 
 ### Elasticsearch Query
 

@@ -7,6 +7,7 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Filters;
 use Jackardios\ElasticQueryWizard\Filters\MoreLikeThisFilter;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use Jackardios\QueryWizard\Exceptions\InvalidFilterValue;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -42,7 +43,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
                     '_id' => '123',
                 ],
             ])
-            ->allowedFilters(MoreLikeThisFilter::make(['title', 'body'], 'similar'));
+            ->allowedFilters(MoreLikeThisFilter::make(['title', 'body'], 'similar')->allowDocumentReferences());
         $wizard->build();
 
         $queries = $this->getMustQueries($wizard->boolQuery());
@@ -445,7 +446,7 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
     {
         $like = fn (mixed $value): mixed => $this->getMustQueries(
             tap($this->createElasticWizardWithFilters(['similar' => $value])
-                ->allowedFilters(MoreLikeThisFilter::make(['title'], 'similar')))->build()->boolQuery()
+                ->allowedFilters(MoreLikeThisFilter::make(['title'], 'similar')->allowDocumentReferences()))->build()->boolQuery()
         )[0]['more_like_this']['like'];
 
         $this->assertSame('red, blue', $like('red, blue'));
@@ -469,12 +470,35 @@ class MoreLikeThisFilterQueryTest extends UnitTestCase
         foreach ([['_index' => 'users', '_id' => '1'], [['_id' => '1', '_routing' => 'x']], ['_id' => ['1']], ['_id' => '1', 'x' => '']] as $value) {
             try {
                 $this->createElasticWizardWithFilters(['similar' => $value])
-                    ->allowedFilters(MoreLikeThisFilter::make(['title'], 'similar'))
+                    ->allowedFilters(MoreLikeThisFilter::make(['title'], 'similar')->allowDocumentReferences())
                     ->build();
                 $this->fail('The reference was accepted: '.json_encode($value));
             } catch (InvalidFilterValue $exception) {
                 $this->assertStringContainsString('A document reference takes only an `_id`', $exception->getMessage());
             }
         }
+    }
+
+    /**
+     * @return array<string, array{mixed}>
+     */
+    public static function documentReferences(): array
+    {
+        return [
+            'one reference' => [['_id' => '1']],
+            'a reference in a list' => [['red', ['_id' => '1']]],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('documentReferences')]
+    public function a_document_reference_is_refused_unless_the_filter_allows_them(mixed $value): void
+    {
+        $this->expectException(InvalidFilterValue::class);
+        $this->expectExceptionMessage('Expected a text or a list of texts: this filter does not take document references.');
+
+        $this->createElasticWizardWithFilters(['similar' => $value])
+            ->allowedFilters(MoreLikeThisFilter::make(['title'], 'similar'))
+            ->build();
     }
 }

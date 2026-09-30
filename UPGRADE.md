@@ -476,8 +476,9 @@ The request is parsed by `laravel-query-wizard` v3, whose stricter rules apply t
   the parameter name). Set `fields` (or `default_field` for `queryString`) with `withParameters()` to search others.
   `queryString` also sends `allow_leading_wildcard: false` and answers a term starting with `*` or `?` with 400;
   `withParameters(['allow_leading_wildcard' => true])` restores the v2 behavior.
-- **Other indices are out of the client's reach.** A more-like-this document reference takes only an `_id` and is
-  read from the searched index (v2 let the client set `_index` and any other key). A geo shape `indexed_shape` needs
+- **Other indices are out of the client's reach.** A more-like-this filter takes document references only after
+  `->allowDocumentReferences()` (v2 always did; without it a reference is now a 400), and a reference takes only an
+  `_id`, read from the searched index (v2 let the client set `_index` and any other key). A geo shape `indexed_shape` needs
   `->indexedShapes($index, $path)` on the filter and takes only an `id` from the client (v2 let the client set `index`
   and `path`, so it could read any index, and a `path` naming a plain field echoed its value in the error).
 - **More like this** keeps a text whole instead of splitting it on the separator; send several texts as a list.
