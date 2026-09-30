@@ -7,7 +7,7 @@ on:
     branches: [main, master, '*.x']
     types: [opened, synchronize, reopened, ready_for_review]
   # composer.lock is not committed and CI runs composer update, so every build
-  # resolves jackardios/laravel-query-wizard:dev-master afresh. Without a timer a
+  # resolves jackardios/laravel-query-wizard:dev-legacy-l10 afresh. Without a timer a
   # breaking change upstream stays invisible until someone happens to push here.
   schedule:
     - cron: '0 5 * * 1'
@@ -18,6 +18,11 @@ concurrency:
   # scheduled run on the same ref and cancel-in-progress kills the canary.
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
+
+env:
+  # Laravel 10 and 11 have open security advisories and no fixed release. This line
+  # keeps supporting them, so Composer must not refuse to install them.
+  COMPOSER_POLICY_ADVISORIES_BLOCK: '0'
 
 jobs:
   tests:
