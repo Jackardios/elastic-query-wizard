@@ -8,6 +8,7 @@ use Closure;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Sort\Sort;
+use Jackardios\QueryWizard\Enums\SortDirection;
 
 /**
  * Sort by a field within nested documents.
@@ -126,11 +127,11 @@ final class NestedSort extends AbstractElasticSort
         return $this;
     }
 
-    public function handle(SearchBuilder $builder, string $direction): void
+    public function handle(SearchBuilder $builder, SortDirection $direction): void
     {
         $fullField = $this->path.'.'.$this->nestedField;
 
-        $sort = Sort::field($fullField)->order($direction);
+        $sort = Sort::field($fullField)->order($direction->value);
 
         if ($this->missing !== null) {
             $sort->missing($this->missing);

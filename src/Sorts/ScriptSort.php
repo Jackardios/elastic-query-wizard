@@ -6,6 +6,7 @@ namespace Jackardios\ElasticQueryWizard\Sorts;
 
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Sort\Sort;
+use Jackardios\QueryWizard\Enums\SortDirection;
 
 /**
  * Script-based sorting using Painless scripts.
@@ -74,7 +75,7 @@ final class ScriptSort extends AbstractElasticSort
         return $this;
     }
 
-    public function handle(SearchBuilder $builder, string $direction): void
+    public function handle(SearchBuilder $builder, SortDirection $direction): void
     {
         $script = ['source' => $this->scriptSource];
 
@@ -82,7 +83,7 @@ final class ScriptSort extends AbstractElasticSort
             $script['params'] = $this->params;
         }
 
-        $sort = Sort::script($script, $this->type)->order($direction);
+        $sort = Sort::script($script, $this->type)->order($direction->value);
 
         if ($this->mode !== null) {
             $sort->mode($this->mode);

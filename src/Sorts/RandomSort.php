@@ -8,6 +8,7 @@ use Jackardios\EsScoutDriver\Query\Compound\BoolQuery;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Sort\Sort;
 use Jackardios\EsScoutDriver\Support\Query;
+use Jackardios\QueryWizard\Enums\SortDirection;
 use stdClass;
 
 /**
@@ -61,14 +62,14 @@ final class RandomSort extends AbstractElasticSort
         return $this;
     }
 
-    public function handle(SearchBuilder $builder, string $direction): void
+    public function handle(SearchBuilder $builder, SortDirection $direction): void
     {
         $functionScore = Query::functionScore($this->queryBuiltSoFar($builder))
             ->addFunction($this->buildRandomScoreFunction())
             ->boostMode('replace');
 
         $builder->clearBoolQuery()->query($functionScore);
-        $builder->sort(Sort::score()->order($direction));
+        $builder->sort(Sort::score()->order($direction->value));
     }
 
     /**

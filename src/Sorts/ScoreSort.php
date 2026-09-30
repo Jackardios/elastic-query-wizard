@@ -6,6 +6,7 @@ namespace Jackardios\ElasticQueryWizard\Sorts;
 
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Sort\Sort;
+use Jackardios\QueryWizard\Enums\SortDirection;
 
 final class ScoreSort extends AbstractElasticSort
 {
@@ -14,8 +15,8 @@ final class ScoreSort extends AbstractElasticSort
         return new self('_score', $alias);
     }
 
-    public function handle(SearchBuilder $builder, string $direction): void
+    public function handle(SearchBuilder $builder, SortDirection $direction): void
     {
-        $builder->sort(Sort::score()->order($direction));
+        $builder->sort(Sort::score()->order($direction->value));
     }
 }

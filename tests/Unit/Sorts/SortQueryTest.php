@@ -221,9 +221,9 @@ class SortQueryTest extends UnitTestCase
                 return new self($property, $alias);
             }
 
-            public function apply(mixed $subject, string $direction): mixed
+            public function apply(mixed $subject, SortDirection $direction): mixed
             {
-                $subject->sort('name', $direction);
+                $subject->sort('name', $direction->value);
 
                 return $subject;
             }

@@ -256,6 +256,7 @@ new CustomSort('property_name');
 use Jackardios\ElasticQueryWizard\Sorts\AbstractElasticSort;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Sort\Sort;
+use Jackardios\QueryWizard\Enums\SortDirection;
 
 final class CustomSort extends AbstractElasticSort
 {
@@ -264,9 +265,9 @@ final class CustomSort extends AbstractElasticSort
         return new static($property, $alias);
     }
 
-    public function handle(SearchBuilder $builder, string $direction): void
+    public function handle(SearchBuilder $builder, SortDirection $direction): void
     {
-        $sort = Sort::field($this->property)->order($direction);
+        $sort = Sort::field($this->property)->order($direction->value);
         $builder->sort($sort);
     }
 }

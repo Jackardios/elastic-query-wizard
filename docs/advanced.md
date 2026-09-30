@@ -615,8 +615,9 @@ ElasticQueryWizard::for(Product::class)
 ### Extending AbstractSort
 
 ```php
-use Jackardios\QueryWizard\Sorts\AbstractSort;
 use Jackardios\EsScoutDriver\Sort\Sort;
+use Jackardios\QueryWizard\Enums\SortDirection;
+use Jackardios\QueryWizard\Sorts\AbstractSort;
 
 class PopularitySort extends AbstractSort
 {
@@ -643,7 +644,7 @@ class PopularitySort extends AbstractSort
         return new static($property, $viewsWeight, $likesWeight, $alias);
     }
 
-    public function apply(mixed $subject, string $direction): mixed
+    public function apply(mixed $subject, SortDirection $direction): mixed
     {
         $script = [
             'source' => "doc['views'].value * params.vw + doc['likes'].value * params.lw",
@@ -653,7 +654,7 @@ class PopularitySort extends AbstractSort
             ],
         ];
 
-        $sort = Sort::script($script, 'number')->order($direction);
+        $sort = Sort::script($script, 'number')->order($direction->value);
         $subject->sort($sort);
 
         return $subject;

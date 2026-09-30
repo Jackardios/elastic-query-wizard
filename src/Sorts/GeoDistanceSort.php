@@ -6,6 +6,7 @@ namespace Jackardios\ElasticQueryWizard\Sorts;
 
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Sort\Sort;
+use Jackardios\QueryWizard\Enums\SortDirection;
 
 final class GeoDistanceSort extends AbstractElasticSort
 {
@@ -69,10 +70,10 @@ final class GeoDistanceSort extends AbstractElasticSort
         return $this;
     }
 
-    public function handle(SearchBuilder $builder, string $direction): void
+    public function handle(SearchBuilder $builder, SortDirection $direction): void
     {
         $sort = Sort::geoDistance($this->property, $this->lat, $this->lon)
-            ->order($direction)
+            ->order($direction->value)
             ->unit($this->unit);
 
         if ($this->mode !== null) {

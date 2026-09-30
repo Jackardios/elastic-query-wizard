@@ -6,6 +6,7 @@ namespace Jackardios\ElasticQueryWizard\Tests\Unit\Sorts;
 
 use Jackardios\ElasticQueryWizard\Sorts\AbstractElasticSort;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
+use Jackardios\QueryWizard\Enums\SortDirection;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -20,7 +21,7 @@ class AbstractElasticSortTest extends TestCase
         $sort = $this->createSort();
         $subject = new \stdClass;
 
-        $result = $sort->apply($subject, 'asc');
+        $result = $sort->apply($subject, SortDirection::Ascending);
 
         $this->assertSame($subject, $result);
     }
@@ -32,7 +33,7 @@ class AbstractElasticSortTest extends TestCase
         {
             public bool $handleCalled = false;
 
-            public ?string $capturedDirection = null;
+            public ?SortDirection $capturedDirection = null;
 
             public function __construct(string $property, ?string $alias = null)
             {
@@ -44,7 +45,7 @@ class AbstractElasticSortTest extends TestCase
                 return new self($property, $alias);
             }
 
-            public function handle(SearchBuilder $builder, string $direction): void
+            public function handle(SearchBuilder $builder, SortDirection $direction): void
             {
                 $this->handleCalled = true;
                 $this->capturedDirection = $direction;
@@ -53,11 +54,11 @@ class AbstractElasticSortTest extends TestCase
 
         $searchBuilder = $this->createStub(SearchBuilder::class);
 
-        $result = $sort->apply($searchBuilder, 'desc');
+        $result = $sort->apply($searchBuilder, SortDirection::Descending);
 
         $this->assertSame($searchBuilder, $result);
         $this->assertTrue($sort->handleCalled);
-        $this->assertEquals('desc', $sort->capturedDirection);
+        $this->assertSame(SortDirection::Descending, $sort->capturedDirection);
     }
 
     #[Test]
@@ -90,7 +91,7 @@ class AbstractElasticSortTest extends TestCase
                 return new self($property, $alias);
             }
 
-            public function handle(SearchBuilder $builder, string $direction): void
+            public function handle(SearchBuilder $builder, SortDirection $direction): void
             {
                 // no-op for test
             }
