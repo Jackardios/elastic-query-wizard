@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Filters;
 
+use InvalidArgumentException;
 use Jackardios\ElasticQueryWizard\Enums\BoolClause;
 use Jackardios\EsScoutDriver\Query\FullText\MultiMatchQuery;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
@@ -21,11 +22,17 @@ final class MultiMatchFilter extends AbstractTextFilter
     {
         parent::__construct($property, $alias);
 
+        if ($fields === []) {
+            throw new InvalidArgumentException(sprintf('Filter `%s` needs at least one field to search.', $this->getName()));
+        }
+
         $this->fields = $fields;
     }
 
     /**
      * @param  string[]  $fields  The Elasticsearch fields to search across
+     *
+     * @throws InvalidArgumentException When the list is empty
      */
     public static function make(string $property, array $fields, ?string $alias = null): static
     {

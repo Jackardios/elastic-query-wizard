@@ -82,4 +82,13 @@ class MultiMatchFilterQueryTest extends UnitTestCase
         $this->assertCount(1, $queries);
         $this->assertArrayHasKey('multi_match', $queries[0]);
     }
+
+    #[Test]
+    public function it_refuses_an_empty_field_list_when_configured(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('Filter `q` needs at least one field to search.');
+
+        MultiMatchFilter::make('search', [], 'q');
+    }
 }

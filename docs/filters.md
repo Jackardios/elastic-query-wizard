@@ -479,6 +479,8 @@ ElasticFilter::multiMatch('search', ['title', 'body', 'tags'])
 ElasticFilter::multiMatch('search', ['title^3', 'body^2', 'tags'])
 ```
 
+An empty field list throws `InvalidArgumentException` when the filter is configured.
+
 ### Query Parameters
 
 ```
