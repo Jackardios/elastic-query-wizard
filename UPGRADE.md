@@ -164,8 +164,8 @@ $wizard->tapSearchBuilder(fn (SearchBuilder $builder) => $builder->must($query))
 $wizard->boolQuery()->filter($query);
 ```
 
-`tapSearchBuilder()` runs again on every build. A change made through `boolQuery()` stays on the built search, so a
-configuration call after `build()` throws a `LogicException` instead of rebuilding without it.
+`tapSearchBuilder()` runs again on every build. `boolQuery()` builds the wizard first and returns the bool query of the
+built search, so a configuration call after it throws a `LogicException` instead of rebuilding without the change.
 
 The soft delete mode moved to the search builder:
 
@@ -817,8 +817,18 @@ tests that compare messages.
   `ElasticFilter::callback()`.
 - `modifyQuery()`, `modifyModels()`, `tapSearchBuilder()` and search builder methods called while the wizard builds
   (from a callback) throw a `LogicException`.
-- A configuration call after the build throws a `LogicException` when `boolQuery()` was used before the build, after a
-  failed build whose rollback dropped a `boolQuery()` change, and after `getBoolQuery()` through the wizard.
+- `boolQuery()` builds the wizard first. A configuration call after a change to the built search through the wizard
+  (`boolQuery()`, `getBoolQuery()` or a search builder method called after the build) throws a `LogicException`, since
+  the rebuild would drop the change; configure the wizard before, or use `tapSearchBuilder()`.
+- `when()` and `unless()` are applied to the search builder with the other fluent calls when the wizard builds, and
+  throw `BadMethodCallException` without a callback.
+- `withParameters()` refuses a value of a type the query's setter does not take (`'boost' => '2'`) when the filter is
+  configured, and `range()->withParameters()` refuses `gt`, `gte`, `lt` and `lte`.
+- Geo coordinates in exponent notation (`1e1`) or with a trailing dot (`5.`) are 400s.
+- `multiMatch()` with an empty field list throws `InvalidArgumentException`.
+- `AbstractElasticGroup::addQueryToBoolQuery()` and `AbstractElasticFilter::isBlankValueShape()` are removed: add a
+  query to the clause the filter's `getEffectiveClause()` names, and check values with `laravel-query-wizard`'s
+  `FilterValueParser::isBlank()`.
 
 #### Filter Groups
 
@@ -845,6 +855,9 @@ tests that compare messages.
 - `asNumber()` on term, range and ids filters reads values as decimal numbers and returns 400 for anything else, such
   as text or a date for a numeric field, where Elasticsearch fails the search.
 - `tapSearchBuilder()`, `modifyQuery()` and `modifyModels()` take any callable (were `Closure` only).
+- `ElasticQuery` and `ElasticAggregation` forward the macros of `Query` and `Agg`, and the wizard those of
+  `SearchBuilder`. The wizard lists the search builder methods it forwards in `@method` tags instead of
+  `@mixin SearchBuilder`, so static analysis reads a forwarded fluent call as returning the wizard.
 
 ### Since the master snapshot
 

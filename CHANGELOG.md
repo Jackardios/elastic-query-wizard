@@ -32,10 +32,12 @@ made since those snapshots.
   (10000, `null` turns the check off).
 - Geo bounding boxes take named edges (`left`, `bottom`, `right`, `top`); geo shape polygons keep their holes and are
   closed when their last point differs from their first.
+- `ElasticQuery` and `ElasticAggregation` forward the macros of `Query` and `Agg`, and the wizard forwards those of
+  `SearchBuilder`.
 
 ### Changed
 
-- The exceptions drop the `Exception` suffix and are final, like `laravel-query-wizard`'s:
+- The exceptions drop the `Exception` suffix, like `laravel-query-wizard`'s, and are final:
   `DuplicateGroupChildFilterNameException` is `DuplicateGroupChildFilterName`, `UnsupportedFilterInGroupException` is
   `UnsupportedFilterInGroup` (an `InvalidArgumentException`, was a `RuntimeException`), and the `dev-master`
   `FilterNameConflictException` is `FilterNameConflict`. They are made through their static factories, and their
@@ -78,8 +80,21 @@ made since those snapshots.
 - A more-like-this document reference takes only an `_id` and is read from the searched index; a geo shape
   `indexed_shape` needs `indexedShapes($index, $path)` and takes only an `id`.
 - `FilterValueSanitizer` is `@internal`; custom filters read values with `laravel-query-wizard`'s `FilterValueParser`.
-- `withParameters()` checks each name against the filter's query when the filter is configured
-  (`InvalidArgumentException`).
+- `withParameters()` checks each name, and the type of each value, against the filter's query when the filter is
+  configured (`InvalidArgumentException`); `range()` refuses `gt`, `gte`, `lt` and `lte`, which it sets itself.
+- `boolQuery()` builds the wizard first and returns the bool query of the built search. A configuration call after a
+  change to the built search through the wizard (`boolQuery()`, `getBoolQuery()` or a search builder method called
+  after the build) throws a `LogicException`, since the rebuild would drop the change.
+- `when()` and `unless()` are applied to the search builder with the other fluent calls when the wizard builds, and
+  throw `BadMethodCallException` without a callback.
+- `ElasticQueryWizard` declares the search builder methods it forwards in `@method` tags instead of
+  `@mixin SearchBuilder`, so static analysis reads a forwarded fluent call as returning the wizard. The `ElasticQuery`
+  and `ElasticAggregation` tags list every factory with its return type.
+- Geo coordinates are read as decimal numbers: exponent notation (`1e1`) and a trailing dot (`5.`) are 400s.
+- A value preparer that returns only blank parts makes geo, range, nested and more-like-this filters apply no
+  condition, like a blank request value; geo filters answered 400 and `moreLikeThis` sent `like: []`.
+- `multiMatch()` with an empty field list throws `InvalidArgumentException` when configured.
+- `elastic-query-wizard.max_result_window` accepts a string of digits, such as a value read with `env()`.
 - Date range bounds are read like `laravel-query-wizard` reads dates: a date or an ISO 8601 date-time (other values,
   epoch numbers and date math included, are 400s), in the application timezone or the filter's `timezone()`, with a
   date `to` covering the whole day. The bounds are sent as ISO 8601 date-times with an offset and
@@ -120,6 +135,9 @@ made since those snapshots.
   `modifyModels()` and `tapSearchBuilder()`.
 - `DateRangeFilter::dateFormat()`; use `esFormat()`.
 - `NullFilter::withInvertedLogic()` and `withoutInvertedLogic()`; use `ElasticFilter::notNull()`.
+- `AbstractElasticGroup::addQueryToBoolQuery()` and `AbstractElasticFilter::isBlankValueShape()` of the `dev-master`
+  snapshots; add a query to the clause the filter's `getEffectiveClause()` names, and check values with
+  `laravel-query-wizard`'s `FilterValueParser::isBlank()`.
 
 ### Fixed
 
@@ -158,9 +176,13 @@ made since those snapshots.
   had not indexed which models are trashed.
 - A range bound left empty is no bound; coordinates that overflow to infinity no longer fail the JSON encoding.
 - A clone of a wizard whose built search was changed keeps the change lock.
-- A configuration call after the build throws a `LogicException` when `boolQuery()` was used before the build; the
-  rebuild used to drop its change silently. So does a build after a failed one, whose rollback drops the change, and
-  a configuration call after `getBoolQuery()` through the wizard.
+- A configuration call after `boolQuery()` no longer rebuilds without its change, and `getBoolQuery()` through the
+  wizard returns the bool query.
+- A search builder method that is not public, called through the wizard, throws `BadMethodCallException` naming the
+  wizard.
+- The query string leading-wildcard check accepts a lone `*` before a phrase, a group, `!`, a range or a regular
+  expression, reads form feed and vertical tab as term characters, and refuses a leading wildcard after a regular
+  expression or range inside a term (`a/b/*c`, `a[b TO c]*d`), which Elasticsearch refused with a failed search.
 
 ### Security
 
