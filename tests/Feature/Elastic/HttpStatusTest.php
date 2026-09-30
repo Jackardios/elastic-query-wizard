@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Tests\Feature\Elastic;
 
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Route;
 use Jackardios\ElasticQueryWizard\ElasticFilter;
 use Jackardios\ElasticQueryWizard\ElasticQueryWizard;
@@ -26,6 +27,8 @@ class HttpStatusTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        Config::set('scout.soft_delete', true);
 
         Route::get('/test-models', fn () => $this->ids(ElasticQueryWizard::for(TestModel::class)->allowedFilters(
             ElasticFilter::term('category'),

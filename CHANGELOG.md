@@ -127,6 +127,8 @@ made since those snapshots.
   `ids` searched for the id `1`.
 - A root filter with a `default()` that a group leaf of the same name shadows throws `FilterNameConflictException`;
   its default was silently dropped.
+- A trashed filter throws a `LogicException` when `scout.soft_delete` is off: `only` returned live models, since Scout
+  had not indexed which models are trashed.
 - A range bound left empty is no bound; coordinates that overflow to infinity no longer fail the JSON encoding.
 - A clone of a wizard whose built search was changed keeps the change lock.
 - A configuration call after the build throws a `LogicException` when `boolQuery()` was used before the build; the

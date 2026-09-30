@@ -1187,6 +1187,12 @@ GET /posts?filter[trashed]=false
 
 Values are read in any letter case. Any other value, `1` and `0` included, returns 400 (`InvalidFilterValue`).
 
+### Requirements
+
+Scout indexes which models are trashed only with `scout.soft_delete` set to `true` (`SCOUT_SOFT_DELETE=true`), for
+models using `SoftDeletes`. Without it the filter has nothing to read, so a request for a mode throws a
+`LogicException` instead of returning trashed and live models alike.
+
 ### Important Limitation
 
 `TrashedFilter` is a root-level filter and cannot be used inside filter groups.

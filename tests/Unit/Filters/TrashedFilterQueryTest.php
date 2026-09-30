@@ -129,4 +129,18 @@ class TrashedFilterQueryTest extends UnitTestCase
             $wizard->getSubject()->getSoftDeleteMode()
         );
     }
+
+    #[Test]
+    public function a_trashed_mode_without_soft_deletes_in_scout_throws(): void
+    {
+        Config::set('scout.soft_delete', false);
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('needs `scout.soft_delete` set to true');
+
+        $this
+            ->createElasticWizardWithFilters(['trashed' => 'only'], SoftDeleteModel::class)
+            ->allowedFilters(ElasticFilter::trashed())
+            ->build();
+    }
 }

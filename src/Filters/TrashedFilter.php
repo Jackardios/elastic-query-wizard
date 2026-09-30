@@ -33,9 +33,21 @@ final class TrashedFilter extends AbstractElasticFilter
         return null;
     }
 
+    /**
+     * @throws \LogicException When Scout does not index soft deletes, so no mode could apply
+     */
     public function handle(SearchBuilder $builder, mixed $value): void
     {
-        match (FilterValueParser::trashedMode($value, $this)) {
+        $mode = FilterValueParser::trashedMode($value, $this);
+
+        if ($mode !== null && ! config('scout.soft_delete', false)) {
+            throw new \LogicException(sprintf(
+                'Filter `%s` needs `scout.soft_delete` set to true: without it, Scout does not index which models are trashed.',
+                $this->getName()
+            ));
+        }
+
+        match ($mode) {
             'with' => $builder->withTrashed(),
             'only' => $builder->onlyTrashed(),
             'without' => $builder->excludeTrashed(),
