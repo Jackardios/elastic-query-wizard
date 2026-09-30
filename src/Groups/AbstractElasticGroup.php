@@ -293,4 +293,9 @@ abstract class AbstractElasticGroup extends AbstractFilter implements GroupInter
             throw DuplicateGroupChildFilterNameException::forGroup($this->getName(), $duplicates);
         }
     }
+
+    protected function supportsBooleanValues(): bool
+    {
+        return false;
+    }
 }

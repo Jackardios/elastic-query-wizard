@@ -172,4 +172,9 @@ final class QueryStringFilter extends AbstractElasticFilter
 
         return $length - 1;
     }
+
+    protected function supportsBooleanValues(): bool
+    {
+        return false;
+    }
 }

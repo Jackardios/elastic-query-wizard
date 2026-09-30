@@ -62,4 +62,9 @@ final class MatchPhraseFilter extends AbstractElasticFilter
 
         return $this->applyParametersOnQuery($query);
     }
+
+    protected function supportsBooleanValues(): bool
+    {
+        return false;
+    }
 }

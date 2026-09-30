@@ -47,4 +47,9 @@ final class TrashedFilter extends AbstractElasticFilter
             null => null,
         };
     }
+
+    protected function supportsBooleanValues(): bool
+    {
+        return false;
+    }
 }

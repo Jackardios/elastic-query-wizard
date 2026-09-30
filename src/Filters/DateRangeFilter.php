@@ -192,4 +192,9 @@ final class DateRangeFilter extends AbstractElasticFilter
     {
         return $date->format($date->format('u') === '000000' ? DATE_ATOM : 'Y-m-d\TH:i:s.uP');
     }
+
+    protected function supportsBooleanValues(): bool
+    {
+        return false;
+    }
 }

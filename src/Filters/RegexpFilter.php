@@ -70,4 +70,9 @@ final class RegexpFilter extends AbstractElasticFilter
 
         return $this->applyParametersOnQuery($query);
     }
+
+    protected function supportsBooleanValues(): bool
+    {
+        return false;
+    }
 }

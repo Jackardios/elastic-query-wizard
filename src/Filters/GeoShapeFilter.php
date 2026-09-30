@@ -250,4 +250,9 @@ final class GeoShapeFilter extends AbstractElasticFilter
 
         $query->indexedShape($this->indexedShapeIndex, trim((string) $id), $this->indexedShapePath);
     }
+
+    protected function supportsBooleanValues(): bool
+    {
+        return false;
+    }
 }

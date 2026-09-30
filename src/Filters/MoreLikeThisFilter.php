@@ -324,4 +324,9 @@ final class MoreLikeThisFilter extends AbstractElasticFilter
             $query->boostTerms($this->boostTerms);
         }
     }
+
+    protected function supportsBooleanValues(): bool
+    {
+        return false;
+    }
 }

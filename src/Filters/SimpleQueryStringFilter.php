@@ -71,4 +71,9 @@ final class SimpleQueryStringFilter extends AbstractElasticFilter
 
         return $this->applyParametersOnQuery($query);
     }
+
+    protected function supportsBooleanValues(): bool
+    {
+        return false;
+    }
 }
