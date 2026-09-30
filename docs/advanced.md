@@ -805,6 +805,8 @@ $results = ElasticQueryWizard::for(Post::class)
 ```
 
 > **Note:** After `build()`, `modifyQuery()` and `modifyModels()` are locked and will throw a `LogicException`. Register these callbacks before build.
+> Registering a callback or calling a SearchBuilder method on the wizard while it builds (from a `tap()` callback,
+> a filter or a schema method) throws a `LogicException` as well.
 > **Note:** Once you call SearchBuilder methods on the wizard after `build()`, changing its configuration (allowedFilters, allowedSorts, etc.) throws a `LogicException`.
 > Calls on the builder that `build()` returned are not tracked: a later configuration change rebuilds from a fresh builder and silently drops them. To keep a change across rebuilds, call the method on the wizard before `build()` or use `tapSearchBuilder()`.
 

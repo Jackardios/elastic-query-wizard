@@ -521,6 +521,10 @@ class ElasticQueryWizard extends BaseQueryWizard
      */
     protected function queueSearchBuilderMutation(Closure $callback): static
     {
+        if (! $this->isBuilt()) {
+            $this->invalidateBuild();
+        }
+
         $this->searchBuilderModifiers[] = $callback;
 
         if ($this->isBuilt()) {
@@ -651,6 +655,8 @@ class ElasticQueryWizard extends BaseQueryWizard
     private function assertBuildCallbackCanBeAdded(string $methodName): void
     {
         if (! $this->isBuilt()) {
+            $this->invalidateBuild();
+
             return;
         }
 

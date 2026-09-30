@@ -329,4 +329,30 @@ class ElasticQueryWizardTest extends UnitTestCase
         $queryModifiers = (new \ReflectionProperty(SearchBuilder::class, 'queryModifiers'))->getValue($wizard->getSubject());
         $this->assertSame([(new TestModel)->searchableAs()], array_keys($queryModifiers));
     }
+
+    /**
+     * @return array<string, array{\Closure(ElasticQueryWizard): mixed}>
+     */
+    public static function buildCallbackRegistrations(): array
+    {
+        return [
+            'modifyQuery' => [static fn (ElasticQueryWizard $wizard) => $wizard->modifyQuery(static function (Builder $builder, array $rawResult): void {})],
+            'modifyModels' => [static fn (ElasticQueryWizard $wizard) => $wizard->modifyModels(static fn (Collection $collection): Collection => $collection)],
+            'tapSearchBuilder' => [static fn (ElasticQueryWizard $wizard) => $wizard->tapSearchBuilder(static fn (SearchBuilder $builder) => $builder)],
+            'a fluent search builder method' => [static fn (ElasticQueryWizard $wizard) => $wizard->size(5)],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('buildCallbackRegistrations')]
+    public function a_callback_registered_while_the_wizard_builds_throws(\Closure $register): void
+    {
+        $wizard = ElasticQueryWizard::for(TestModel::class);
+        $wizard->tap(static fn () => $register($wizard));
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('The wizard cannot be reconfigured while it builds.');
+
+        $wizard->build();
+    }
 }

@@ -116,6 +116,8 @@ made since those snapshots.
   instead of letting them replace the request's bounds or format.
 - A search that joins another index through the wizard (`->join(Other::class)`) builds: the wizard registers its
   model callbacks for its own model, where they used to fail every build with an `InvalidQueryException`.
+- `modifyQuery()`, `modifyModels()`, `tapSearchBuilder()` and SearchBuilder methods called while the wizard builds throw
+  a `LogicException`, like the core's configuration methods, instead of adding a callback on every build.
 - A range bound left empty is no bound; coordinates that overflow to infinity no longer fail the JSON encoding.
 - A clone of a wizard whose built search was changed keeps the change lock.
 - A configuration call after the build throws a `LogicException` when `boolQuery()` was used before the build; the
