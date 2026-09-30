@@ -28,9 +28,11 @@ final class QueryStringFilter extends AbstractElasticFilter
     use LimitsValueLength;
 
     /**
-     * The characters that can end a term or start a new one inside it.
+     * The characters Lucene's query parser reads as neither part of a term nor
+     * a wildcard: its whitespace (space, tab, CR, LF, and U+3000, which the
+     * scan replaces by a space) and its syntax characters, except the escape.
      */
-    private const TERM_BREAKS = " \t\n\r\v\f()!:\\\"~^";
+    private const SEPARATORS = " \t\n\r()!:^~\"[]{}/";
 
     /**
      * The value is one text, which may contain the separator; a list is a 400.
@@ -99,14 +101,14 @@ final class QueryStringFilter extends AbstractElasticFilter
 
     /**
      * Whether a term of the query starts with `*` or `?`, which Elasticsearch
-     * refuses without `allow_leading_wildcard`. A lone `*`, quoted phrases,
-     * ranges, regular expressions and escaped characters are not such terms.
+     * refuses without `allow_leading_wildcard`. A lone `*` (one followed by a
+     * separator or nothing), quoted phrases, ranges, regular expressions and
+     * escaped characters are not such terms.
      *
-     * A new term starts after whitespace (U+3000, the ideographic space, too),
-     * `(`, `)`, `:`, `!`, a phrase, a range, a regular expression, and
-     * fuzziness or a boost (`a~*b`, `a^2*b`), as Lucene's query parser reads
-     * it. The scan is linear, so a long value can't exhaust the PCRE limits and
-     * slip through.
+     * A new term starts after whitespace, `(`, `)`, `:`, `!`, a phrase, a
+     * range, a regular expression, and fuzziness or a boost (`a~*b`, `a^2*b`),
+     * as Lucene's query parser reads it. The scan is linear, so a long value
+     * can't exhaust the PCRE limits and slip through.
      */
     private static function hasLeadingWildcard(string $query): bool
     {
@@ -116,7 +118,7 @@ final class QueryStringFilter extends AbstractElasticFilter
 
         for ($i = 0; $i < $length; $i++) {
             if (! $atTermStart) {
-                $i += strcspn($query, self::TERM_BREAKS, $i);
+                $i += strcspn($query, self::SEPARATORS.'\\', $i);
 
                 if ($i >= $length) {
                     break;
@@ -125,27 +127,30 @@ final class QueryStringFilter extends AbstractElasticFilter
 
             $char = $query[$i];
 
-            if (ctype_space($char) || $char === '(' || $char === ')' || $char === ':' || $char === '!') {
-                $atTermStart = true;
-            } elseif ($char === '\\') {
+            if ($char === '\\') {
                 $i++;
                 $atTermStart = false;
             } elseif ($char === '"') {
                 $i = self::closingPosition($query, $i, '"');
                 $atTermStart = true;
-            } elseif ($char === '~' || $char === '^') {
+            } elseif ($char === '/') {
+                $i = self::closingPosition($query, $i, '/');
+                $atTermStart = true;
+            } elseif ($char === '[' || $char === '{') {
+                $i = self::closingPosition($query, $i, ']}');
+                $atTermStart = true;
+            } elseif ($char === '~') {
+                $i = self::fuzzinessEnd($query, $i + 1) - 1;
+                $atTermStart = true;
+            } elseif ($char === '^') {
                 $i += strspn($query, '0123456789.', $i + 1);
+                $atTermStart = true;
+            } elseif (str_contains(self::SEPARATORS, $char)) {
                 $atTermStart = true;
             } elseif ($char === '+' || $char === '-') {
                 continue;
-            } elseif ($char === '/') {
-                $i = self::closingPosition($query, $i, '/');
-            } elseif ($char === '[' || $char === '{') {
-                $i = self::closingPosition($query, $i, ']}');
-            } elseif ($char === '*' || $char === '?') {
-                $next = $query[$i + 1] ?? ' ';
-
-                if ($char === '?' || ! (ctype_space($next) || str_contains(')~^:', $next))) {
+            } elseif ($char === '?' || $char === '*') {
+                if ($char === '?' || ($i + 1 < $length && ! str_contains(self::SEPARATORS, $query[$i + 1]))) {
                     return true;
                 }
             } else {
@@ -154,6 +159,28 @@ final class QueryStringFilter extends AbstractElasticFilter
         }
 
         return false;
+    }
+
+    /**
+     * The position after the fuzziness that starts at $start: the term
+     * characters that follow `~`, such as `2` or `0.5`.
+     */
+    private static function fuzzinessEnd(string $query, int $start): int
+    {
+        $length = strlen($query);
+        $i = $start;
+
+        while ($i < $length) {
+            $i += strcspn($query, self::SEPARATORS.'*?\\', $i);
+
+            if ($i >= $length || $query[$i] !== '\\') {
+                break;
+            }
+
+            $i += 2;
+        }
+
+        return min($i, $length);
     }
 
     /**

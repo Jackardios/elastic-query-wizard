@@ -156,6 +156,18 @@ class QueryStringFilterQueryTest extends UnitTestCase
             'star in an unclosed regular expression' => ['/a *b', false],
             'unclosed group' => ['(*a', true],
             'trailing escape' => ['a \\', false],
+            'lone star before a phrase' => ['*"a"', false],
+            'lone star before a group' => ['x *(a) b', false],
+            'lone star before a negation' => ['*!a', false],
+            'lone star before a range' => ['*[a TO b]', false],
+            'lone star before a regular expression' => ['*/a.*/', false],
+            'star after a form feed inside a term' => ["a\f*b", false],
+            'star after a vertical tab inside a term' => ["a\v*b", false],
+            'star before a form feed' => ["*\fa", true],
+            'star before a no-break space' => ["*\u{00A0}a", true],
+            'after a regular expression inside a term' => ['a/b/*c', true],
+            'after a range inside a term' => ['a[b TO c]*d', true],
+            'after an integer fuzziness' => ['a~1*b', true],
         ];
     }
 
