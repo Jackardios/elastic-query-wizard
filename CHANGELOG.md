@@ -13,8 +13,7 @@ made since those snapshots.
 ### Requirements
 
 - PHP 8.2+, Laravel 12.69.0+ or 13.30.0+ (the first releases without CVE-2026-102279, like `laravel-query-wizard`'s
-  floors), `laravel-query-wizard` ^3.0.0-rc.5 and `es-scout-driver` ^1.0.0-rc.1.
-  CI runs Elasticsearch 8.19 and 9.5.
+  floors), `laravel-query-wizard` ^3.0.0-rc.6 and `es-scout-driver` ^1.0.0-rc.3.
 
 ### Added
 
@@ -34,25 +33,42 @@ made since those snapshots.
   closed when their last point differs from their first.
 - `ElasticQuery` and `ElasticAggregation` forward the macros of `Query` and `Agg`, and the wizard forwards those of
   `SearchBuilder`.
+- `ElasticQueryWizard::tapBuiltSearch()` runs a callback at the end of every build, after the request's filters and
+  sorts, for a change that reads the filtered query, such as wrapping it in a `function_score` (call
+  `clearBoolQuery()` after wrapping, or the wrapped clauses apply a second time beside the wrapper).
+- `ElasticQueryWizard::getAllowedLeafFilters()` lists the filters a request may name, by request key: every group is
+  replaced by its leaves, without the leaves `disallowedFilters()` removes and the root filters a group leaf shadows.
+  The filters are copies, like those `getAllowedFilters()` returns.
+  It complements `laravel-query-wizard`'s `getAllowedFilters()`, `getAllowedSorts()`, `getAllowedIncludes()`,
+  `getAllowedFields()`, `getAllowedAppends()` and `getRequestedFilterNames()`, which the wizard inherits.
+- `elastic-query-wizard.max_text_length` (1000, `null` for no limit) is the default length limit of the text and
+  pattern filters that have none of their own, see Changed.
+- `Exceptions\InvalidPagination`, the 400 `paginate()` throws for a page size or a page below 1.
+- `BoolClause::addTo()` is public API: a custom group adds a query to the clause a filter's `getEffectiveClause()`
+  names with it.
 
 ### Changed
 
 - The exceptions drop the `Exception` suffix, like `laravel-query-wizard`'s, and are final:
   `DuplicateGroupChildFilterNameException` is `DuplicateGroupChildFilterName`, `UnsupportedFilterInGroupException` is
   `UnsupportedFilterInGroup` (an `InvalidArgumentException`, was a `RuntimeException`), and the `dev-master`
-  `FilterNameConflictException` is `FilterNameConflict`. They are made through their static factories, and their
-  messages quote names in backticks.
+  `FilterNameConflictException` is `FilterNameConflict`. These three are made through their static factories, and
+  their messages quote names in backticks.
 - The factories that take more than a name take the name first, like `laravel-query-wizard`'s:
   `ElasticFilter::multiMatch($property, $fields)`, `moreLikeThis($property, $fields)`, `nested($property, $path)`,
   `ElasticSort::script($property, $scriptSource)` and `ElasticSort::nested($property, $path, $nestedField)`, and the
   `make()` methods of their classes.
 - `tapSearchBuilder()`, `modifyQuery()` and `modifyModels()` take any callable (were `Closure` only), like
   `laravel-query-wizard`'s `tap()`.
-- `HasParameters::applyParametersOnQuery()` is protected; the `Concerns` traits, `AbstractElasticInclude::setSearchResult()`
-  and the protected internals of `ElasticQueryWizard` are `@internal`. The README's Backward Compatibility section lists
-  what 3.x keeps stable, following `laravel-query-wizard`: public methods not marked `@internal`, and the protected
-  members marked `@api` of `AbstractElasticFilter`, `AbstractElasticSort`, `AbstractElasticInclude` and
+- `HasParameters::applyParametersOnQuery()` is protected, and a class using the trait implements
+  `parameterQueryClasses()`; the `Concerns` traits, `AbstractElasticInclude::setSearchResult()` and the wizard's own
+  wiring (`$queryModifiers`, `$modelModifiers`, `$searchBuilderModifiers`, `applySearchBuilderModifiers()`,
+  `queueSearchBuilderMutation()`, `collectGroupLeafFilters()`) are `@internal`. The README's Backward Compatibility
+  section lists what 3.x keeps stable, following `laravel-query-wizard`: public methods not marked `@internal`, and the
+  protected members marked `@api` of `AbstractElasticFilter`, `AbstractElasticSort`, `AbstractElasticInclude` and
   `AbstractElasticGroup`, the classes meant to be extended.
+- `ElasticQueryWizard` is `@api` and may be extended: its public methods and the `@api` hooks of
+  `laravel-query-wizard` it overrides, now tagged `@api` here too, stay stable for subclasses.
 - `GroupInterface` requires `getEffectiveClause()`, so a group that implements it directly goes to the clause it names
   inside another group (it always went to `filter`).
 - Exception messages follow `laravel-query-wizard`'s: names in backticks, and `Call to undefined method …()` for a
@@ -84,7 +100,20 @@ made since those snapshots.
   configured (`InvalidArgumentException`); `range()` refuses `gt`, `gte`, `lt` and `lte`, which it sets itself.
 - `boolQuery()` builds the wizard first and returns the bool query of the built search. A configuration call after a
   change to the built search through the wizard (`boolQuery()`, `getBoolQuery()` or a search builder method called
-  after the build) throws a `LogicException`, since the rebuild would drop the change.
+  after the build) throws a `LogicException`, since the rebuild would drop the change. Called while the wizard builds,
+  from a `tap()`, `tapSearchBuilder()` or `tapBuiltSearch()` callback or a callback filter or sort, `boolQuery()`
+  returns the bool query being built and locks nothing.
+- Every text and pattern filter limits the length of its value: `wildcard`, `match`, `matchPhrase`,
+  `matchPhrasePrefix`, `multiMatch`, `queryString` and `simpleQueryString` refuse a value longer than
+  `elastic-query-wizard.max_text_length` (1000 characters) with a 400; they had no limit. `maxLength()` on a filter
+  overrides the config, and `maxLength(null)` removes the limit. `moreLikeThis` has no default limit, since its text
+  is a sample document; `maxLength()` sets one.
+- The inner hits of a nested group are named after the group unless `innerHits()` gets a `name` (see Fixed): with an
+  alias, `ElasticGroup::nested('comments', 'c2')`, they are under `inner_hits['c2']`, no longer under the path.
+- `FieldSort::unmappedType()` names its parameter `$type` (was `$unmappedType`), like `NestedSort`'s.
+- `FilterValueSanitizer` lost `isBlank()`, `isFilled()`, `arrayWithOnlyFilledItems()`,
+  `arrayToCommaSeparatedString()`, `toString()` and `toCoordinatesArray()`, and its `geoBoundingBoxValue()`,
+  `geoDistanceValue()` and `rangeFilterValue()` take the filter as their second argument.
 - `when()` and `unless()` are applied to the search builder with the other fluent calls when the wizard builds, and
   throw `BadMethodCallException` without a callback.
 - `ElasticQueryWizard` declares the search builder methods it forwards in `@method` tags instead of
@@ -106,7 +135,7 @@ made since those snapshots.
 - `default()`, `prepareValueWith()`, `when()`, `asBoolean()`, `withStructuredInput()`, `withoutStructuredInput()`,
   `withValueSplitting()` and `withoutValueSplitting()` on a filter group throw a `LogicException`.
 - Schema `defaultFilters()` keys name group leaves, as request keys do, and `disallowedFilters()` covers leaves through
-  `laravel-query-wizard` (^3.0.0-rc.5): a default for a leaf no longer fails every build, and a key naming a group
+  `laravel-query-wizard` (^3.0.0-rc.6): a default for a leaf no longer fails every build, and a key naming a group
   throws. A group named like another filter throws `laravel-query-wizard`'s `InvalidArgumentException`;
   `FilterNameConflictException::groupNameTaken()` is removed.
 - `applyPostProcessingTo()` returns a new lazy collection for a lazy collection, post-processing each model as it is
@@ -131,13 +160,14 @@ made since those snapshots.
   `applyPostProcessingToResults()`, `finalizeSubject()`, `addBuildQueryModifier()`, `prepareAppendTreeData()`,
   `prepareRelationFieldData()`, the `$appendTree`, `$relationFieldTree`, `$buildQueryModifiers`,
   `$safeRootHiddenFields` and `$validatedRequestedRootFields` properties with their `…Prepared` flags, and the
-  `HandlesSafeRelationSelect` and `HandlesRelationPostProcessing` traits. Models are shaped by `EloquentShape`; use `modifyQuery()`,
-  `modifyModels()` and `tapSearchBuilder()`.
+  methods of `laravel-query-wizard`'s `HandlesSafeRelationSelect` and `HandlesRelationPostProcessing` traits, which the
+  wizard no longer uses. Models are shaped by `EloquentShape`; use `modifyQuery()`, `modifyModels()` and
+  `tapSearchBuilder()`.
 - `DateRangeFilter::dateFormat()`; use `esFormat()`.
 - `NullFilter::withInvertedLogic()` and `withoutInvertedLogic()`; use `ElasticFilter::notNull()`.
 - `AbstractElasticGroup::addQueryToBoolQuery()` and `AbstractElasticFilter::isBlankValueShape()` of the `dev-master`
-  snapshots; add a query to the clause the filter's `getEffectiveClause()` names, and check values with
-  `laravel-query-wizard`'s `FilterValueParser::isBlank()`.
+  snapshots; add a query to the clause the filter's `getEffectiveClause()` names with `BoolClause::addTo()`, and check
+  values with `laravel-query-wizard`'s `FilterValueParser::isBlank()`.
 
 ### Fixed
 
@@ -180,6 +210,14 @@ made since those snapshots.
   wizard returns the bool query.
 - A search builder method that is not public, called through the wizard, throws `BadMethodCallException` naming the
   wizard.
+- A search builder method that runs on the built search (`paginate()`, `getSort()`, `count()`, `execute()`, …),
+  called on the wizard from a callback of the build, throws a `LogicException` naming the method and the builder to
+  call it on; the message was `The wizard cannot be built while it builds.`
+- A clone of the wizard made inside a callback of the build starts unbuilt from the original search and builds the
+  whole search on its own; it could not be built at all.
+- `paginate()` answers a page size or a page below 1 with the 400 `InvalidPagination`, and a page whose offset does
+  not fit in an integer with `MaxResultWindowExceeded` when the window is `null`; these were
+  `InvalidArgumentException`s from the search builder, a 500.
 - The query string leading-wildcard check accepts a lone `*` before a phrase, a group, `!`, a range or a regular
   expression, reads form feed and vertical tab as term characters, and refuses a leading wildcard after a regular
   expression or range inside a term (`a/b/*c`, `a[b TO c]*d`), which Elasticsearch refused with a failed search.

@@ -10,11 +10,13 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\LazyCollection;
 use Jackardios\ElasticQueryWizard\Exceptions\FilterNameConflict;
+use Jackardios\ElasticQueryWizard\Exceptions\InvalidPagination;
 use Jackardios\ElasticQueryWizard\Exceptions\MaxResultWindowExceeded;
 use Jackardios\ElasticQueryWizard\Filters\TermFilter;
 use Jackardios\ElasticQueryWizard\Groups\GroupInterface;
 use Jackardios\ElasticQueryWizard\Includes\AbstractElasticInclude;
 use Jackardios\ElasticQueryWizard\Sorts\FieldSort;
+use Jackardios\ElasticQueryWizard\Support\PackageConfig;
 use Jackardios\EsScoutDriver\Query\Compound\BoolQuery;
 use Jackardios\EsScoutDriver\Search\Paginator;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
@@ -40,8 +42,13 @@ use Jackardios\QueryWizard\Schema\ResourceSchemaInterface;
  * - `ElasticSort::random()` sends `field: _seq_no` with a seed, which ES 8.x requires
  *
  * The wizard forwards the public methods of SearchBuilder. The fluent ones, and when() and unless(), return the
- * wizard: it applies them when it builds, or at once after the build. The others build it first and return the
- * builder's result.
+ * wizard: before the build they are queued and run when it builds, ahead of the request's filters and sorts; after the
+ * build they run at once on the built search, on top of them. The others build it first and return the builder's
+ * result. tapBuiltSearch() takes a change that has to follow the filters and sorts on every build.
+ *
+ * The class may be extended. Its public methods and the `@api` hooks of laravel-query-wizard it overrides are kept
+ * stable for subclasses, which call the parent implementation of a hook they override; members marked `@internal`
+ * are not.
  *
  * @method $this query(\Jackardios\EsScoutDriver\Query\QueryInterface|\Closure|array<mixed> $query)
  * @method $this clearQuery()
@@ -69,6 +76,8 @@ use Jackardios\QueryWizard\Schema\ResourceSchemaInterface;
  * @method $this clearRescore()
  * @method $this from(int $from)
  * @method $this size(int $size)
+ * @method $this clearFrom()
+ * @method $this clearSize()
  * @method $this suggestRaw(array<mixed> $suggest)
  * @method $this suggest(string $name, array<mixed> $definition)
  * @method $this clearSuggest()
@@ -87,8 +96,10 @@ use Jackardios\QueryWizard\Schema\ResourceSchemaInterface;
  * @method $this trackTotalHits(int|bool $trackTotalHits)
  * @method $this trackScores(bool $trackScores)
  * @method $this minScore(float $minScore)
+ * @method $this clearMinScore()
  * @method $this searchType(string $searchType)
  * @method $this preference(string $preference)
+ * @method $this clearPreference()
  * @method $this pointInTime(string $id, ?string $keepAlive = null)
  * @method $this clearPointInTime()
  * @method $this searchAfter(array<mixed> $searchAfter)
@@ -97,6 +108,7 @@ use Jackardios\QueryWizard\Schema\ResourceSchemaInterface;
  * @method $this clearRouting()
  * @method $this explain(bool $explain)
  * @method $this terminateAfter(int $terminateAfter)
+ * @method $this clearTerminateAfter()
  * @method $this requestCache(bool $requestCache)
  * @method $this timeout(string $timeout)
  * @method $this storedFields(array<mixed> $fields)
@@ -104,6 +116,7 @@ use Jackardios\QueryWizard\Schema\ResourceSchemaInterface;
  * @method $this version(bool $version = true)
  * @method $this scriptFields(array<mixed> $scriptFields)
  * @method $this runtimeMappings(array<mixed> $runtimeMappings)
+ * @method $this clearRuntimeMappings()
  * @method $this knn(string $field, array<mixed> $queryVector, int $k, ?int $numCandidates = null, ?float $similarity = null, \Jackardios\EsScoutDriver\Query\QueryInterface|array<mixed>|null $filter = null)
  * @method $this knnRaw(array<mixed> $knn)
  * @method $this clearKnn()
@@ -154,6 +167,8 @@ use Jackardios\QueryWizard\Schema\ResourceSchemaInterface;
  *
  * @extends BaseQueryWizard<SearchBuilder>
  *
+ * @api
+ *
  * @phpstan-consistent-constructor
  */
 class ElasticQueryWizard extends BaseQueryWizard
@@ -181,6 +196,13 @@ class ElasticQueryWizard extends BaseQueryWizard
      * @internal
      */
     protected array $searchBuilderModifiers = [];
+
+    /**
+     * Run at the end of every build, after the filters and sorts.
+     *
+     * @var array<int, Closure(SearchBuilder): mixed>
+     */
+    private array $builtSearchModifiers = [];
 
     /** @var class-string<Model> */
     protected string $modelClass;
@@ -210,6 +232,11 @@ class ElasticQueryWizard extends BaseQueryWizard
     private bool $proxyModified = false;
 
     /**
+     * Set while build() runs, the core's tap() callbacks included.
+     */
+    private bool $buildInProgress = false;
+
+    /**
      * @param  class-string<Model>  $subject  A model class using the `Jackardios\EsScoutDriver\Searchable` trait
      *
      * @throws \InvalidArgumentException When the class is not a searchable model, or the schema describes another model
@@ -232,6 +259,9 @@ class ElasticQueryWizard extends BaseQueryWizard
     /**
      * Search a model class. A model instance is not accepted: the search would
      * cover the whole index, not that model.
+     *
+     * Unlike laravel-query-wizard's for(), which refuses a second argument, this
+     * one takes the parameters manager to read the request from.
      *
      * @param  class-string<Model>  $subject
      */
@@ -257,13 +287,41 @@ class ElasticQueryWizard extends BaseQueryWizard
     }
 
     /**
+     * @return SearchBuilder
+     */
+    public function build(): mixed
+    {
+        if ($this->buildInProgress) {
+            return parent::build();
+        }
+
+        $this->buildInProgress = true;
+
+        try {
+            return parent::build();
+        } finally {
+            $this->buildInProgress = false;
+        }
+    }
+
+    /**
      * The root bool query of the built search; the wizard builds first. A later
      * configuration change throws a `LogicException`, since the rebuild would
-     * drop what was changed here; use `tapSearchBuilder()` for a change that
-     * survives rebuilds.
+     * drop what was changed here; use `tapSearchBuilder()` or `tapBuiltSearch()`
+     * for a change that survives rebuilds.
+     *
+     * Called while the wizard builds (from a tap(), tapSearchBuilder() or
+     * tapBuiltSearch() callback, or a callback filter or sort), it returns the
+     * bool query of the search being built, as the builder the callback
+     * receives does, and locks nothing: the callback runs again on a rebuild.
+     * Only a tapBuiltSearch() callback sees every filter of the request in it.
      */
     public function boolQuery(): BoolQuery
     {
+        if ($this->buildInProgress) {
+            return $this->subject->boolQuery();
+        }
+
         $this->build();
         $this->proxyModified = true;
 
@@ -271,13 +329,87 @@ class ElasticQueryWizard extends BaseQueryWizard
     }
 
     /**
-     * Apply custom SearchBuilder mutations declaratively (before/after build).
+     * Change the search builder. Before the build the callback is queued: it
+     * runs at the start of every build, before the request's filters and sorts
+     * are applied, so `sortRaw()` in it comes ahead of `?sort=`. After the
+     * build it runs once, at once, on the built search (`sortRaw()` in it
+     * replaces the sorts of `?sort=`), and a later configuration change throws
+     * a `LogicException`, since the rebuild would drop the change. The fluent
+     * search builder methods called on the wizard follow the same rule.
+     *
+     * Use `tapBuiltSearch()` for a change that follows the filters and sorts
+     * on every build.
      *
      * @param  callable(SearchBuilder): mixed  $callback  Return value is ignored.
+     *
+     * @throws \LogicException While the wizard builds
      */
     public function tapSearchBuilder(callable $callback): static
     {
         return $this->queueSearchBuilderMutation($callback(...));
+    }
+
+    /**
+     * Change the search once the request's filters and sorts are on it: the
+     * callback runs at the end of every build, before the wizard registers the
+     * callbacks that load the models. Use it to wrap the filtered query, for
+     * example in a `function_score`, or to replace the sorts.
+     *
+     * Like laravel-query-wizard's tap(), it does not run at once on a built
+     * wizard: the next `build()` rebuilds the search and runs it. On a wizard
+     * whose built search was changed through the wizard it throws, as every
+     * configuration change does.
+     *
+     * @param  callable(SearchBuilder): mixed  $callback  Return value is ignored.
+     *
+     * @throws \LogicException While the wizard builds, or after the built search was changed through the wizard
+     */
+    public function tapBuiltSearch(callable $callback): static
+    {
+        $this->invalidateBuild();
+        $this->builtSearchModifiers[] = $callback(...);
+
+        return $this;
+    }
+
+    /**
+     * The filters a request may name, by request key: `getAllowedFilters()`
+     * with every group replaced by its leaves. A leaf that `disallowedFilters()`
+     * removes is left out, and so is a root filter whose key a group leaf of
+     * the same name takes. Like `getAllowedFilters()`, it does not build the
+     * wizard, and the filters are copies: changing one does not change the wizard.
+     *
+     * @return array<array-key, FilterInterface> A name that is a number (`5`) is an integer key, as in any PHP array
+     *
+     * @throws FilterNameConflict When a leaf is in more than one group, or a shadowed root filter has a default
+     * @throws \LogicException When called from a schema method
+     */
+    public function getAllowedLeafFilters(): array
+    {
+        // The core types the hook's argument by string keys and passes it this same list.
+        /** @var array<string, FilterInterface> $filters */
+        $filters = $this->getAllowedFilters();
+        $shadowed = $this->resolveShadowedFilterNames($filters);
+        /** @var array<array-key, FilterInterface> $leaves */
+        $leaves = [];
+
+        foreach ($filters as $name => $filter) {
+            if (! $filter instanceof GroupInterface) {
+                if (! isset($shadowed[$name])) {
+                    $leaves[$name] = $filter;
+                }
+
+                continue;
+            }
+
+            foreach ($this->collectGroupLeafFilters($filter) as $leaf) {
+                if (! $this->isFilterNameDisallowed($leaf->getName())) {
+                    $leaves[$this->normalizePublicPath($leaf->getName())] = clone $leaf;
+                }
+            }
+        }
+
+        return $leaves;
     }
 
     /**
@@ -306,11 +438,13 @@ class ElasticQueryWizard extends BaseQueryWizard
         return $this;
     }
 
+    /** @api */
     protected function normalizeStringToFilter(string $name): FilterInterface
     {
         return TermFilter::make($name);
     }
 
+    /** @api */
     protected function normalizeStringToSort(string $name): SortInterface
     {
         $property = ltrim($name, '-');
@@ -318,6 +452,7 @@ class ElasticQueryWizard extends BaseQueryWizard
         return FieldSort::make($property);
     }
 
+    /** @api */
     protected function normalizeStringToInclude(string $name): IncludeInterface
     {
         $config = $this->getConfig();
@@ -325,6 +460,7 @@ class ElasticQueryWizard extends BaseQueryWizard
         return RelationshipInclude::fromString($name, $config->getCountSuffix(), $config->getExistsSuffix());
     }
 
+    /** @api */
     protected function applyFields(array $fields): void
     {
         $this->shapeRootFields = $fields;
@@ -337,6 +473,8 @@ class ElasticQueryWizard extends BaseQueryWizard
 
     /**
      * The model the wizard searches, for wildcard appends and hidden fields.
+     *
+     * @api
      */
     protected function resourceModel(): Model
     {
@@ -375,6 +513,8 @@ class ElasticQueryWizard extends BaseQueryWizard
      *
      * @param  array<string, FilterInterface>  $filters
      * @return array<int, string>
+     *
+     * @api
      */
     protected function resolveAllowedFilterNames(array $filters): array
     {
@@ -412,6 +552,8 @@ class ElasticQueryWizard extends BaseQueryWizard
      * @throws FilterNameConflict When a leaf is in more than one group,
      *                            where one request value would apply in each,
      *                            or a shadowed root filter has a default
+     *
+     * @api
      */
     protected function resolveShadowedFilterNames(array $filters): array
     {
@@ -454,6 +596,8 @@ class ElasticQueryWizard extends BaseQueryWizard
      * The map is keyed by the raw child name because that is what
      * AbstractElasticGroup::applyChildrenToQuery() looks the values up by.
      * Normalization only applies to the name set used for request validation.
+     *
+     * @api
      */
     protected function resolvePreparedFilterValue(FilterInterface $filter): mixed
     {
@@ -512,6 +656,8 @@ class ElasticQueryWizard extends BaseQueryWizard
      *
      * @param  array<int, string>  $validRequestedIncludes
      * @param  array<string, IncludeInterface>  $includesIndex
+     *
+     * @api
      */
     protected function applyValidatedIncludes(array $validRequestedIncludes, array $includesIndex): void
     {
@@ -520,6 +666,7 @@ class ElasticQueryWizard extends BaseQueryWizard
         }
     }
 
+    /** @api */
     protected function prepareBuild(): void
     {
         $this->shapeIncludes = [];
@@ -536,9 +683,15 @@ class ElasticQueryWizard extends BaseQueryWizard
      * reconfiguration can't change a search that was already built. The shape
      * runs after the developer's modifyQuery() callbacks, so it selects the
      * keys of the eager loads they register.
+     *
+     * @api
      */
     protected function finalizeBuild(): void
     {
+        foreach ($this->builtSearchModifiers as $callback) {
+            $callback($this->subject);
+        }
+
         $model = $this->resourceModel();
         $scoutKeyName = method_exists($model, 'getScoutKeyName') ? $model->getScoutKeyName() : null;
         $shape = $this->shape = $this->resolveEloquentShape(
@@ -591,12 +744,14 @@ class ElasticQueryWizard extends BaseQueryWizard
             ->modifyModels($modifyModels, $this->modelClass);
     }
 
+    /** @api */
     protected function invalidateBuild(): void
     {
         if ($this->proxyModified) {
             throw new \LogicException(
                 'The wizard cannot be reconfigured after its built search was changed through the wizard: the rebuild '
-                .'would drop the change. Configure the wizard first, or change the search in tapSearchBuilder().'
+                .'would drop the change. Configure the wizard first, or change the search in tapSearchBuilder(). '
+                .'A wizard kept across requests is rebuilt for each request and meets the same limit.'
             );
         }
 
@@ -634,14 +789,28 @@ class ElasticQueryWizard extends BaseQueryWizard
     /**
      * Paginate the results; call `withModels()` or `withDocuments()` on the paginator.
      *
-     * @throws MaxResultWindowExceeded When the page ends past `elastic-query-wizard.max_result_window`
+     * @throws InvalidPagination When the page size or the page is below 1
+     * @throws MaxResultWindowExceeded When the page ends past `elastic-query-wizard.max_result_window`, or past the
+     *                                 largest integer when the window is null
+     * @throws \LogicException When called from a callback of the build
      */
     public function paginate(int $perPage = 15, string $pageName = 'page', ?int $page = null): Paginator
     {
-        $page ??= Paginator::resolveCurrentPage($pageName);
-        $maxResultWindow = $this->maxResultWindow();
+        $this->assertNotBuilding('paginate');
 
-        if ($maxResultWindow !== null && $perPage >= 1 && $page > intdiv($maxResultWindow, $perPage)) {
+        if ($perPage < 1) {
+            throw InvalidPagination::pageSize($perPage);
+        }
+
+        $page ??= Paginator::resolveCurrentPage($pageName);
+
+        if ($page < 1) {
+            throw InvalidPagination::page($page, $pageName);
+        }
+
+        $maxResultWindow = PackageConfig::positiveIntOrNull('max_result_window', self::DEFAULT_MAX_RESULT_WINDOW) ?? PHP_INT_MAX;
+
+        if ($page > intdiv($maxResultWindow, $perPage)) {
             throw new MaxResultWindowExceeded($page, $perPage, $maxResultWindow, $pageName);
         }
 
@@ -657,8 +826,9 @@ class ElasticQueryWizard extends BaseQueryWizard
      * the wizard first and runs on the built search; the result is returned,
      * or the wizard in place of the builder.
      *
-     * @param  array<int, mixed>  $arguments
+     * @param  array<int|string, mixed>  $arguments
      *
+     * @throws \LogicException When a method that runs on the built search is called while the wizard builds
      * @throws \BadMethodCallException When the search builder has no such public method or macro,
      *                                 or when() or unless() gets no callback
      */
@@ -686,6 +856,7 @@ class ElasticQueryWizard extends BaseQueryWizard
             );
         }
 
+        $this->assertNotBuilding($name);
         $this->build();
         $result = $this->subject->$name(...$arguments);
 
@@ -697,30 +868,29 @@ class ElasticQueryWizard extends BaseQueryWizard
     }
 
     /**
-     * The last result a page may reach, from `elastic-query-wizard.max_result_window`
-     * (Elasticsearch's default `index.max_result_window`); null lifts the limit.
+     * A method that runs on the built search cannot be called inside the build.
      *
-     * @throws \InvalidArgumentException When the value is not a positive integer, a string of digits holding one, or null
+     * @throws \LogicException
      */
-    private function maxResultWindow(): ?int
+    private function assertNotBuilding(string $method): void
     {
-        $value = config('elastic-query-wizard.max_result_window', self::DEFAULT_MAX_RESULT_WINDOW);
-
-        if ($value === null) {
-            return null;
+        if ($this->buildInProgress) {
+            throw new \LogicException(sprintf(
+                '%s() cannot be called on the wizard while it builds: it runs on the built search. '
+                .'Call it on the SearchBuilder the callback receives.',
+                $method
+            ));
         }
+    }
 
-        if (is_string($value) && preg_match('/^\d+\z/', $value) === 1) {
-            $value = filter_var($value, FILTER_VALIDATE_INT);
-        }
+    /**
+     * A copy made inside a callback of the build is not being built itself.
+     */
+    public function __clone(): void
+    {
+        parent::__clone();
 
-        if (is_int($value) && $value > 0) {
-            return $value;
-        }
-
-        throw new \InvalidArgumentException(
-            'Config `elastic-query-wizard.max_result_window` must be a positive integer or null.'
-        );
+        $this->buildInProgress = false;
     }
 
     /**

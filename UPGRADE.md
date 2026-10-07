@@ -7,7 +7,7 @@ This document describes how to upgrade Elastic Query Wizard between versions.
   `v3-rc1` branch), read [Upgrading from dev-master snapshots to 3.0](#upgrading-from-dev-master-snapshots-to-30).
 
 Both follow `laravel-query-wizard` 3.0, whose rules apply to this package too; its
-[upgrade guide](https://github.com/Jackardios/laravel-query-wizard/blob/v3.0.0-rc.4/UPGRADE.md) has the full list.
+[upgrade guide](https://github.com/Jackardios/laravel-query-wizard/blob/v3.0.0-rc.6/UPGRADE.md) has the full list.
 
 ---
 
@@ -20,7 +20,7 @@ pass to Elasticsearch unchecked are now read first: a value it cannot read is a 
 ### Requirements
 
 - PHP 8.2+ (tested on 8.2–8.5) and Laravel 12.69.0+ or 13.30.0+ (v2: PHP 8.1+, Laravel 10). Laravel 10 and 11 stay on
-  the `legacy-l10` branch (`dev-legacy-l10`).
+  the `legacy-l10` branch; see [Staying on Laravel 10 or 11](#staying-on-laravel-10-or-11).
 - Elasticsearch 8.x or 9.x, with the `elasticsearch/elasticsearch` client of the same major version.
 
 **v2.2.0:**
@@ -34,18 +34,24 @@ pass to Elasticsearch unchecked are now read first: a value it cannot read is a 
 **3.0:**
 ```json
 "php": "^8.2",
-"jackardios/es-scout-driver": "^1.0.0-rc.1",
-"jackardios/laravel-query-wizard": "^3.0.0-rc.5",
+"jackardios/es-scout-driver": "^1.0.0-rc.3",
+"jackardios/laravel-query-wizard": "^3.0.0-rc.6",
 "laravel/framework": "^12.69.0 || ^13.30.0"
 ```
 
-Require the package with `composer require jackardios/elastic-query-wizard:^3.0@rc` while 3.0 is a release candidate.
+While 3.0 is a release candidate, require the package together with the two it needs: Composer applies stability
+flags of the root project only, so in a project with `minimum-stability: stable` the package alone does not resolve.
+
+```bash
+composer require "jackardios/elastic-query-wizard:^3.0@rc" "jackardios/laravel-query-wizard:^3.0@rc" \
+    "jackardios/es-scout-driver:^1.0@rc"
+```
 
 ### The Elasticsearch Driver
 
 `elastic-scout-driver-plus` is replaced by `es-scout-driver`, a different package with its own configuration, query
 API and result classes. Its
-[migration guide](https://github.com/Jackardios/es-scout-driver/blob/v1.0.0-rc.1/MIGRATION_GUIDE.md) covers the
+[migration guide](https://github.com/Jackardios/es-scout-driver/blob/v1.0.0-rc.3/MIGRATION_GUIDE.md) covers the
 driver; the classes the wizard deals with are:
 
 | v2 | 3.0 |
@@ -164,8 +170,12 @@ $wizard->tapSearchBuilder(fn (SearchBuilder $builder) => $builder->must($query))
 $wizard->boolQuery()->filter($query);
 ```
 
-`tapSearchBuilder()` runs again on every build. `boolQuery()` builds the wizard first and returns the bool query of the
-built search, so a configuration call after it throws a `LogicException` instead of rebuilding without the change.
+`tapSearchBuilder()` runs again at the start of every build, before the request's filters and sorts are applied;
+`tapBuiltSearch()` runs at the end of every build, after them, and is the one to use for a change that reads the
+filtered query, such as wrapping it in a `function_score`. `boolQuery()` builds the wizard first and returns the bool
+query of the built search, so a configuration call after it throws a `LogicException` instead of rebuilding without
+the change. Inside a callback of the build, `$wizard->boolQuery()` returns the bool query being built, like the
+builder the callback receives. [docs/advanced.md](docs/advanced.md#when-a-change-runs) has the order of a build.
 
 The soft delete mode moved to the search builder:
 
@@ -597,7 +607,7 @@ A controller narrows a schema with the `disallowed*()` methods and extends it wi
 ### Request Handling (laravel-query-wizard 3.0)
 
 The request is read by `laravel-query-wizard` 3.0. Read its
-[upgrade guide](https://github.com/Jackardios/laravel-query-wizard/blob/v3.0.0-rc.4/UPGRADE.md): its v2.x section, then
+[upgrade guide](https://github.com/Jackardios/laravel-query-wizard/blob/v3.0.0-rc.6/UPGRADE.md): its v2.x section, then
 its `dev-master → 3.0.0` section, as it advises. The changes most visible here:
 
 - **Configuration.** The v2 keys of `config/query-wizard.php` moved: `count_suffix` to `includes.count_suffix`,
@@ -665,6 +675,9 @@ The filters v2 had behave as follows in 3.0; the others are [new in v3](#new-in-
 - **Trashed filters** take `with`, `only`, `without`, `true` or `false`; other values (`1` and `0` included) are 400s
   (v2 ignored them). Without `scout.soft_delete` set to true, a trashed filter throws a `LogicException` (v2 did
   nothing: Scout does not index which models are trashed).
+- **Text and pattern filters limit their value's length**: 1000 characters by default (256 for `fuzzy`), a longer
+  value is a 400. `maxLength()` on the filter or `elastic-query-wizard.max_text_length` in the config changes the
+  limit, `null` removes it.
 - **Filter parameters.** `withParameters()` adds to the parameters set before (v2 replaced them), and checks each name
   when the filter is configured: a name the filter's query has no setter for throws `InvalidArgumentException` (v2
   failed with a PHP `Error` on the first request that used the filter).
@@ -680,8 +693,11 @@ The filters v2 had behave as follows in 3.0; the others are [new in v3](#new-in-
   more-like-this filters.
 - Sorts: `ElasticSort::geoDistance()`, `script()`, `score()`, `nested()` and `random()`.
 - Includes: `ElasticInclude::exists()` adds a `{relation}_exists` attribute.
-- `ElasticQueryWizard::forSchema()` and resource schemas, `tapSearchBuilder()`, `boolQuery()` and
+- `ElasticQueryWizard::forSchema()` and resource schemas, `tapSearchBuilder()`, `tapBuiltSearch()`, `boolQuery()` and
   `applyPostProcessingTo()` for models loaded outside the wizard.
+- `getAllowedFilters()`, `getAllowedLeafFilters()`, `getAllowedSorts()`, `getAllowedIncludes()`, `getAllowedFields()`,
+  `getAllowedAppends()` and `getRequestedFilterNames()` read what the wizard accepts
+  ([docs/advanced.md](docs/advanced.md#reading-the-configuration)).
 - `ElasticQuery` and `ElasticAggregation`, proxies to the `es-scout-driver` query and aggregation factories:
 
 ```php
@@ -691,20 +707,35 @@ ElasticAggregation::terms('field');
 ElasticAggregation::dateHistogram('field', '1d');
 ```
 
-### Elasticsearch 9
+### Elasticsearch 8 and 9
 
 3.0 supports Elasticsearch 8.x and 9.x:
 
 1. **Range queries** take `gt`, `gte`, `lt` and `lte`; Elasticsearch 9 removed `from`, `to`, `include_lower` and
    `include_upper`, and the range filter refuses them.
-2. **Random sorts:** a seeded `random_score` needs a `field`; `ElasticSort::random()->seed()` sets `_seq_no`.
+2. **Random sorts:** Elasticsearch 8 refuses a seeded `random_score` without a `field` (9 reads `_seq_no`);
+   `ElasticSort::random()->seed()` sends `_seq_no` on both.
 3. **Circle geo shapes** are not supported; use `ElasticFilter::geoDistance()`.
+
+### Staying on Laravel 10 or 11
+
+The `legacy-l10` branch keeps the `master` API of this package for Laravel 10–12 and PHP 8.1. It is not tagged, and
+it needs the matching lines of both neighbours, so change the three constraints together:
+
+```json
+"jackardios/elastic-query-wizard": "dev-legacy-l10",
+"jackardios/laravel-query-wizard": "dev-legacy-l10",
+"jackardios/es-scout-driver": "^0.1"
+```
+
+`es-scout-driver` 0.1 allows the `elasticsearch/elasticsearch` client 8 and 9 and Scout 10 and 11; an application on
+an Elasticsearch 8 server also requires `"elasticsearch/elasticsearch": "^8.0"` itself, or Composer installs client 9.
 
 ### Checklist
 
 Dependencies:
-- [ ] Require `jackardios/elastic-query-wizard` `^3.0@rc`, `jackardios/laravel-query-wizard` `^3.0.0-rc.5` and
-  `jackardios/es-scout-driver` `^1.0.0-rc.1`; remove `jackardios/elastic-scout-driver-plus`
+- [ ] Require `jackardios/elastic-query-wizard` `^3.0@rc`, `jackardios/laravel-query-wizard` `^3.0.0-rc.6` and
+  `jackardios/es-scout-driver` `^1.0.0-rc.3`; remove `jackardios/elastic-scout-driver-plus`
 - [ ] Follow the `es-scout-driver` migration guide: configuration, `Searchable` trait, result and paginator classes
 - [ ] Move the v2 keys of `config/query-wizard.php` to their new places
 
@@ -713,8 +744,8 @@ Wizard:
 - [ ] Rename `setAllowed*()` → `allowed*()`, `setDefault*()` → `default*()`
 - [ ] Rename `addEloquentQueryCallback()` → `modifyQuery()` and type its second argument as `array $rawResult`
 - [ ] Rename `addEloquentCollectionCallback()` → `modifyModels()`
-- [ ] Replace `getRootBoolQuery()` with `tapSearchBuilder()` or `boolQuery()`, and `getRootBoolQuery()->withTrashed()`
-  with `$wizard->withTrashed()`
+- [ ] Replace `getRootBoolQuery()` with `tapSearchBuilder()`, `tapBuiltSearch()` or `boolQuery()`, and
+  `getRootBoolQuery()->withTrashed()` with `$wizard->withTrashed()`
 - [ ] Keep the wizard in a variable where code used the result of `build()` as the wizard
 - [ ] Check `paginate()` calls without a page size (15 per page now)
 - [ ] Replace wizard subclasses with a `ResourceSchema`
@@ -731,6 +762,8 @@ Filters, sorts and includes:
   argument
 - [ ] Add `asBoolean()` to filters that received `true`/`false` as booleans
 - [ ] Replace date math and custom date formats in range filters; drop `case_insensitive` from term filters
+- [ ] Set `scout.soft_delete` to true where a trashed filter is used, and `maxLength()` or
+  `elastic-query-wizard.max_text_length` where a text filter takes more than 1000 characters
 
 Custom classes:
 - [ ] Filters: extend `AbstractElasticFilter` and replace `handle()` with
@@ -751,16 +784,19 @@ Tests:
 
 The snapshots are the `master` branch (last commit `12c14af`, requiring `es-scout-driver` `dev-main` and
 `laravel-query-wizard` `dev-master`) and the `v3-rc1` branch. [Since the v3-rc1 snapshot](#since-the-v3-rc1-snapshot)
-lists the changes made after `e72a4f6`, the last pushed `v3-rc1` commit; [Since the master
-snapshot](#since-the-master-snapshot) lists the earlier ones, which apply when coming from `master`.
+lists the changes the `v3-rc1` branch received after its commit `e72a4f6` (a later snapshot of the branch already has
+some of them); [Since the master snapshot](#since-the-master-snapshot) lists the earlier ones, which apply when coming
+from `master`.
 [CHANGELOG.md](CHANGELOG.md) has every entry.
 
 ### Requirements
 
 - PHP 8.2+ (tested on 8.2–8.5) and Laravel 12.69.0+ or 13.30.0+ (`master`: PHP 8.1+, Laravel 10–12). Laravel 10 and
-  11 stay on the `legacy-l10` branch (`dev-legacy-l10`), which keeps the `master` API with `es-scout-driver` `^0.1`.
-- `jackardios/laravel-query-wizard` `^3.0.0-rc.5` and `jackardios/es-scout-driver` `^1.0.0-rc.1`; require this
-  package as `^3.0@rc`. Read `laravel-query-wizard`'s `dev-master → 3.0.0` section too.
+  11 stay on the `legacy-l10` branch, which keeps the `master` API with `es-scout-driver` `^0.1` and
+  `laravel-query-wizard` `dev-legacy-l10`; see [Staying on Laravel 10 or 11](#staying-on-laravel-10-or-11).
+- `jackardios/laravel-query-wizard` `^3.0.0-rc.6` and `jackardios/es-scout-driver` `^1.0.0-rc.3`; require this
+  package as `^3.0@rc`, in one `composer require` with the other two (the command is under
+  [Requirements](#requirements) above). Read `laravel-query-wizard`'s `dev-master → 3.0.0` section too.
 
 ### Since the v3-rc1 snapshot
 
@@ -779,7 +815,8 @@ methods of their classes:
 
 > **Warning:** `multiMatch()` and `moreLikeThis()` calls in the old order fail with a `TypeError`, but `nested()` and
 > `script()` take strings only, so an old call still runs with the arguments swapped: the filter reads the path as its
-> name and the name as its path. Search the code for these four calls. Named arguments
+> name and the name as its path. Search the code for `ElasticFilter::nested()`, `ElasticSort::script()` and
+> `ElasticSort::nested()` calls. Named arguments
 > (`ElasticFilter::nested(property: 'author', path: 'comments')`) work in both versions.
 
 #### Exceptions
@@ -804,8 +841,12 @@ tests that compare messages.
   `->allowDocumentReferences()`; without it a reference is a 400 (`Expected a text or a list of texts: this filter does
   not take document references.`). Elasticsearch reads the referenced document regardless of the search's
   conditions, so a client could learn what another tenant's document contains.
-- `prefix` values longer than 1000 characters and `fuzzy` values longer than 256 are 400s by default, like `regexp`
-  (1000 already); `maxLength()` sets another limit and `maxLength(null)` removes it.
+- Every text and pattern filter limits the length of its value, and a longer one is a 400: `fuzzy` 256 characters,
+  the others 1000 (`regexp` had that limit already; `prefix`, `wildcard`, `match`, `matchPhrase`,
+  `matchPhrasePrefix`, `multiMatch`, `queryString` and `simpleQueryString` are new; `moreLikeThis` has no default
+  limit).
+  `maxLength()` sets another limit on a filter and `maxLength(null)` removes it; for the filters other than `regexp`,
+  `prefix` and `fuzzy`, `elastic-query-wizard.max_text_length` in the config changes the default.
 - A trashed filter throws a `LogicException` when `scout.soft_delete` is not true: `only` returned live models, since
   Scout had not indexed which models are trashed.
 - A date range filter returns 400 for keys other than its two bounds and for a year after 9999, and `withParameters()`
@@ -815,11 +856,47 @@ tests that compare messages.
 - Text and pattern filters and `ids` return 400 for a JSON boolean from a request body.
 - `ElasticSort::callback()` throws a `LogicException` when its subject is not a `SearchBuilder`, like
   `ElasticFilter::callback()`.
-- `modifyQuery()`, `modifyModels()`, `tapSearchBuilder()` and search builder methods called while the wizard builds
-  (from a callback) throw a `LogicException`.
+- `modifyQuery()`, `modifyModels()`, `tapSearchBuilder()` and search builder methods called on the wizard while it
+  builds (from a callback) throw a `LogicException`; call them on the builder the callback receives.
 - `boolQuery()` builds the wizard first. A configuration call after a change to the built search through the wizard
   (`boolQuery()`, `getBoolQuery()` or a search builder method called after the build) throws a `LogicException`, since
   the rebuild would drop the change; configure the wizard before, or use `tapSearchBuilder()`.
+
+  ```php
+  // master: the bool query was read without building, at any time
+  $wizard->boolQuery()->addMust($query);
+  $wizard->allowedFilters(/* … */);              // 3.0: LogicException
+
+  // 3.0: configure first, or queue the change
+  $wizard->allowedFilters(/* … */)->must($query);
+  $wizard->tapSearchBuilder(fn (SearchBuilder $builder) => $builder->must($query));
+  ```
+
+  From inside a callback of the build, `$wizard->boolQuery()` still works: it returns the bool query being built,
+  the same object as `$builder->boolQuery()`.
+- A fluent search builder method called on the wizard, and a `tapSearchBuilder()` callback, run at the start of the
+  build when called before it, ahead of the request's filters and sorts, and at once on the built search when called
+  after it. `$wizard->sortRaw(…)` therefore comes before the sorts of `?sort=` in the first case and replaces them in
+  the second. A callback that reads the filtered query, for example to wrap it in a `function_score`, belongs in
+  `tapBuiltSearch()`, which runs at the end of every build:
+
+  ```php
+  // master, and 3.0 only when something has built the wizard already
+  $wizard->tapSearchBuilder(fn (SearchBuilder $builder) => $builder->query(
+      ['function_score' => ['query' => $wizard->boolQuery()->toArray(), 'functions' => $functions]]
+  ));
+
+  // 3.0
+  $wizard->tapBuiltSearch(fn (SearchBuilder $builder) => $builder->query(
+      ['function_score' => ['query' => $builder->boolQuery()->toArray(), 'functions' => $functions]]
+  )->clearBoolQuery());
+  ```
+
+  Keep the `clearBoolQuery()`: the search builder sends its bool query together with what `query()` sets, so without
+  it the filters and the wrapped clauses apply a second time beside the `function_score`. The same holds for a
+  wrapper added with `$builder->boolQuery()->addMust(…)`: read the bool query into the wrapper, clear it, then add.
+- `paginate()` with a page size or a page below 1 throws the 400 `InvalidPagination` (was an
+  `InvalidArgumentException` from the search builder).
 - `when()` and `unless()` are applied to the search builder with the other fluent calls when the wizard builds, and
   throw `BadMethodCallException` without a callback.
 - `withParameters()` refuses a value of a type the query's setter does not take (`'boost' => '2'`) when the filter is
@@ -827,25 +904,47 @@ tests that compare messages.
 - Geo coordinates in exponent notation (`1e1`) or with a trailing dot (`5.`) are 400s.
 - `multiMatch()` with an empty field list throws `InvalidArgumentException`.
 - `AbstractElasticGroup::addQueryToBoolQuery()` and `AbstractElasticFilter::isBlankValueShape()` are removed: add a
-  query to the clause the filter's `getEffectiveClause()` names, and check values with `laravel-query-wizard`'s
+  query to the clause the filter's `getEffectiveClause()` names with `BoolClause::addTo()`
+  (`$filter->getEffectiveClause()->addTo($boolQuery, $query)`), and check values with `laravel-query-wizard`'s
   `FilterValueParser::isBlank()`.
+- `FilterValueSanitizer` lost `isBlank()`, `isFilled()`, `arrayWithOnlyFilledItems()`,
+  `arrayToCommaSeparatedString()`, `toString()` and `toCoordinatesArray()`, and `geoBoundingBoxValue()`,
+  `geoDistanceValue()` and `rangeFilterValue()` take the filter as their second argument, so that the 400 names it (a
+  property name still compiles). The class is `@internal`: read values in custom filters with
+  `laravel-query-wizard`'s `FilterValueParser` (`isBlank()`, `number()`, `boolean()`, `isoDate()`, …).
+- A class that uses the `HasParameters` trait must implement `parameterQueryClasses()`, the query classes whose
+  setters `withParameters()` accepts; without it the class fails to load (`Class … contains 1 abstract method`). The
+  trait is `@internal`: a custom filter is better off setting its query's options in `buildQuery()`.
+- `FieldSort::unmappedType()` names its parameter `$type` (was `$unmappedType`), like `NestedSort`'s; a call with the
+  named argument `unmappedType:` fails.
+- A value preparer that returns only blank parts makes geo, range, nested and more-like-this filters apply no
+  condition; geo filters answered 400 and `moreLikeThis` sent `like: []`.
+- Requests are subject to `laravel-query-wizard`'s `limits.max_fields_count` (100 fields across every fieldset).
 
 #### Filter Groups
 
 - `disallowedFilters()` removes a filter inside a bool or nested group, as it removes one at the root: its request key
   is refused and its default is not applied (it used to reach Elasticsearch). This needs `laravel-query-wizard`
-  `^3.0.0-rc.5`.
+  `^3.0.0-rc.6`.
 - A schema `defaultFilters()` key names a group's leaf, as request keys do; a key naming a group throws.
 - A root filter with a `default()` that a group leaf of the same name shadows throws `FilterNameConflict`; its default
   was dropped silently.
 - `GroupInterface` requires `getEffectiveClause()`. Groups extending `AbstractElasticGroup` have it; a class that
   implements the interface directly adds it.
+- The inner hits of a nested group are named after the group unless `innerHits()` gets a `name`; Elasticsearch named
+  them after the path. For a group without an alias the two are the same. For `ElasticGroup::nested('comments',
+  'c2')->innerHits()` the result set moved from `inner_hits['comments']` to `inner_hits['c2']`: read it there, or
+  keep the old key with `innerHits(['name' => 'comments'])`.
 
 #### API Marking
 
 - `HasParameters::applyParametersOnQuery()` is protected.
-- The `Concerns` traits, `AbstractElasticInclude::setSearchResult()`, `FilterValueSanitizer` and the protected internals
-  of `ElasticQueryWizard` are `@internal`.
+- The `Concerns` traits, `AbstractElasticInclude::setSearchResult()` and `FilterValueSanitizer` are `@internal`, and
+  so is the wizard's own wiring: `$queryModifiers`, `$modelModifiers`, `$searchBuilderModifiers`,
+  `applySearchBuilderModifiers()`, `queueSearchBuilderMutation()` and `collectGroupLeafFilters()` (read the leaves
+  with the public `getAllowedLeafFilters()`).
+- `ElasticQueryWizard` is `@api` and may be extended: its public methods and the `@api` hooks of
+  `laravel-query-wizard` it overrides stay stable for subclasses.
 - `AbstractElasticFilter`, `AbstractElasticSort`, `AbstractElasticInclude`, `AbstractElasticGroup` and `GroupInterface`
   are `@api`. The README's [Backward Compatibility](README.md#backward-compatibility) section lists what 3.x keeps
   stable.
@@ -855,6 +954,10 @@ tests that compare messages.
 - `asNumber()` on term, range and ids filters reads values as decimal numbers and returns 400 for anything else, such
   as text or a date for a numeric field, where Elasticsearch fails the search.
 - `tapSearchBuilder()`, `modifyQuery()` and `modifyModels()` take any callable (were `Closure` only).
+- `tapBuiltSearch()` runs a callback at the end of every build, after the request's filters and sorts.
+- `getAllowedLeafFilters()` lists the filters a request may name, as copies, with every group replaced by its leaves; with
+  `laravel-query-wizard`'s `getAllowedFilters()`, `getAllowedSorts()`, `getAllowedIncludes()`, `getAllowedFields()`,
+  `getAllowedAppends()` and `getRequestedFilterNames()` it replaces reading the protected `getEffective*()` methods.
 - `ElasticQuery` and `ElasticAggregation` forward the macros of `Query` and `Agg`, and the wizard those of
   `SearchBuilder`. The wizard lists the search builder methods it forwards in `@method` tags instead of
   `@mixin SearchBuilder`, so static analysis reads a forwarded fluent call as returning the wizard.
@@ -884,10 +987,10 @@ These changes were made between `master` (`12c14af`) and `e72a4f6`; coming from 
   after the eager-load constraint registered in `modifyQuery()` and keeps the related model's `$with` and
   `$withCount`.
 - The protected internals `applyPostProcessingToResults()`, `finalizeSubject()`, `addBuildQueryModifier()`,
-  `prepareAppendTreeData()`, `prepareRelationFieldData()`, the `$appendTree`, `$relationFieldTree`,
-  `$buildQueryModifiers`, `$safeRootHiddenFields` and `$validatedRequestedRootFields` properties and the
-  `HandlesSafeRelationSelect` and `HandlesRelationPostProcessing` traits are removed; use `modifyQuery()`,
-  `modifyModels()` and `tapSearchBuilder()`.
+  `prepareAppendTreeData()`, `prepareRelationFieldData()` and the `$appendTree`, `$relationFieldTree`,
+  `$buildQueryModifiers`, `$safeRootHiddenFields` and `$validatedRequestedRootFields` properties are removed, and the
+  wizard no longer uses `laravel-query-wizard`'s `HandlesSafeRelationSelect` and `HandlesRelationPostProcessing`
+  traits, so their methods are gone from it; use `modifyQuery()`, `modifyModels()` and `tapSearchBuilder()`.
 - `applyPostProcessingTo()` returns a new lazy collection for a lazy collection and throws `InvalidArgumentException`
   for a generator, which post-processing would use up.
 
@@ -957,15 +1060,21 @@ These changes were made between `master` (`12c14af`) and `e72a4f6`; coming from 
 
 ### Checklist
 
-- [ ] Require `jackardios/elastic-query-wizard` `^3.0@rc`, `jackardios/laravel-query-wizard` `^3.0.0-rc.5` and
-  `jackardios/es-scout-driver` `^1.0.0-rc.1`
+- [ ] Require `jackardios/elastic-query-wizard` `^3.0@rc`, `jackardios/laravel-query-wizard` `^3.0.0-rc.6` and
+  `jackardios/es-scout-driver` `^1.0.0-rc.3`
 - [ ] Reorder the arguments of `multiMatch()`, `moreLikeThis()`, `ElasticFilter::nested()`, `ElasticSort::script()`
   and `ElasticSort::nested()`
 - [ ] Rename the `*Exception` classes and update tests that compare messages
 - [ ] Replace `dateFormat()` with `esFormat()`
 - [ ] Add `allowDocumentReferences()` to more-like-this filters that take `_id` references
-- [ ] Set `maxLength()` on `prefix` and `fuzzy` filters that need longer values
+- [ ] Set `maxLength()` on the text and pattern filters that need values longer than 1000 characters (256 for
+  `fuzzy`), or `elastic-query-wizard.max_text_length`
 - [ ] Set `scout.soft_delete` to true where a trashed filter is used
+- [ ] Move `$wizard->boolQuery()` changes after the configuration or into `tapSearchBuilder()`, and callbacks that
+  read the filtered query into `tapBuiltSearch()`
+- [ ] Read `inner_hits` of aliased nested groups under the alias, or give `innerHits()` a `name`
+- [ ] Add `parameterQueryClasses()` to classes using `HasParameters`; replace the removed `FilterValueSanitizer`
+  methods with `FilterValueParser`
 - [ ] Stop calling `applyParametersOnQuery()` from outside the filter
 - [ ] Add `getEffectiveClause()` to classes that implement `GroupInterface` directly
 - [ ] From `master`: pass the model class to `for()`, rename the `BoolClause` cases, take `SortDirection` in custom

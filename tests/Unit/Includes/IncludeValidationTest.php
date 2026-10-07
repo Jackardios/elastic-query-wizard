@@ -9,7 +9,6 @@ use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use Jackardios\QueryWizard\Exceptions\InvalidIncludeQuery;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
-use ReflectionClass;
 
 #[Group('unit')]
 #[Group('include')]
@@ -42,12 +41,7 @@ class IncludeValidationTest extends UnitTestCase
             ->createElasticWizardWithIncludes('relatedModels')
             ->allowedIncludes('relatedModels.nestedRelatedModels', 'relatedModels');
 
-        $property = (new ReflectionClass($query))->getProperty('allowedIncludes');
-        $rawIncludes = $property->getValue($query);
-
-        $this->assertCount(2, $rawIncludes);
-        $this->assertContains('relatedModels', $rawIncludes);
-        $this->assertContains('relatedModels.nestedRelatedModels', $rawIncludes);
+        $this->assertSame(['relatedModels.nestedRelatedModels', 'relatedModels'], array_keys($query->getAllowedIncludes()));
     }
 
     #[Test]

@@ -4,20 +4,25 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Tests\Unit;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Jackardios\ElasticQueryWizard\ElasticFilter;
+use Jackardios\ElasticQueryWizard\ElasticGroup;
 use Jackardios\ElasticQueryWizard\ElasticInclude;
 use Jackardios\ElasticQueryWizard\ElasticQuery;
 use Jackardios\ElasticQueryWizard\ElasticSort;
 use Jackardios\ElasticQueryWizard\Enums\BoolClause;
 use Jackardios\ElasticQueryWizard\Exceptions\InvalidRangeValue;
 use Jackardios\ElasticQueryWizard\Filters\AbstractElasticFilter;
+use Jackardios\ElasticQueryWizard\Includes\AbstractElasticInclude;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\RelatedModel;
 use Jackardios\ElasticQueryWizard\Tests\Fixtures\Models\TestModel;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use Jackardios\EsScoutDriver\Query\QueryInterface;
+use Jackardios\EsScoutDriver\Search\Hit;
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
+use Jackardios\EsScoutDriver\Search\SearchResult;
 use Jackardios\EsScoutDriver\Support\Query;
 use Jackardios\QueryWizard\Contracts\QueryWizardInterface;
 use Jackardios\QueryWizard\Enums\SortDirection;
@@ -229,6 +234,140 @@ class DocumentationExamplesTest extends UnitTestCase
             $this->getFilterQueries($wizard->boolQuery())
         );
     }
+
+    #[Test]
+    public function the_callback_filter_phrase_example_takes_a_value_with_a_comma_and_refuses_a_list(): void
+    {
+        $filter = fn () => ElasticFilter::callback('phrase', function (SearchBuilder $builder, mixed $value, string $property) {
+            if (! is_string($value)) {
+                throw InvalidFilterValue::make($value, $property, 'Expected one phrase.');
+            }
+
+            $builder->must(Query::matchPhrase('content', $value));
+        })->withoutValueSplitting();
+
+        $wizard = $this->createElasticWizardWithFilters(['phrase' => 'red, blue'])->allowedFilters($filter());
+
+        $this->assertSame(
+            [['match_phrase' => ['content' => ['query' => 'red, blue']]]],
+            $this->getMustQueries($wizard->build()->boolQuery())
+        );
+
+        $this->expectException(InvalidFilterValue::class);
+        $this->expectExceptionMessage('Expected one phrase.');
+
+        $this->createElasticWizardWithFilters(['phrase' => ['red', 'blue']])->allowedFilters($filter())->build();
+    }
+
+    #[Test]
+    public function the_callback_filter_condition_example_reads_a_boolean(): void
+    {
+        $filter = fn () => ElasticFilter::callback('available', function (SearchBuilder $builder, mixed $value, string $property) {
+            if ($value === true) {
+                $builder->filter(Query::term('status', 'active'));
+                $builder->filter(Query::range('stock')->gt(0));
+            }
+        })->asBoolean();
+
+        $on = $this->createElasticWizardWithFilters(['available' => 'true'])->allowedFilters($filter());
+        $off = $this->createElasticWizardWithFilters(['available' => 'false'])->allowedFilters($filter());
+
+        $this->assertCount(2, $this->getFilterQueries($on->build()->boolQuery()));
+        $this->assertNull($off->build()->getBoolQuery());
+
+        $this->expectException(InvalidFilterValue::class);
+
+        $this->createElasticWizardWithFilters(['available' => 'red, blue'])->allowedFilters($filter())->build();
+    }
+
+    #[Test]
+    public function the_callback_filter_nested_example_takes_one_value_or_a_list(): void
+    {
+        $filter = fn () => ElasticFilter::callback('comment_author', function (SearchBuilder $builder, mixed $value, string $property) {
+            $builder->filter(
+                Query::nested('comments', Query::terms('comments.author', (array) $value))
+            );
+        });
+
+        $one = $this->createElasticWizardWithFilters(['comment_author' => 'john'])->allowedFilters($filter());
+        $two = $this->createElasticWizardWithFilters(['comment_author' => 'john,jane'])->allowedFilters($filter());
+
+        $this->assertSame(
+            ['comments.author' => ['john']],
+            $this->getFilterQueries($one->build()->boolQuery())[0]['nested']['query']['terms']
+        );
+        $this->assertSame(
+            ['comments.author' => ['john', 'jane']],
+            $this->getFilterQueries($two->build()->boolQuery())[0]['nested']['query']['terms']
+        );
+    }
+
+    #[Test]
+    public function a_custom_group_adds_a_query_to_the_clause_a_filter_names(): void
+    {
+        $boolQuery = Query::bool();
+        $filter = ElasticFilter::term('status')->inMustNot();
+
+        $filter->getEffectiveClause()->addTo($boolQuery, Query::term('status', 'draft'));
+
+        $this->assertSame([['term' => ['status' => ['value' => 'draft']]]], $this->getMustNotQueries($boolQuery));
+    }
+
+    #[Test]
+    public function a_nested_group_with_an_alias_names_its_inner_hits_after_the_alias_unless_a_name_is_given(): void
+    {
+        $byAlias = $this->createElasticWizardWithFilters(['author' => 'john'])->allowedFilters(
+            ElasticGroup::nested('comments', 'c2')->innerHits()->children([ElasticFilter::term('comments.author', 'author')])
+        );
+        $byName = $this->createElasticWizardWithFilters(['author' => 'john'])->allowedFilters(
+            ElasticGroup::nested('comments', 'c2')->innerHits(['name' => 'comments'])->children([ElasticFilter::term('comments.author', 'author')])
+        );
+
+        $this->assertSame(['name' => 'c2'], $this->getFilterQueries($byAlias->build()->boolQuery())[0]['nested']['inner_hits']);
+        $this->assertSame(['name' => 'comments'], $this->getFilterQueries($byName->build()->boolQuery())[0]['nested']['inner_hits']);
+    }
+
+    #[Test]
+    public function a_default_sort_needs_no_allowed_sort_and_is_not_an_elastic_sort_definition(): void
+    {
+        $wizard = $this->createElasticWizardFromQuery()->defaultSorts('-created_at');
+
+        $this->assertSame([['created_at' => 'desc']], $wizard->build()->getSort());
+
+        $this->expectException(\TypeError::class);
+
+        $this->createElasticWizardFromQuery()->defaultSorts(ElasticSort::field('created_at'));
+    }
+
+    #[Test]
+    public function get_bool_query_locks_the_configuration_only_when_the_search_has_a_bool_query(): void
+    {
+        $empty = $this->createElasticWizardFromQuery();
+        $this->assertNull($empty->getBoolQuery());
+        $empty->allowedFilters('status');
+
+        $filtered = $this->createElasticWizardWithFilters(['status' => 'x'])->allowedFilters('status');
+        $this->assertNotNull($filtered->getBoolQuery());
+
+        $this->expectException(\LogicException::class);
+
+        $filtered->allowedSorts('name');
+    }
+
+    #[Test]
+    public function the_highlight_include_example_reads_the_highlights_by_document_id(): void
+    {
+        $include = DocumentedHighlightsInclude::make('highlights');
+        $include->setSearchResult(new SearchResult(['hits' => ['hits' => [
+            ['_index' => 'posts', '_id' => '7', '_source' => [], 'highlight' => ['title' => ['<em>a</em>']]],
+            ['_index' => 'posts', '_id' => '8', '_source' => []],
+        ]]]));
+
+        $include->handleEloquent(TestModel::query());
+
+        $this->assertSame(['7' => ['title' => ['<em>a</em>']]], $include->highlightsById);
+        $this->assertNull($include->getSearchResult()?->hits()->first()?->model());
+    }
 }
 
 class DocumentedPost extends TestModel
@@ -282,5 +421,25 @@ final class DocumentedCustomFilter extends AbstractElasticFilter
     public function buildQuery(mixed $value): QueryInterface|array|null
     {
         return is_string($value) ? Query::match($this->property, $value) : null;
+    }
+}
+
+final class DocumentedHighlightsInclude extends AbstractElasticInclude
+{
+    /** @var array<string, array<string, mixed>> */
+    public array $highlightsById = [];
+
+    public static function make(string $relation, ?string $alias = null): static
+    {
+        return new self($relation, $alias);
+    }
+
+    public function handleEloquent(Builder $eloquentBuilder): void
+    {
+        $this->highlightsById = $this->getSearchResult()
+            ?->hits()
+            ->filter(fn (Hit $hit) => $hit->highlight !== [])
+            ->mapWithKeys(fn (Hit $hit) => [$hit->documentId => $hit->highlight])
+            ->all() ?? [];
     }
 }

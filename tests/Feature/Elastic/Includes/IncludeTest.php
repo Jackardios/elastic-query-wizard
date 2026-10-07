@@ -16,7 +16,6 @@ use Jackardios\QueryWizard\Eloquent\Includes\RelationshipInclude;
 use Jackardios\QueryWizard\Exceptions\InvalidIncludeQuery;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
-use ReflectionClass;
 
 #[Group('elastic')]
 #[Group('include')]
@@ -319,15 +318,7 @@ class IncludeTest extends TestCase
             ->createElasticWizardWithIncludes('relatedModels')
             ->allowedIncludes('relatedModels.nestedRelatedModels', 'relatedModels');
 
-        // Access the wizard's allowedIncludes property - it contains raw values before building
-        $property = (new ReflectionClass($wizard))->getProperty('allowedIncludes');
-        $rawValues = $property->getValue($wizard);
-
-        // allowedIncludes contains the raw string/object values before normalization
-        $includeNames = array_map(
-            fn ($include) => is_string($include) ? $include : $include->getName(),
-            $rawValues
-        );
+        $includeNames = array_keys($wizard->getAllowedIncludes());
 
         $this->assertContains('relatedModels', $includeNames);
         $this->assertContains('relatedModels.nestedRelatedModels', $includeNames);

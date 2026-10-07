@@ -255,6 +255,14 @@ final class MoreLikeThisFilter extends AbstractElasticFilter
         return $like;
     }
 
+    /**
+     * A sample document is long by nature: only maxLength() limits it.
+     */
+    protected function defaultMaxLength(): ?int
+    {
+        return null;
+    }
+
     private function expected(): string
     {
         return $this->allowsDocumentReferences

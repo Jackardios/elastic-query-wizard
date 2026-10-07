@@ -19,6 +19,8 @@ This section covers advanced features and customization options for Elastic Quer
 - [Resource Schemas](#resource-schemas)
 - [Fields and Appends](#fields-and-appends)
 - [Declarative SearchBuilder Methods](#declarative-searchbuilder-methods)
+- [When a Change Runs](#when-a-change-runs)
+- [Reading the Configuration](#reading-the-configuration)
 - [DSL Proxies](#dsl-proxies)
 - [Custom Aggregations](#custom-aggregations)
 - [Working with Bool Query](#working-with-bool-query)
@@ -319,7 +321,9 @@ GET /posts?append=excerpt,reading_time
 ## Declarative SearchBuilder Methods
 
 `ElasticQueryWizard` exposes most useful `SearchBuilder` operations directly.
-These methods are declarative: you can call them before or after `build()`, and they remain consistent with wizard configuration.
+Called before `build()`, these methods are declarative: the wizard queues them and applies them on every build, so
+they survive a later configuration change. Called after `build()`, they change the built search at once, and the
+result is not the same: see [When a Change Runs](#when-a-change-runs).
 
 ```php
 $results = ElasticQueryWizard::for(Post::class)
@@ -338,7 +342,9 @@ $results = ElasticQueryWizard::for(Post::class)
 
 `when()` and `unless()` are declarative as well: their callback receives the search builder when the wizard builds. Any
 other `SearchBuilder` method, such as `count()` or `getBoolQuery()`, and any `SearchBuilder` macro builds the wizard
-first and runs on the built search; the wizard is returned in place of the builder.
+first and runs on the built search; the wizard is returned in place of the builder. A macro is not queued even when
+it returns the builder: `$wizard->myMacro()->allowedFilters(…)` throws a `LogicException`, since the macro has changed
+the built search. Configure the wizard first, or call the macro on the builder inside `tapSearchBuilder()`.
 
 ```php
 ElasticQueryWizard::for(Post::class)
@@ -355,6 +361,95 @@ ElasticQueryWizard::for(Post::class)
         $builder->timeout('2s');
     });
 ```
+
+---
+
+## When a Change Runs
+
+A build applies, in this order: the `tap()` callbacks, the queued search builder calls and `tapSearchBuilder()`
+callbacks, the request's filters, its sorts, the `tapBuiltSearch()` callbacks, and last the callbacks that load the
+models with their includes, fields and appends.
+
+| Call | Before `build()` | After `build()` |
+|------|------------------|-----------------|
+| A fluent search builder method on the wizard (`sortRaw()`, `must()`, `size()`, …), `when()`, `unless()`, `tapSearchBuilder()` | Queued: runs at the start of every build, **before** the filters and sorts | Runs once, at once, on the built search, **after** the filters and sorts; a later configuration change throws a `LogicException` |
+| `tap()` (from `laravel-query-wizard`) | Queued: runs at the start of every build | Queued: the next `build()` rebuilds the search |
+| `tapBuiltSearch()` | Queued: runs at the end of every build, **after** the filters and sorts | Queued: the next `build()` rebuilds the search |
+| `modifyQuery()`, `modifyModels()` | Registered for every build | `LogicException` |
+
+So the same call gives another search on each side of the build. With `?sort=-name` and `allowedSorts('name')`:
+
+```php
+$wizard->sortRaw([['_score' => 'desc']]);   // before build(): sort is [_score desc, name desc]
+
+$wizard->build();
+$wizard->sortRaw([['_score' => 'desc']]);   // after build(): sort is [_score desc], the client's sort is replaced
+```
+
+`boolQuery()`, `getSort()`, `count()` and every other method that returns a value build the wizard, so a call placed
+above such a line moves a fluent call below it to the "after" column without an error. Keep to one side: make the
+calls before anything builds the wizard, or put the change in a callback.
+
+`tapBuiltSearch()` is the callback for a change that needs the filtered query, on every build. It receives the search
+builder with the request's filters and sorts on it:
+
+```php
+use Jackardios\EsScoutDriver\Search\SearchBuilder;
+
+ElasticQueryWizard::for(Post::class)
+    ->allowedFilters([ElasticFilter::term('status')])
+    ->tapBuiltSearch(function (SearchBuilder $builder) {
+        // Wrap what the request filtered in a function_score
+        $builder->query(
+            ElasticQuery::functionScore(clone $builder->boolQuery())
+                ->addFunction(['field_value_factor' => ['field' => 'views']])
+        )->clearBoolQuery();
+    });
+```
+
+`clearBoolQuery()` is part of the wrapping: the search builder sends its bool query together with what `query()`
+sets, so without it the filters apply a second time beside the `function_score`.
+
+Inside any of these callbacks, and inside a callback filter or sort, use the builder the callback receives. On the
+wizard only `boolQuery()` works while it builds: it returns the bool query of the search being built, the same object
+as `$builder->boolQuery()`. In a `tapSearchBuilder()` callback that bool query does not hold the request's filters
+yet; in a `tapBuiltSearch()` callback it does. Other search builder methods called on the wizard from a callback,
+`build()`, `paginate()` and `applyPostProcessingTo()`, and the methods that register callbacks, throw a
+`LogicException`.
+
+A clone carries the callbacks of the wizard it was cloned from. A callback that captured `$wizard` still changes that
+wizard when the clone builds, not the clone: one more reason to use the builder the callback receives.
+
+Do not call `clearQueryModifiers()`, `clearModelModifiers()` or `clearAll()` on a built wizard or on the builder
+`build()` returned: they remove the callbacks that apply includes, fields and appends to the models.
+
+---
+
+## Reading the Configuration
+
+The wizard reports what a request may use, without building:
+
+```php
+$wizard = ElasticQueryWizard::forSchema(PostSchema::class)->disallowedFilters('trashed');
+
+$wizard->getAllowedFilters();        // ['status' => TermFilter, 'search' => BoolGroup, …] by public name
+$wizard->getAllowedLeafFilters();    // the same with every group replaced by its leaves, by request key
+$wizard->getAllowedSorts();          // ['created_at' => FieldSort, …]
+$wizard->getAllowedIncludes();       // by include name
+$wizard->getAllowedFields();         // list of field names
+$wizard->getAllowedAppends();        // list of append names
+$wizard->getRequestedFilterNames();  // the filter keys of the current request, allowed or not
+```
+
+All but `getAllowedLeafFilters()` come from `laravel-query-wizard`. `getAllowedFilters()` lists a group under the
+group's name, which is not a request key; `getAllowedLeafFilters()` lists what `?filter[…]` may name: the leaves of
+every group, without those `disallowedFilters()` removes, and without a root filter whose key a group leaf of the same
+name takes. `getRequestedFilterNames()` names leaves too. The filters, sorts and includes returned are copies:
+changing one does not change the wizard. None of them can be called from a schema method, which is describing that
+configuration.
+
+`ElasticQueryWizard::for($modelClass, $parameters)` takes a `QueryParametersManager` as its second argument, to read
+another request than the current one; `laravel-query-wizard`'s own `for()` refuses a second argument.
 
 ---
 
@@ -413,7 +508,17 @@ $search->aggregate(
 
 ## Working with Bool Query
 
-Access the root bool query for complex query logic:
+Add clauses with the wizard's `must()`, `filter()`, `should()` and `mustNot()`. Called before the build they are
+queued, so the configuration stays open and the clauses survive a rebuild:
+
+```php
+$wizard = ElasticQueryWizard::for(Post::class)
+    ->must(ElasticQuery::match('title', 'search term'))
+    ->mustNot(ElasticQuery::term('is_hidden', true))
+    ->allowedFilters([ElasticFilter::term('status')]);
+```
+
+For what these methods do not cover, such as `minimum_should_match`, access the root bool query of the built search:
 
 ```php
 $search = ElasticQueryWizard::for(Post::class)
@@ -439,8 +544,11 @@ $boolQuery->addMustNot(ElasticQuery::term('is_hidden', true));
 
 > **Note:** The wizard's `boolQuery()` and `getBoolQuery()` build the wizard first, like other `SearchBuilder` methods
 > that return a value, and return the built search's bool query. A change made there lives on the built search, which a
-> rebuild replaces, so both lock the configuration: a later change throws a `LogicException`. Use `tapSearchBuilder()`
-> for a change that survives rebuilds.
+> rebuild replaces, so `boolQuery()` locks the configuration: a later change throws a `LogicException`.
+> `getBoolQuery()` locks it only when it returns a bool query; for a search without clauses it returns `null` and
+> locks nothing. Use `tapSearchBuilder()` or `tapBuiltSearch()` for a change that survives rebuilds
+> ([When a Change Runs](#when-a-change-runs)); inside their callbacks `$wizard->boolQuery()` returns the bool query
+> being built and locks nothing.
 
 ---
 
@@ -579,7 +687,7 @@ class CustomFilter extends AbstractElasticFilter
     }
 
     /**
-     * Override default clause if needed (default is FILTER).
+     * Override default clause if needed (default is BoolClause::Filter).
      */
     protected function getDefaultClause(): BoolClause
     {
@@ -588,7 +696,7 @@ class CustomFilter extends AbstractElasticFilter
 
     /**
      * Build the Elasticsearch query.
-     * Return null to skip the filter.
+     * Return null to skip the filter (not an empty array, which the driver refuses).
      * You can also return raw array query fragments for low-level DSL cases.
      */
     public function buildQuery(mixed $value): QueryInterface|array|null
@@ -708,28 +816,43 @@ For includes that need access to Elasticsearch results:
 
 ```php
 use Jackardios\ElasticQueryWizard\Includes\AbstractElasticInclude;
+use Jackardios\EsScoutDriver\Search\Hit;
 use Illuminate\Database\Eloquent\Builder;
 
-class HighlightedInclude extends AbstractElasticInclude
+class HighlightsInclude extends AbstractElasticInclude
 {
-    public static function make(string $property, ?string $alias = null): static
+    /** @var array<string, array<string, mixed>> Highlights by document id */
+    public array $highlightsById = [];
+
+    public static function make(string $relation, ?string $alias = null): static
     {
-        return new static($property, $alias);
+        return new static($relation, $alias);
     }
 
     public function handleEloquent(Builder $eloquentBuilder): void
     {
-        $searchResult = $this->getSearchResult();
-
-        if ($searchResult) {
-            // Access highlights from Elasticsearch results
-            $highlights = $searchResult->highlights();
-
-            // Store for later use
-            // You can attach this data to models in a collection callback
-        }
+        $this->highlightsById = $this->getSearchResult()
+            ?->hits()
+            ->filter(fn (Hit $hit) => $hit->highlight !== [])
+            ->mapWithKeys(fn (Hit $hit) => [$hit->documentId => $hit->highlight])
+            ->all() ?? [];
     }
 }
+```
+
+`handleEloquent()` runs before the models are loaded, and `getSearchResult()` holds the raw response only: its hits
+carry the document id, source, score and highlight, while `$hit->model()` is always `null` there. An include has no
+step after the models are loaded, so attach what it collected in a `modifyModels()` callback on the wizard:
+
+```php
+$highlights = HighlightsInclude::make('highlights');
+
+ElasticQueryWizard::for(Post::class)
+    ->highlight('title')
+    ->allowedIncludes([$highlights])
+    ->modifyModels(fn (Collection $posts) => $posts->each(
+        fn (Post $post) => $post->setAttribute('highlights', $highlights->highlightsById[$post->getScoutKey()] ?? [])
+    ));
 ```
 
 ### Using CallbackInclude for Simple Cases
@@ -795,7 +918,9 @@ $paginator = ElasticQueryWizard::for(Post::class)
 Elasticsearch refuses a search whose `from + size` exceeds the index's `max_result_window` (10000 by default) with an
 error that reaches the client as a 500. The wizard's `paginate()` answers such a page with 400
 `MaxResultWindowExceeded` (error code `max_result_window_exceeded`, `MaxResultWindowExceeded::ERROR_CODE`) before
-searching. The package ships no config file; to set another limit, or `null` to turn the check off, create
+searching. A page size or a page number below 1, which the search builder refuses with an `InvalidArgumentException`,
+is a 400 `InvalidPagination` (error code `invalid_pagination`), so a page size taken from the request needs only an
+upper bound from the application. The package ships no config file; to set another limit, or `null` to turn the check off, create
 `config/elastic-query-wizard.php` in the application:
 
 ```php
@@ -805,7 +930,8 @@ return [
 ```
 
 The value is a positive integer, a string of digits such as `env()` returns, or `null`; anything else throws an
-`InvalidArgumentException` when the wizard paginates.
+`InvalidArgumentException` when the wizard paginates. The same file takes `max_text_length`, the default length limit
+of the text filters ([Filters: Security](filters.md#security)).
 
 The wizard's `paginate()` takes 15 results per page by default, like Eloquent; `paginate()` on the search builder takes
 10. `paginate()` on the search builder that `build()` returns does not check the window. For results deeper than the
@@ -833,9 +959,10 @@ $results = ElasticQueryWizard::for(Post::class)
 
 > **Note:** After `build()`, `modifyQuery()` and `modifyModels()` are locked and will throw a `LogicException`. Register these callbacks before build.
 > Registering a callback or calling a SearchBuilder method on the wizard while it builds (from a `tap()` callback,
-> a filter or a schema method) throws a `LogicException` as well.
+> a filter or a schema method) throws a `LogicException` as well; use the builder the callback receives. The wizard's
+> `boolQuery()` is the exception: it returns the bool query being built.
 > **Note:** Once you call SearchBuilder methods on the wizard after `build()`, changing its configuration (allowedFilters, allowedSorts, etc.) throws a `LogicException`.
-> Calls on the builder that `build()` returned are not tracked: a later configuration change rebuilds from a fresh builder and silently drops them. To keep a change across rebuilds, call the method on the wizard before `build()` or use `tapSearchBuilder()`.
+> Calls on the builder that `build()` returned are not tracked: a later configuration change rebuilds from a fresh builder and silently drops them. To keep a change across rebuilds, call the method on the wizard before `build()` or use `tapSearchBuilder()` or `tapBuiltSearch()`; [When a Change Runs](#when-a-change-runs) has the order.
 
 ---
 

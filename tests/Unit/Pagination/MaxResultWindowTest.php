@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jackardios\ElasticQueryWizard\Tests\Unit\Pagination;
 
+use Jackardios\ElasticQueryWizard\Exceptions\InvalidPagination;
 use Jackardios\ElasticQueryWizard\Exceptions\MaxResultWindowExceeded;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -91,5 +92,45 @@ class MaxResultWindowTest extends UnitTestCase
         $this->expectExceptionMessage('elastic-query-wizard.max_result_window');
 
         $this->createElasticWizardFromQuery()->paginate(10, 'page', 1);
+    }
+
+    #[Test]
+    public function a_page_size_below_one_is_a_400(): void
+    {
+        foreach ([0, -5] as $perPage) {
+            try {
+                $this->createElasticWizardFromQuery()->paginate($perPage);
+                $this->fail('Expected InvalidPagination.');
+            } catch (InvalidPagination $exception) {
+                $this->assertSame(400, $exception->getStatusCode());
+                $this->assertSame(InvalidPagination::ERROR_CODE, $exception->errorCode);
+                $this->assertNull($exception->parameter);
+                $this->assertSame("The page size must be at least 1, got {$perPage}.", $exception->getMessage());
+            }
+        }
+    }
+
+    #[Test]
+    public function a_page_below_one_is_a_400_naming_the_page_parameter(): void
+    {
+        try {
+            $this->createElasticWizardFromQuery()->paginate(10, 'p', 0);
+            $this->fail('Expected InvalidPagination.');
+        } catch (InvalidPagination $exception) {
+            $this->assertSame(400, $exception->getStatusCode());
+            $this->assertSame('invalid_pagination', $exception->errorCode);
+            $this->assertSame('p', $exception->parameter);
+            $this->assertSame('The page must be at least 1, got 0.', $exception->getMessage());
+        }
+    }
+
+    #[Test]
+    public function without_a_window_a_page_whose_offset_overflows_is_still_a_400(): void
+    {
+        config()->set('elastic-query-wizard.max_result_window', null);
+
+        $this->expectException(MaxResultWindowExceeded::class);
+
+        $this->createElasticWizardFromQuery()->paginate(10, 'page', PHP_INT_MAX);
     }
 }

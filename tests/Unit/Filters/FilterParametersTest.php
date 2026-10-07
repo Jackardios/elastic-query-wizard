@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace Jackardios\ElasticQueryWizard\Tests\Unit\Filters;
 
 use InvalidArgumentException;
+use Jackardios\ElasticQueryWizard\Concerns\HasParameters;
 use Jackardios\ElasticQueryWizard\ElasticFilter;
+use Jackardios\ElasticQueryWizard\Filters\AbstractElasticFilter;
 use Jackardios\ElasticQueryWizard\Tests\UnitTestCase;
+use Jackardios\EsScoutDriver\Query\QueryInterface;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -23,13 +26,23 @@ class FilterParametersTest extends UnitTestCase
         ElasticFilter::term('name')->withParameters(['bost' => 2]);
     }
 
+    /**
+     * The query is a test double: which setters the driver's queries have is the driver's business, and a setter
+     * it adds must not fail this test.
+     */
     #[Test]
     public function a_parameter_the_query_has_no_setter_for_is_refused(): void
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('has no boost() setter');
+        $filter = SetterlessQueryFilter::make('name')->withParameters(['known' => 2]);
 
-        ElasticFilter::matchPhrase('name')->withParameters(['boost' => 2]);
+        $this->assertSame(['setterless' => ['name' => 'x', 'known' => 2]], $filter->buildQuery('x')?->toArray());
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(
+            'Parameter `boost` is not supported by '.SetterlessQueryFilter::class.': '.SetterlessQuery::class.' has no boost() setter.'
+        );
+
+        SetterlessQueryFilter::make('name')->withParameters(['boost' => 2]);
     }
 
     #[Test]
@@ -95,5 +108,45 @@ class FilterParametersTest extends UnitTestCase
             ['fields' => ['name^10', 'country_name^4'], 'query' => 'john', 'type' => 'most_fields', 'operator' => 'or', 'tie_breaker' => 0.3, 'fuzziness' => 'AUTO'],
             $this->getMustQueries($wizard->boolQuery())[0]['multi_match']
         );
+    }
+}
+
+final class SetterlessQuery implements QueryInterface
+{
+    private ?int $known = null;
+
+    public function __construct(private readonly string $field, private readonly string $value) {}
+
+    public function known(int $known): self
+    {
+        $this->known = $known;
+
+        return $this;
+    }
+
+    public function toArray(): array
+    {
+        return ['setterless' => [$this->field => $this->value, 'known' => $this->known]];
+    }
+}
+
+final class SetterlessQueryFilter extends AbstractElasticFilter
+{
+    use HasParameters;
+
+    public static function make(string $property, ?string $alias = null): static
+    {
+        return new self($property, $alias);
+    }
+
+    /** @return list<class-string> */
+    protected function parameterQueryClasses(): array
+    {
+        return [SetterlessQuery::class];
+    }
+
+    public function buildQuery(mixed $value): ?QueryInterface
+    {
+        return is_string($value) ? $this->applyParametersOnQuery(new SetterlessQuery($this->property, $value)) : null;
     }
 }

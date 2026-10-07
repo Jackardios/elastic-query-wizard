@@ -26,7 +26,8 @@ abstract class AbstractElasticFilter extends AbstractFilter
      * Return QueryInterface for typed DSL queries, or raw array for custom
      * low-level Elasticsearch query fragments.
      *
-     * @return QueryInterface|array<string, mixed>|null Return null to skip the filter
+     * @return QueryInterface|array<string, mixed>|null Return null to skip the filter; an empty array is not a query,
+     *                                                  and es-scout-driver throws an `InvalidQueryException` for it
      */
     abstract public function buildQuery(mixed $value): QueryInterface|array|null;
 

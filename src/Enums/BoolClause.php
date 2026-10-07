@@ -18,8 +18,6 @@ enum BoolClause: string
      * Add the query to this clause of the bool query.
      *
      * @param  QueryInterface|array<string, mixed>  $query
-     *
-     * @internal
      */
     public function addTo(BoolQuery $boolQuery, QueryInterface|array $query): void
     {

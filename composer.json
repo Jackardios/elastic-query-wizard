@@ -39,8 +39,8 @@
     ],
     "require": {
         "php": "^8.2",
-        "jackardios/es-scout-driver": "^1.0.0-rc.1",
-        "jackardios/laravel-query-wizard": "^3.0.0-rc.5",
+        "jackardios/es-scout-driver": "^1.0.0-rc.3",
+        "jackardios/laravel-query-wizard": "^3.0.0-rc.6",
         "laravel/framework": "^12.69.0 || ^13.30.0"
     },
     "require-dev": {

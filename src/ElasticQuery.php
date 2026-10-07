@@ -85,7 +85,7 @@ use Jackardios\EsScoutDriver\Support\Query;
  * @method static HasChildQuery hasChild(string $type, QueryInterface|Closure|array<string, mixed> $query)
  * @method static HasParentQuery hasParent(string $parentType, QueryInterface|Closure|array<string, mixed> $query)
  * @method static ParentIdQuery parentId(string $type, string $id)
- * @method static KnnQuery knn(string $field, array<int, float> $queryVector, int $k)
+ * @method static KnnQuery knn(string $field, array<int, float> $queryVector, ?int $k = null)
  * @method static SparseVectorQuery sparseVector(string $field)
  * @method static PinnedQuery pinned(QueryInterface|array<string, mixed> $organic)
  * @method static SemanticQuery semantic(string $field, string $query)

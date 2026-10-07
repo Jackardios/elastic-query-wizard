@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, master, '*.x']
+    branches: [main, master, '*.x', 'v*-rc*']
   pull_request:
-    branches: [main, master, '*.x']
+    branches: [main, master, '*.x', 'v*-rc*']
     types: [opened, synchronize, reopened, ready_for_review]
   # composer.lock is not committed and CI runs composer update, so new releases of
   # laravel-query-wizard, es-scout-driver, Laravel or the Elasticsearch client can
@@ -24,6 +24,9 @@ jobs:
     name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }} / ES ${{ matrix.elasticsearch }}${{ matrix.dependencies == 'lowest' && ' (lowest)' || '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # The Elasticsearch 8.12 leg has not run yet: it reports without failing the workflow
+    # until it has been seen green, then drop `experimental` from it.
+    continue-on-error: ${{ matrix.experimental == true }}
 
     services:
       elasticsearch:
@@ -72,6 +75,15 @@ jobs:
             es_client: '9'
             dependencies: 'lowest'
             framework-floor: '13.30.0'
+          # The oldest Elasticsearch a known application runs. The requests the package
+          # builds itself use nothing newer; this leg is what checks it on a server.
+          - php: '8.3'
+            laravel: '12'
+            testbench: '10'
+            elasticsearch: '8.12.2'
+            es_client: '8'
+            dependencies: 'highest'
+            experimental: true
         exclude:
           # Laravel 13 requires PHP 8.3+
           - php: '8.2'

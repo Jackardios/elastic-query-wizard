@@ -613,7 +613,8 @@ use Jackardios\QueryWizard\Values\Sort;
 )
 ```
 
-A default sort names an allowed sort, the same way `?sort=` does; `defaultSorts()` does not take `ElasticSort` definitions.
+`defaultSorts()` takes names and `Sort` values, not `ElasticSort` definitions (a `TypeError`): to sort by default with a
+definition's options, allow it and name it or its alias.
 
 ---
 

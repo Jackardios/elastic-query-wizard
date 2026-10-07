@@ -38,8 +38,9 @@ A powerful Laravel package for building Elasticsearch queries with JSON:API styl
 
 - PHP 8.2+ (tested on 8.2–8.5)
 - Laravel 12.69.0+ or 13.30.0+
-- Elasticsearch 8.x or 9.x (CI runs 8.19 and 9.5), with the `elasticsearch/elasticsearch` client of the same major
-  version: 8.x for Elasticsearch 8, 9.x for Elasticsearch 9
+- Elasticsearch 8.x or 9.x (CI runs 8.19 and 9.5; see [ES Compatibility](docs/elasticsearch-compatibility.md) for
+  older 8.x minors), with the `elasticsearch/elasticsearch` client of the same major version: 8.x for Elasticsearch 8,
+  9.x for Elasticsearch 9
 - [es-scout-driver](https://github.com/Jackardios/es-scout-driver)
 - [laravel-query-wizard](https://github.com/Jackardios/laravel-query-wizard)
 
@@ -49,8 +50,9 @@ A powerful Laravel package for building Elasticsearch queries with JSON:API styl
 composer require jackardios/elastic-query-wizard
 ```
 
-While v3 is a release candidate, a project with the default `minimum-stability: stable` has to allow the candidates of
-this package and of the two it needs (Composer applies stability flags of the root project only):
+While v3 is a release candidate, the command above still installs v2, which needs Laravel 10. A project with the
+default `minimum-stability: stable` has to ask for the candidates of this package and of the two it needs (Composer
+applies stability flags of the root project only):
 
 ```bash
 composer require "jackardios/elastic-query-wizard:^3.0@rc" "jackardios/laravel-query-wizard:^3.0@rc" \
@@ -429,9 +431,16 @@ From 3.0.0, breaking changes wait for a major version in:
   without `@api` are not covered;
 - the `@api` interface `GroupInterface`, which gains no required methods in minor releases.
 
+`ElasticQueryWizard` may be extended too, and is marked `@api`. A subclass can rely on its public methods and on the
+`@api` hooks of `laravel-query-wizard` it overrides (`normalizeStringToFilter()`, `normalizeStringToSort()`,
+`normalizeStringToInclude()`, `applyFields()`, `resourceModel()`, `resolveAllowedFilterNames()`,
+`resolveShadowedFilterNames()`, `resolvePreparedFilterValue()`, `applyValidatedIncludes()`, `prepareBuild()`,
+`finalizeBuild()` and `invalidateBuild()`): they keep their signatures and keep being called, and a subclass that
+overrides one calls the parent implementation. Its other protected members (`$modelClass` and those marked
+`@internal`) are not covered. `laravel-query-wizard`'s rules cover the wizard methods `ElasticQueryWizard` inherits.
+
 Anything marked `@internal` may change in any release, and so may protected members without `@api`. The `Concerns`
 traits are `@internal`: the filter methods they provide are covered, using a trait in another class is not.
-`laravel-query-wizard`'s rules cover the wizard methods `ElasticQueryWizard` inherits.
 
 ## Testing
 

@@ -109,12 +109,29 @@ straight into the Elasticsearch DSL and therefore need a second look before you 
 [`regexp`](#regexp-filter) and [`wildcard`](#wildcard-filter) (the value can force an index-wide scan).
 
 The text and pattern filters (`prefix`, `wildcard`, `regexp`, `fuzzy`, the match family, `queryString`,
-`simpleQueryString` and `moreLikeThis`) take `maxLength(int)`: a longer value returns 400 (`InvalidFilterValue`), and
-`maxLength(null)` removes the limit. Three have one by default: `regexp` and `prefix` 1000, the longest pattern
+`simpleQueryString` and `moreLikeThis`) limit the length of their value: a longer one returns 400
+(`InvalidFilterValue`). Three have a limit of their own: `regexp` and `prefix` 1000, the longest pattern
 Elasticsearch accepts (see [Regexp Filter](#regexp-filter)), and `fuzzy` 256, since a long fuzzy term costs
-Elasticsearch tens of kilobytes of memory per character. A query string is kept short by the web
-server's URL limit; with `request_data_source` set to `body` nothing limits it, so set `maxLength()` on the filters
-that take free text.
+Elasticsearch tens of kilobytes of memory per character. `wildcard`, the match family, `queryString` and
+`simpleQueryString` take 1000 characters by default: a long text can exceed the number of clauses Elasticsearch
+allows in one query and fail the search. `moreLikeThis` has no default limit, since its text is a sample document
+and long by nature; set `maxLength()` on it where the value comes from the client. `maxLength(int)` sets another
+limit on one filter and `maxLength(null)` removes it. To change the default of the filters without a limit of their own, set
+`max_text_length` in `config/elastic-query-wizard.php` (the package ships no config file, create it in the
+application); `null` removes it:
+
+```php
+return [
+    'max_text_length' => 5000, // a positive integer, a string of digits, or null
+];
+```
+
+`null` is "no limit", and it is also what `env()` returns for a variable that is not set: write
+`env('ELASTIC_MAX_TEXT_LENGTH', 1000)`, not `env('ELASTIC_MAX_TEXT_LENGTH')`, unless a missing variable should lift
+the limit. Any other value (`0`, an empty string, `false`, a float, text) throws an `InvalidArgumentException` when
+a text filter reads its value.
+
+Lengths are counted as Elasticsearch counts them, in UTF-16 code units.
 
 ---
 
@@ -458,7 +475,7 @@ ElasticFilter::notNull('thumbnail', 'has_thumbnail')
 |--------|--------------|-------------|
 | `ExistsFilter` | Field exists | Field doesn't exist |
 | `NullFilter` | Field IS NULL | Field IS NOT NULL |
-| `NullFilter` (inverted) | Field IS NOT NULL | Field IS NULL |
+| `NullFilter::notNull()` | Field IS NOT NULL | Field IS NULL |
 
 Use `NullFilter` when the parameter name suggests "is null" semantics (e.g., `is_deleted`, `is_empty`).
 Use `ExistsFilter` when the parameter name suggests "has value" semantics (e.g., `has_thumbnail`, `has_email`).
@@ -566,7 +583,7 @@ ElasticFilter::wildcard('sku')->withParameters([
 
 A pattern with many wildcards (`*a` repeated 300 times) is too complex for Elasticsearch, which fails the search with a
 400 ([Syntax Elasticsearch Refuses](#syntax-elasticsearch-refuses)). The threshold depends on the pattern, not its
-length, so `maxLength()` does not prevent it; limit the wildcards themselves:
+length, so the default limit of 1000 characters and `maxLength()` do not prevent it; limit the wildcards themselves:
 
 ```php
 use Jackardios\QueryWizard\Exceptions\InvalidFilterValue;
@@ -880,11 +897,18 @@ Latitude must be within [-90, 90] and longitude within [-180, 180]. Units are ca
 
 | Unit | Description |
 |------|-------------|
-| `m` | Meters |
-| `km` | Kilometers |
-| `mi` | Miles |
-| `yd` | Yards |
-| `ft` | Feet |
+| `mm`, `millimeters` | Millimeters |
+| `cm`, `centimeters` | Centimeters |
+| `m`, `meters` | Meters (the default without a unit) |
+| `km`, `kilometers` | Kilometers |
+| `in`, `inch` | Inches |
+| `ft`, `feet` | Feet |
+| `yd`, `yards` | Yards |
+| `mi`, `miles` | Miles |
+| `NM`, `nmi`, `nauticalmiles` | Nautical miles |
+
+The distance is a positive decimal number followed by one of these units, with or without a space (`3km`, `1.5 mi`);
+anything else returns 400.
 
 ---
 
@@ -971,7 +995,7 @@ GET /areas?filter[boundary][type]=indexed_shape&filter[boundary][id]=region_123
 Every point is `[lon, lat]`: exactly two numbers, the longitude within ±180 and the latitude within ±90. An envelope
 is its top-left and bottom-right corners, so its first latitude may not be below its second. Anything else returns 400.
 
-Each polygon ring is a list of `[lon, lat]` points. A ring whose last point differs from its first is closed for you, and a ring must have at least four points once closed. Rings after the first are holes: documents inside a hole do not match.
+Each polygon ring is a list of `[lon, lat]` points. A ring whose last point differs from its first is closed for you, and a ring must have at least four points once closed. Rings after the first are holes: documents inside a hole do not match. Only the number of points and the closing are checked: a ring whose points coincide or lie on one line, or one that crosses itself, is passed on as it is. What Elasticsearch answers for such a ring has not been checked for this package; validate the shape in the application if it matters.
 
 Coordinates are decimal numbers (digits with an optional sign and fraction, no exponent); a value such as `1e1` returns
 400.
@@ -1335,10 +1359,21 @@ Create a custom filter through a callback function.
 use Jackardios\EsScoutDriver\Search\SearchBuilder;
 use Jackardios\EsScoutDriver\Support\Query;
 
+use Jackardios\QueryWizard\Exceptions\InvalidFilterValue;
+
 ElasticFilter::callback('phrase', function (SearchBuilder $builder, mixed $value, string $property) {
+    if (! is_string($value)) {
+        throw InvalidFilterValue::make($value, $property, 'Expected one phrase.');
+    }
+
     $builder->must(Query::matchPhrase('content', $value));
-})
+})->withoutValueSplitting()
 ```
+
+A callback filter splits its value by the separator like any other filter, so `?filter[phrase]=red, blue` reaches the
+callback as the list `['red', 'blue']`, and `?filter[phrase][]=red` as a list too. A callback that passes the value to
+a query taking one string, as `Query::matchPhrase()` does, fails with a `TypeError` (a 500) on such a request. Keep
+the value whole with `withoutValueSplitting()`, and answer a value of another type with `InvalidFilterValue`, a 400.
 
 ### Callback Signature
 
@@ -1349,7 +1384,7 @@ function (SearchBuilder $builder, mixed $value, string $property): void
 | Argument | Description |
 |----------|-------------|
 | `$builder` | SearchBuilder instance for adding queries |
-| `$value` | Value passed to the filter |
+| `$value` | Value passed to the filter: a string, or a list when the value holds the separator or is sent as a list |
 | `$property` | Filter property name |
 
 ### Examples
@@ -1358,28 +1393,37 @@ function (SearchBuilder $builder, mixed $value, string $property): void
 
 ```php
 ElasticFilter::callback('phrase', function ($builder, $value, $property) {
+    if (! is_string($value)) {
+        throw InvalidFilterValue::make($value, $property, 'Expected one phrase.');
+    }
+
     $builder->must(Query::matchPhrase('content', $value));
-})
+})->withoutValueSplitting()
 ```
 
 #### Complex Condition
 
+`asBoolean()` reads `true/false/1/0/yes/no/on/off` and answers anything else with 400; without it the callback
+receives the string `"false"`, which is truthy.
+
 ```php
 ElasticFilter::callback('available', function ($builder, $value, $property) {
-    if ($value) {
+    if ($value === true) {
         $builder->filter(Query::term('status', 'active'));
         $builder->filter(Query::range('stock')->gt(0));
     }
-})
+})->asBoolean()
 ```
 
 #### Nested Query
+
+A `terms` query takes one author or several (`?filter[comment_author]=john,jane`):
 
 ```php
 ElasticFilter::callback('comment_author', function ($builder, $value, $property) {
     $builder->filter(
         Query::nested('comments',
-            Query::term('comments.author', $value)
+            Query::terms('comments.author', (array) $value)
         )
     );
 })
@@ -1722,7 +1766,7 @@ carries the value (`$exception->filterValue`) and what was expected (`$exception
 | `exists`, `null` | not a boolean (`true`, `false`, `1`, `0`, `yes`, `no`, `on`, `off`, in any letter case) | `InvalidFilterValue` |
 | `trashed` | not `with`, `only`, `without`, `true` or `false` | `InvalidFilterValue` |
 | `term`, `ids` with `asNumber()` | a value that is not a decimal number | `InvalidFilterValue` |
-| text and pattern filters, `ids` | a JSON boolean (with `request_data_source` set to `body`); a value longer than `maxLength()` | `InvalidFilterValue` |
+| text and pattern filters, `ids` | a JSON boolean (with `request_data_source` set to `body`); a value longer than the filter's limit (`maxLength()`, 1000 characters by default, 256 for `fuzzy`) | `InvalidFilterValue` |
 
 A value of the wrong shape for the filter (for example a list for `exists`) is rejected earlier with 400
 `InvalidFilterQuery`. Blank values (`null`, whitespace) add no condition, and neither does `,` for a filter that splits

@@ -15,11 +15,18 @@ This package supports Elasticsearch 8.x and 9.x. This document covers version-sp
 |---------------|--------|-------|
 | 8.x | Fully supported | Recommended for production |
 | 9.x | Fully supported | Some features removed (see below) |
+| 7.x and below | Not supported | Use older package versions |
 
 Use the `elasticsearch/elasticsearch` client of the server's major version. The 8.x client asks a 9.x server to accept
 8.x requests, so a parameter removed in 9.x (such as `force_source`) only draws a deprecation warning through it; the
 9.x client gets the error the tables below describe.
-| 7.x and below | Not supported | Use older package versions |
+
+The package's suite runs on Elasticsearch 8.19 and 9.5. The requests the package builds itself use nothing newer than
+8.12, going by the Elasticsearch reference; CI has a leg for 8.12 that reports without failing the build until it has
+run green. Some
+`es-scout-driver` query factories that `ElasticQuery` forwards need a newer server (`knn()` with `k`,
+`sparseVector()` and `semantic()` need 8.15, `textExpansion()->pruningConfig()` 8.13): its compatibility document has
+the list.
 
 ## Elasticsearch 9.x Breaking Changes
 
@@ -56,8 +63,9 @@ ElasticFilter::range('price')
 
 ### Random Sorting
 
-A `random_score` with a seed needs a `field`. `ElasticSort::random()` uses `_seq_no` when you pass a seed, so the same
-code works on 8.x and 9.x; call `field()` only to pick another field. Do not use `_id`: Elasticsearch refuses it for
+On Elasticsearch 8.x a `random_score` with a seed needs a `field`; 9.x reads `_seq_no` without one.
+`ElasticSort::random()` sends `_seq_no` when you pass a seed, so the same code works on 8.x and 9.x; call `field()`
+only to pick another field. Do not use `_id`: Elasticsearch refuses it for
 `random_score`.
 
 ```php
@@ -109,14 +117,13 @@ A histogram on a boolean field works on Elasticsearch 8 and 9 (checked on 9.3 an
    ```
 
 2. **Audit your code** for these patterns:
-   - `random_score` without explicit `field`
    - `force_source` in highlight options
    - Direct `_knn_search` endpoint calls
 
 ### Code Changes Required
 
-**Random sorting:** `ElasticSort::random()->seed()` needs no change, since it sets `field` to `_seq_no`. Add `field` to
-any `random_score` you build yourself.
+**Random sorting:** `ElasticSort::random()->seed()` needs no change, since it sets `field` to `_seq_no`. A seeded
+`random_score` you build yourself without a `field` already fails on 8.x; on 9.x it reads `_seq_no`.
 
 **Highlighting:**
 ```php
