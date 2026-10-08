@@ -8,7 +8,7 @@ All notable changes to this project are documented in this file. The format foll
 Version 3 is a rewrite on top of `laravel-query-wizard` v3 and `es-scout-driver`: fluent `allowed*()` configuration,
 `ElasticFilter`/`ElasticSort`/`ElasticInclude` factories, resource schemas, filter groups and bool clause methods. See
 [UPGRADE.md](UPGRADE.md) for migrating from v2.x and from `dev-master` snapshots. The entries below list the changes
-made since those snapshots.
+made since those snapshots; pre-release v3.0.0-rc.1 was tagged on 2026-10-08 and holds all of them.
 
 ### Requirements
 
