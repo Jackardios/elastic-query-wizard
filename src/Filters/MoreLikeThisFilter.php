@@ -258,7 +258,7 @@ final class MoreLikeThisFilter extends AbstractElasticFilter
     /**
      * A sample document is long by nature: only maxLength() limits it.
      */
-    protected function defaultMaxLength(): ?int
+    protected function defaultMaxLength(): null
     {
         return null;
     }
